@@ -1171,6 +1171,23 @@
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
         }
 
+        /* MAP SECTION */
+        .section-map {
+            background: var(--color-white);
+        }
+
+        .map-wrapper {
+            width: 100%;
+        }
+
+        .map-wrapper iframe {
+            width: 100%;
+            height: 420px;
+            border: 0;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
         .contact-info {
             font-size: var(--font-size-xl);
             margin: var(--spacing-xl) 0;
@@ -1664,11 +1681,14 @@
         <div class="container">
             <div class="section-subtitle">Location</div>
             <h2 id="map-title" class="section-title">How To Reach Us</h2>
-            <div class="map-container" id="mapContainer">
-                <!-- Google Maps iframe will be injected here -->
-            </div>
-            <div class="directions-grid" id="directionsGrid">
-                <!-- Direction cards will be injected here -->
+            <div class="map-wrapper">
+                <iframe
+                    id="mapFrame"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen
+                    title="Google Maps location">
+                </iframe>
             </div>
         </div>
     </section>
@@ -2219,54 +2239,17 @@
         }
 
         function renderMap(data) {
-            if (!isFeatureEnabled('map', data)) return;
-            if (!data.map) {
-                log('Map feature enabled but no data provided');
-                return;
-            }
+            if (!data.embeds || !data.embeds.map) return;
+            if (data.features && data.features.map === false) return;
 
             state.features.map = true;
 
-            // Render Google Maps iframe
-            if (data.map.embedUrl) {
-                const mapContainer = document.getElementById('mapContainer');
-                const iframe = document.createElement('iframe');
-                iframe.src = sanitizeUrl(data.map.embedUrl);
-                iframe.setAttribute('allowfullscreen', '');
-                iframe.setAttribute('loading', 'lazy');
-                iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-                iframe.setAttribute('title', 'Google Maps location');
-                mapContainer.appendChild(iframe);
+            const iframe = document.getElementById('mapFrame');
+            if (iframe) {
+                iframe.src = sanitizeUrl(data.embeds.map);
+                document.getElementById('section-map').classList.remove('hidden');
+                log('Map section rendered');
             }
-
-            // Render directions
-            if (data.map.directions && Array.isArray(data.map.directions)) {
-                const grid = document.getElementById('directionsGrid');
-                grid.innerHTML = '';
-
-                data.map.directions.forEach((direction, index) => {
-                    if (!direction.mode || !direction.description) return;
-
-                    const card = document.createElement('div');
-                    card.className = 'direction-card scroll-reveal';
-                    card.style.animationDelay = `${index * 0.1}s`;
-
-                    const mode = document.createElement('div');
-                    mode.className = 'direction-mode';
-                    mode.textContent = sanitizeText(direction.mode);
-
-                    const desc = document.createElement('p');
-                    desc.className = 'direction-description';
-                    desc.textContent = sanitizeText(direction.description);
-
-                    card.appendChild(mode);
-                    card.appendChild(desc);
-                    grid.appendChild(card);
-                });
-            }
-
-            document.getElementById('section-map').classList.remove('hidden');
-            log('Map section rendered');
         }
 
         function renderTestimonials(data) {

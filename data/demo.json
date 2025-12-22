@@ -1,0 +1,33 @@
+{
+  "slug": "mountview",
+  "status": "active",
+  "name": "Mount View Luxury Resort",
+  "tagline": "Elevate your stay — where nature meets elegance",
+  "about": "Mount View Luxury Resort offers lavish suites, infinity pools, curated gourmet dining, and private balconies overlooking the breathtaking valley.",
+  "branding": {
+    "logo": "https://images.unsplash.com/photo-1527030280862-64139fba04ca?auto=format&fit=crop&w=200&q=60",
+    "heroImage": "https://images.unsplash.com/photo-1501117716987-c8e1ecb210fa?auto=format&fit=crop&w=1600&q=80"
+  },
+  "amenities": ["Infinity Pool", "Premium Spa", "Fine Dining Restaurant"],
+  "rooms": [
+    { "name": "Deluxe Valley Suite", "price": "₹8,000 / night", "image": "https://images.unsplash.com/photo-1590490359683-6632931f7f9b?auto=format&fit=crop&w=1200&q=80", "description": "Valley-facing suite with king bed." }
+  ],
+  "gallery": ["https://images.unsplash.com/photo-1519824145371-296894a0daa9?auto=format&fit=crop&w=1200&q=80"],
+  "embeds": { "map": "https://www.google.com/maps/embed?pb=!1m18!..."} ,
+  "contact": { "phone": "+91 9876543210" },
+  "social": {
+    "instagram": "https://www.instagram.com/rinil_kuriakose",
+    "facebook": "https://www.facebook.com/rinil.pulinakuzhi/",
+    "youtube": "https://www.youtube.com/watch?v=32MmEsLnOkQ"
+  },
+  
+  "features": {
+    "about": true,
+    "amenities": true,
+    "rooms": true,
+    "gallery": true,
+    "bookingEnquiry": true,
+    "contact": true
+  },
+  "templateId": "resort_v1"
+}

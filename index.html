@@ -2904,12 +2904,28 @@
 
             const result = await response.json();
             if (result.status === 'ok') {
-              showBookingSuccess(statusDiv, 'Enquiry submitted successfully! We\'ll get back to you shortly.');
+              showBookingSuccess(statusDiv, 'Enquiry submitted successfully! Opening chat with resort owner...');
               form.reset();
               // Trigger input events to reset character counts
               form.querySelectorAll('input, textarea').forEach(el => {
                 el.dispatchEvent(new Event('input'));
               });
+              
+              // Auto-open WhatsApp chat with resort owner
+              if (state.data && state.data.contact && state.data.contact.whatsapp) {
+                const ownerPhone = state.data.contact.whatsapp.replace(/\D/g, ''); // Remove non-digits
+                const guestName = payload.name || 'Guest';
+                const checkIn = payload.checkIn || 'TBD';
+                const checkOut = payload.checkOut || 'TBD';
+                const message = `Hi! I just submitted a booking inquiry for ${checkIn} to ${checkOut}. Looking forward to hearing from you!`;
+                const whatsappUrl = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(message)}`;
+                
+                // Open WhatsApp after a brief delay to show success message
+                setTimeout(() => {
+                  window.open(whatsappUrl, '_blank');
+                  log('WhatsApp chat opened for resort:', state.data.name);
+                }, 1500);
+              }
             } else {
               showBookingError(statusDiv, `Error: ${result.message || 'Unable to submit enquiry. Please try again.'}`);
             }

@@ -1726,7 +1726,7 @@
          * This allows Worker-based routing while maintaining local development support
          */
         const CONFIG = {
-            dataPath: window.RESORT_DATA_PATH || 'data/mountview.json',
+            dataPath: window.RESORT_DATA_PATH || `data/${window.location.pathname.replace(/\/$/, '').split('/').pop()}.json`,
             schemaVersion: '1.0',
             templateVersion: '1.1',
             debug: new URLSearchParams(window.location.search).has('debug')

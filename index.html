@@ -2629,11 +2629,21 @@
 
           state.features.bookingEnquiry = true;
 
-          // Update form slug with actual site data
+          // Update form slug from URL pathname
           const slugInput = document.querySelector('#booking-enquiry-form input[name="slug"]');
-          if (slugInput && state.data && state.data.slug) {
-            slugInput.value = state.data.slug;
-            log('Updated slug to:', state.data.slug);
+          if (slugInput) {
+            const slug = window.location.pathname
+              .replace(/\/$/, '')
+              .split('/')
+              .pop();
+            
+            if (!slug) {
+              slugInput.value = '';
+              log('WARNING: Could not determine slug from URL');
+            } else {
+              slugInput.value = slug;
+              log('Updated slug from URL to:', slug);
+            }
           }
 
           const pageUrlInput = document.querySelector('#booking-enquiry-form input[name="page_url"]');
@@ -2771,6 +2781,13 @@
           const payload = Object.fromEntries(formData.entries());
 
           // Comprehensive Validation
+
+          // 0. Slug validation
+          if (!payload.slug || payload.slug.trim().length === 0) {
+            showBookingError(statusDiv, 'Booking is temporarily unavailable');
+            submitButton.disabled = false;
+            return;
+          }
 
           // 1. Name validation
           if (!payload.name || payload.name.trim().length === 0) {

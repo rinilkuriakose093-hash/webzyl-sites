@@ -1721,14 +1721,54 @@
         'use strict';
 
         /**
+         * Property Slug Derivation
+         * Supports both URL patterns:
+         * - Path-based: webzyl-sites.pages.dev/mountview
+         * - Subdomain-based: mountview.webzyl.com
+         */
+        function getPropertySlug() {
+            // 1. Try path-based slug (legacy: /mountview)
+            const pathSlug = window.location.pathname
+                .replace(/^\/|\/$/g, '')
+                .split('/')[0];
+            
+            if (pathSlug && pathSlug !== 'index.html') {
+                console.log('[SLUG] Derived from path:', pathSlug);
+                return pathSlug;
+            }
+            
+            // 2. Try subdomain-based slug (mountview.webzyl.com)
+            const hostname = window.location.hostname;
+            const hostParts = hostname.split('.');
+            
+            // If subdomain exists and not www or localhost
+            if (hostParts.length >= 3 && hostParts[0] !== 'www') {
+                console.log('[SLUG] Derived from subdomain:', hostParts[0]);
+                return hostParts[0];
+            }
+            
+            // 3. Check if localhost with no path (development)
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                console.warn('[SLUG] Development mode - using fallback slug');
+                return 'demo'; // Fallback for local development
+            }
+            
+            // 4. Fail loudly with helpful error
+            console.error('[SLUG] Unable to determine slug from:', {
+                hostname: hostname,
+                pathname: window.location.pathname
+            });
+            throw new Error('Unable to determine property slug from URL');
+        }
+
+        /**
          * Template Configuration
-         * dataPath: Can be injected by Worker via window.RESORT_DATA_PATH or defaults to JSON file
-         * This allows Worker-based routing while maintaining local development support
+         * dataPath: Can be injected by Worker via window.RESORT_DATA_PATH or defaults to derived slug
          */
         const CONFIG = {
-            dataPath: window.RESORT_DATA_PATH || `data/${window.location.pathname.replace(/\/$/, '').split('/').pop()}.json`,
+            dataPath: window.RESORT_DATA_PATH || `/data/${getPropertySlug()}.json`,
             schemaVersion: '1.0',
-            templateVersion: '1.1',
+            templateVersion: '1.2',
             debug: new URLSearchParams(window.location.search).has('debug')
         };
 

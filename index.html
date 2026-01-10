@@ -1,0 +1,3004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta property="og:title" content="">
+    <meta property="og:description" content="">
+    <meta property="og:image" content="">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="">
+    <title>Loading...</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --color-primary: #14b8a6;
+            --color-primary-light: #2dd4bf;
+            --color-primary-dark: #0f766e;
+            --color-accent: #B89355;
+            --color-accent-hover: #d97706;
+            --color-accent-light: #fbbf24;
+            --color-text-dark: #0f172a;
+            --color-text-medium: #334155;
+            --color-text-light: #475569;
+            --color-text-lighter: #64748b;
+            --color-bg-cream: #F9F7F2;
+            --color-white: #ffffff;
+            --color-overlay: rgba(0, 0, 0, 0.5);
+            
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            --spacing-2xl: 4rem;
+            --spacing-3xl: 5rem;
+            --spacing-4xl: 6rem;
+            
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 2rem;
+            --font-size-4xl: 2.5rem;
+            --font-size-5xl: 3.5rem;
+            --font-size-6xl: 4.5rem;
+            
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.16);
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-full: 9999px;
+            
+            --transition-fast: 0.15s;
+            --transition-base: 0.3s;
+            --transition-slow: 0.6s;
+            
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --nav-logo-height: 48px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--color-text-medium);
+            background: var(--color-bg-cream);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body.motion-enabled * {
+            transition-timing-function: var(--ease-smooth);
+        }
+
+        body.motion-disabled * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ERROR & INACTIVE STATE */
+        .error-container,
+        .inactive-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--spacing-xl);
+            text-align: center;
+            position: relative;
+        }
+
+        .inactive-container {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .inactive-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 1;
+        }
+
+        /* Reduce overlay when using solid color background */
+        .inactive-container.color-only::before {
+            background: var(--color-bg-cream);
+        }
+
+        .inactive-content {
+            position: relative;
+            z-index: 2;
+            color: var(--color-white);
+            max-width: 600px;
+        }
+
+        .inactive-logo {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto var(--spacing-xl);
+            object-fit: contain;
+        }
+
+        .inactive-title {
+            font-size: var(--font-size-5xl);
+            font-weight: 800;
+            margin-bottom: var(--spacing-md);
+            text-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
+
+        .inactive-message {
+            font-size: var(--font-size-xl);
+            line-height: 1.8;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+
+        .error-title {
+            font-size: var(--font-size-4xl);
+            color: var(--color-text-dark);
+            margin-bottom: var(--spacing-md);
+            font-weight: 700;
+        }
+
+        .error-message {
+            font-size: var(--font-size-lg);
+            color: var(--color-text-light);
+        }
+
+        /* NAVIGATION */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: transparent;
+            transition: all var(--transition-base) var(--ease-smooth);
+            padding: var(--spacing-md) 0;
+        }
+
+        body.motion-enabled .navbar {
+            animation: slideInLeft 0.8s var(--ease-smooth);
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-sm) 0;
+        }
+
+        .nav-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            /* premium serif logo */
+            font-family: 'Playfair Display', serif;
+            color: var(--color-text-dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            transition: all var(--transition-base) var(--ease-smooth);
+            margin-left: 0;
+            left: 0;
+            /* keep logo fixed to left side and prevent centering */
+            flex: 0 0 auto;
+            margin-right: auto;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Nav logo image when branding.logo is provided */
+        .nav-logo-img {
+            height: var(--nav-logo-height);
+            width: auto;
+            display: block;
+            object-fit: contain;
+            vertical-align: middle;
+        }
+
+        .logo .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--color-text-dark);
+            font-size: 1rem;
+            line-height: 1;
+            white-space: nowrap;
+            display: none; /* shown only on larger screens */
+        }
+
+        @media (min-width: 768px) {
+            :root { --nav-logo-height: 56px; }
+            .logo .logo-text { display: inline-block; }
+        }
+
+        /* Ensure nav links sit to the right while logo stays left */
+        .nav-links {
+            margin-left: auto;
+        }
+
+        .navbar.scrolled .logo {
+            color: var(--color-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--spacing-2xl);
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links li {
+            display: none;
+        }
+
+        .nav-links li.visible {
+            display: block;
+        }
+
+        .nav-links a {
+            color: var(--color-white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+            letter-spacing: 0.3px;
+            transition: all var(--transition-base) var(--ease-smooth);
+            position: relative;
+        }
+
+        .navbar.scrolled .nav-links a {
+            color: var(--color-text-medium);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-accent);
+            transition: width var(--transition-base) var(--ease-smooth);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: var(--spacing-xs) var(--spacing-lg);
+            background: var(--color-accent);
+            color: var(--color-white);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            transition: all var(--transition-base) var(--ease-smooth);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+
+        .nav-cta:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .nav-cta::after {
+            display: none;
+        }
+
+        /* When hero uses a light background, make the navbar links and CTA dark/visible */
+        .navbar.hero-light {
+            background: transparent;
+        }
+
+        .navbar.hero-light .nav-links a {
+            color: var(--color-text-dark);
+        }
+
+        .navbar.hero-light .nav-links a::after {
+            background: rgba(184,143,85,0.6);
+        }
+
+        .navbar.hero-light .nav-cta {
+            background: var(--color-accent);
+            color: var(--color-white);
+            box-shadow: 0 8px 24px rgba(184,143,85,0.12);
+        }
+
+        .navbar.hero-light .nav-cta:hover {
+            background: var(--color-accent-hover);
+        }
+
+        /* HERO SECTION */
+        .section-hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--color-white);
+            overflow: hidden;
+        }
+
+        #hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            filter: contrast(1.1) brightness(1.05);
+        }
+
+        body.motion-enabled #hero-background {
+            animation: scaleIn 1.2s var(--ease-smooth);
+        }
+
+        #hero-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            /* default overlay is transparent — color-mode will supply its own gradient */
+            background: transparent;
+        }
+
+        #hero-background.color-mode {
+            background-image: none !important;
+        }
+
+        #hero-background.color-mode::before {
+            /* pure white-based premium gradient */
+            background: linear-gradient(135deg,
+                #ffffff 0%,
+                #fbfbfb 40%,
+                #f7f5f0 75%,
+                #f3efe6 100%);
+        }
+
+        #hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 1100px;
+            padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+
+        body.motion-enabled #hero-content {
+            animation: fadeInUp 1s var(--ease-smooth) 0.3s both;
+        }
+
+        .hero-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto var(--spacing-xl);
+            object-fit: contain;
+        }
+
+        body.motion-enabled .hero-logo {
+            animation: scaleIn 0.8s var(--ease-spring) 0.5s both;
+        }
+
+        .hero-subtitle {
+            font-size: var(--font-size-base);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--color-accent-light);
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.95;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 5.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-lg);
+            text-shadow: 0 4px 24px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+            line-height: 1.05;
+            text-transform: uppercase;
+        }
+
+        .hero-tagline {
+            font-size: var(--font-size-2xl);
+            font-weight: 300;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-2xl);
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            color: var(--color-text-medium);
+        }
+
+        /* Light/premium hero adjustments (scoped via JS-added `color-light`) */
+        .section-hero.color-light .hero-title {
+            color: var(--color-text-dark);
+            text-shadow: 0 6px 18px rgba(255,255,255,0.6);
+        }
+
+        .section-hero.color-light .hero-subtitle {
+            color: var(--color-accent);
+        }
+
+        .section-hero.color-light .hero-tagline {
+            color: var(--color-text-medium);
+            text-shadow: none;
+        }
+
+        .section-hero.color-light .btn-primary {
+            background: var(--color-accent);
+            color: var(--color-white);
+            box-shadow: 0 12px 36px rgba(184,147,85,0.12);
+            border-color: transparent;
+        }
+
+        .section-hero.color-light .btn-secondary {
+            background: rgba(20,20,20,0.04);
+            color: var(--color-text-medium);
+            border-color: rgba(20,20,20,0.06);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        body.motion-enabled .hero-buttons {
+            animation: fadeInUp 0.8s var(--ease-smooth) 0.8s both;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-md) var(--spacing-2xl);
+            text-decoration: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base) var(--ease-smooth);
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: transparent;
+            color: var(--color-accent);
+            border: 1px solid var(--color-accent);
+            box-shadow: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent);
+            color: var(--color-white);
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(245, 158, 11, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            color: var(--color-white);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-3px);
+        }
+
+        /* Ensure hero buttons are visible on darkened hero (color-mode + overlay) */
+        .section-hero .btn-primary {
+            background: var(--color-accent);
+            color: var(--color-white);
+            border-color: transparent;
+            box-shadow: 0 12px 36px rgba(184, 147, 85, 0.16);
+        }
+
+        .section-hero .btn-primary:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 48px rgba(184, 147, 85, 0.2);
+        }
+
+        .section-hero .btn-secondary {
+            background: rgba(255,255,255,0.12);
+            color: var(--color-white);
+            border-color: rgba(255,255,255,0.22);
+        }
+
+        .section-hero .btn-secondary:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.36);
+        }
+
+        /* SCROLL REVEAL */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        body.motion-enabled .scroll-reveal.revealed {
+            animation: fadeInUp 0.8s var(--ease-smooth) forwards;
+        }
+
+        body.motion-disabled .scroll-reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* COMMON SECTION STYLES */
+        .section {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: var(--spacing-4xl) var(--spacing-4xl);
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        .section-subtitle {
+            color: var(--color-accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: var(--font-size-5xl);
+            color: var(--color-text-dark);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .section-description {
+            font-size: var(--font-size-lg);
+            color: var(--color-text-light);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* ABOUT SECTION */
+        .section-about {
+            background: var(--color-white);
+        }
+
+        .section-about .about-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-text {
+            font-size: var(--font-size-xl);
+            line-height: 2;
+            color: var(--color-text-medium);
+            font-weight: 400;
+        }
+
+        /* AMENITIES SECTION */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-xl);
+        }
+
+        .amenity-card {
+            background: var(--color-white);
+            padding: var(--spacing-2xl) var(--spacing-xl);
+            border-radius: var(--radius-xl);
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-slow) var(--ease-smooth);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* Use the base page background so hero never falls back to grey */
+            background: var(--color-bg-cream);
+            z-index: 0;
+        }
+
+        .section-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .amenity-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-3xl);
+            font-weight: bold;
+            box-shadow: 0 8px 24px rgba(20, 184, 166, 0.25);
+            transition: all var(--transition-base) var(--ease-spring);
+        }
+
+        .amenity-card:hover .amenity-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .amenity-title {
+            font-size: var(--font-size-xl);
+            color: var(--color-text-dark);
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        /* ROOMS SECTION */
+        .section-rooms {
+            background: linear-gradient(180deg, var(--color-bg-cream) 0%, var(--color-white) 100%);
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-2xl);
+        }
+
+        .room-card {
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-slow) var(--ease-smooth);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .room-card:hover {
+            transform: translateY(-16px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .room-image-wrapper {
+            position: relative;
+            height: 320px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+
+        .room-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-slow) var(--ease-smooth);
+        }
+
+        .room-card:hover .room-image {
+            transform: scale(1.1);
+        }
+
+        .room-badge {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: var(--color-accent);
+            color: var(--color-white);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: var(--font-size-xs);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .room-content {
+            padding: var(--spacing-xl);
+        }
+
+        .room-name {
+            font-size: var(--font-size-3xl);
+            font-weight: 800;
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text-dark);
+            letter-spacing: -1px;
+        }
+
+        .room-description {
+            color: var(--color-text-light);
+            margin-bottom: var(--spacing-xl);
+            line-height: 1.8;
+            font-size: var(--font-size-base);
+        }
+
+        .room-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--spacing-lg);
+            border-top: 2px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .room-price-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .room-price-label {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-lighter);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .room-price {
+            font-size: var(--font-size-3xl);
+            color: var(--color-primary);
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .book-button {
+            padding: var(--spacing-sm) var(--spacing-xl);
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base) var(--ease-smooth);
+            font-size: var(--font-size-base);
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 16px rgba(20, 184, 166, 0.3);
+        }
+
+        .book-button:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(20, 184, 166, 0.4);
+        }
+
+        /* GALLERY SECTION */
+        .section-gallery {
+            background: var(--color-white);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+            padding: 0;
+        }
+
+        .gallery-item {
+            position: relative;
+            height: 320px;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-slow) var(--ease-smooth);
+            background: var(--color-bg-cream);
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-slow) var(--ease-smooth);
+        }
+
+        .gallery-item:hover .gallery-image {
+            transform: scale(1.15);
+        }
+
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 40%, var(--color-bg-cream));
+            opacity: 0;
+            transition: opacity var(--transition-base) var(--ease-smooth);
+        }
+
+        .gallery-item:hover::after {
+            opacity: 1;
+        }
+
+        /* BOOKING ENQUIRY SECTION */
+        .section-booking {
+            background: var(--color-white);
+        }
+
+        .booking-form-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--color-bg-cream);
+            padding: var(--spacing-3xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        #booking-enquiry-form {
+            display: grid;
+            gap: var(--spacing-2xl);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-2xl);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .booking-form-wrapper label {
+            font-weight: 600;
+            color: var(--color-text-dark);
+            font-size: var(--font-size-base);
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .required-indicator {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .booking-form-wrapper input,
+        .booking-form-wrapper textarea {
+            padding: var(--spacing-md);
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            color: var(--color-text-dark);
+            font-family: inherit;
+            transition: all var(--transition-base) var(--ease-smooth);
+            background: var(--color-white);
+        }
+
+        .booking-form-wrapper input:focus,
+        .booking-form-wrapper textarea:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+
+        .booking-form-wrapper input:invalid:not(:placeholder-shown),
+        .booking-form-wrapper textarea:invalid:not(:placeholder-shown) {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .booking-form-wrapper textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .char-count {
+            display: block;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-lighter);
+            margin-top: 0.25rem;
+        }
+
+        .char-count.warning {
+            color: #f59e0b;
+            font-weight: 500;
+        }
+
+        .char-count.error {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .booking-form-wrapper small {
+            display: block;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-lighter);
+            margin-top: 0.25rem;
+        }
+
+        .btn-submit {
+            padding: var(--spacing-md) var(--spacing-3xl);
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-base);
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all var(--transition-base) var(--ease-smooth);
+            box-shadow: 0 8px 20px rgba(20, 184, 166, 0.25);
+            justify-self: start;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: var(--color-primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(20, 184, 166, 0.35);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .booking-status {
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            text-align: center;
+            margin-top: var(--spacing-lg);
+        }
+
+        .booking-status.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .booking-status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* CONTACT SECTION */
+        .section-contact {
+            background: var(--color-bg-cream);
+        }
+
+        .contact-wrapper {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+            padding: var(--spacing-4xl) var(--spacing-3xl);
+            border-radius: 32px;
+            text-align: center;
+            color: var(--color-white);
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -15%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 65%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        .contact-wrapper .section-subtitle {
+            color: var(--color-accent-light);
+        }
+
+        .contact-wrapper .section-title {
+            color: var(--color-white);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* SOCIAL LINKS IN ABOUT SECTION */
+        .about-social-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .about-social-links .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            color: var(--color-primary);
+            text-decoration: none;
+            border: 2px solid rgba(20, 184, 166, 0.2);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: rgba(20, 184, 166, 0.05);
+        }
+
+        .about-social-links .social-link:hover {
+            color: var(--color-primary-dark);
+            border-color: var(--color-primary);
+            background: rgba(20, 184, 166, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .about-social-links .social-link svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .about-youtube-thumbnail {
+            display: block;
+            margin: 24px auto 0;
+            max-width: 100%;
+            width: 480px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .about-youtube-thumbnail:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        /* MAP SECTION */
+        .section-map {
+            background: var(--color-white);
+        }
+
+        .map-wrapper {
+            width: 100%;
+        }
+
+        .map-wrapper iframe {
+            width: 100%;
+            height: 420px;
+            border: 0;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .contact-info {
+            font-size: var(--font-size-xl);
+            margin: var(--spacing-xl) 0;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            line-height: 1.8;
+        }
+
+        .contact-phone {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: var(--font-size-3xl);
+            color: var(--color-accent-light);
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: var(--spacing-xl);
+            padding: var(--spacing-lg) var(--spacing-2xl);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-full);
+            transition: all var(--transition-base) var(--ease-smooth);
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-phone:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        /* FOOTER */
+        .footer {
+            background: var(--color-text-dark);
+            color: var(--color-white);
+            padding: var(--spacing-3xl) var(--spacing-xl) var(--spacing-xl);
+        }
+
+        .footer-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-2xl);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .footer-section h3 {
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--spacing-md);
+            color: var(--color-accent-light);
+            font-weight: 700;
+        }
+
+        .footer-section p {
+            opacity: 0.8;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: var(--font-size-sm);
+        }
+
+        /* LOADING STATE */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--color-bg-cream) 0%, var(--color-white) 100%);
+        }
+
+        .loading-spinner {
+            width: 64px;
+            height: 64px;
+            border: 4px solid rgba(20, 184, 166, 0.1);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+			        margin-bottom: var(--spacing-lg);
+    }
+
+    .loading-text {
+        font-size: var(--font-size-xl);
+        color: var(--color-primary);
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1200px) {
+        .rooms-grid,
+        .gallery-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        :root {
+            --font-size-6xl: 2.75rem;
+            --font-size-5xl: 2.25rem;
+            --font-size-4xl: 1.875rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 2.5rem;
+            --spacing-3xl: 3rem;
+            --spacing-4xl: 3.5rem;
+        }
+
+        .nav-links {
+            display: none;
+        }
+
+        .nav-container {
+            padding: 0 var(--spacing-md);
+        }
+
+        .section {
+            padding: var(--spacing-3xl) var(--spacing-md);
+        }
+
+        .hero-title {
+            font-size: var(--font-size-4xl);
+        }
+
+        .hero-tagline {
+            font-size: var(--font-size-lg);
+        }
+
+        .hero-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .rooms-grid,
+        .gallery-grid,
+        .amenities-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .booking-form-wrapper {
+            padding: var(--spacing-2xl) var(--spacing-md);
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .contact-wrapper {
+            padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+
+        .contact-phone {
+            font-size: var(--font-size-2xl);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* MODAL STYLES */
+    .modal {
+        position: fixed;
+        z-index: 1050;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-base) var(--ease-smooth);
+    }
+
+    .modal.show {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .modal-content {
+        background: var(--color-white);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        max-width: 600px;
+        width: 100%;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        z-index: 1100;
+    }
+
+    .close-button {
+        position: absolute;
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: none;
+        color: var(--color-text-dark);
+        font-size: var(--font-size-lg);
+        cursor: pointer;
+        transition: color var(--transition-base) var(--ease-smooth);
+    }
+
+    .close-button:hover {
+        color: var(--color-primary);
+    }
+
+    /* FORM STYLES */
+    .modal form {
+        display: grid;
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+
+    .modal label {
+        font-weight: 500;
+        color: var(--color-text-dark);
+    }
+
+    .modal input,
+    .modal textarea {
+        padding: var(--spacing-sm);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-base);
+        color: var(--color-text-dark);
+        transition: border-color var(--transition-base) var(--ease-smooth);
+    }
+
+    .modal input:focus,
+    .modal textarea:focus {
+        border-color: var(--color-primary);
+        outline: none;
+    }
+
+    .modal button[type="submit"] {
+        background: var(--color-primary);
+        color: var(--color-white);
+        padding: var(--spacing-md);
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--transition-base) var(--ease-smooth);
+    }
+
+    .modal button[type="submit"]:hover {
+        background: var(--color-primary-dark);
+    }
+
+    /* ANIMATION KEYFRAMES */
+    @keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes modalOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    }
+</style>
+</head>
+<body class="motion-enabled">
+    <!-- LOADING STATE -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Experience</div>
+    </div>
+<!-- ERROR STATE -->
+<div id="error" class="error-container hidden">
+    <h1 class="error-title">Site Not Found</h1>
+    <p class="error-message">Unable to load site data. Please check the URL and try again.</p>
+</div>
+
+<!-- INACTIVE STATE -->
+<div id="inactive" class="inactive-container hidden">
+    <div class="inactive-content">
+        <img id="inactiveLogo" class="inactive-logo hidden" src="" alt="">
+        <h1 id="inactiveTitle" class="inactive-title">Coming Soon</h1>
+        <p id="inactiveMessage" class="inactive-message">This site is currently unavailable. Please check back later.</p>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="content" class="hidden">
+    <!-- NAVIGATION -->
+    <nav id="navbar" class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="#section-hero" class="logo" id="navLogo" aria-label="Home">Resort</a>
+            <ul class="nav-links">
+                <li data-nav="about"><a href="#section-about">About</a></li>
+                <li data-nav="amenities"><a href="#section-amenities">Amenities</a></li>
+                <li data-nav="rooms"><a href="#section-rooms">Rooms</a></li>
+                <li data-nav="gallery"><a href="#section-gallery">Gallery</a></li>
+                <li data-nav="bookingEnquiry"><a href="#section-booking">Booking Enquiry</a></li>
+                <li data-nav="contact"><a href="#section-contact" class="nav-cta">Contact Us</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION (Always-on, not feature-gated) -->
+    <section id="section-hero" class="section-hero" data-section="hero" role="banner">
+        <div id="hero-background"></div>
+        <div id="hero-content">
+            <img id="heroLogo" class="hero-logo hidden" src="" alt="">
+            <div class="hero-subtitle">Welcome To</div>
+            <h1 id="siteName" class="hero-title"></h1>
+            <p id="tagline" class="hero-tagline"></p>
+            <div class="hero-buttons">
+                <a href="#section-rooms" class="btn-primary" id="heroRoomsBtn">Explore Rooms</a>
+                <a href="#section-contact" class="btn-secondary" id="heroContactBtn">Get In Touch</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="section-about" class="section section-about scroll-reveal hidden" data-section="about" data-feature="about" aria-labelledby="about-title">
+        <div class="section-header">
+            <div class="section-subtitle">Discover</div>
+            <h2 id="about-title" class="section-title">About Us</h2>
+        </div>
+        <div class="about-content">
+            <p id="aboutText" class="about-text"></p>
+        </div>
+    </section>
+
+    <!-- AMENITIES SECTION -->
+    <section id="section-amenities" class="section section-amenities scroll-reveal hidden" data-section="amenities" data-feature="amenities" aria-labelledby="amenities-title">
+        <div class="section-header">
+            <div class="section-subtitle">Experience</div>
+            <h2 id="amenities-title" class="section-title">World-Class Amenities</h2>
+            <p class="section-description">Indulge in luxury with our carefully curated selection of premium facilities</p>
+        </div>
+        <div id="amenitiesGrid" class="amenities-grid"></div>
+    </section>
+
+    <!-- ROOMS SECTION -->
+    <section id="section-rooms" class="section section-rooms scroll-reveal hidden" data-section="rooms" data-feature="rooms" aria-labelledby="rooms-title">
+        <div class="section-header">
+            <div class="section-subtitle">Stay</div>
+            <h2 id="rooms-title" class="section-title">Luxurious Accommodations</h2>
+            <p class="section-description">Choose from our exquisite collection of rooms designed for ultimate comfort</p>
+        </div>
+        <div id="roomsGrid" class="rooms-grid"></div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section id="section-gallery" class="section section-gallery scroll-reveal hidden" data-section="gallery" data-feature="gallery" aria-labelledby="gallery-title">
+        <div class="section-header">
+            <div class="section-subtitle">Explore</div>
+            <h2 id="gallery-title" class="section-title">Gallery</h2>
+            <p class="section-description">Immerse yourself in the beauty and elegance of our resort</p>
+        </div>
+        <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section id="section-testimonials" class="section section-testimonials scroll-reveal hidden" data-section="testimonials" data-feature="testimonials" aria-labelledby="testimonials-title">
+        <div class="container">
+            <div class="section-subtitle">Testimonials</div>
+            <h2 id="testimonials-title" class="section-title">What Our Guests Say</h2>
+            <div class="testimonials-grid" id="testimonialsGrid">
+                <!-- Testimonial cards will be injected here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- BOOKING ENQUIRY SECTION -->
+    <section id="section-booking" class="section section-booking scroll-reveal hidden" data-section="booking" data-feature="bookingEnquiry" aria-labelledby="booking-title">
+        <div class="section-header">
+            <div class="section-subtitle">Plan</div>
+            <h2 id="booking-title" class="section-title">Booking Enquiry</h2>
+            <p class="section-description">This is an enquiry, not a confirmed booking. We'll get back to you shortly with availability.</p>
+        </div>
+        <div class="booking-form-wrapper">
+            <form id="booking-enquiry-form">
+                <input type="hidden" name="slug" value="">
+                <input type="hidden" name="source_channel" value="microsite">
+                <input type="hidden" name="page_url" value="">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="be-name">Full Name: <span class="required-indicator">*</span></label>
+                        <input type="text" id="be-name" name="name" maxlength="100" placeholder="Your full name" required>
+                        <small class="char-count">0 / 100</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="be-phone">Phone: <span class="required-indicator">*</span></label>
+                        <input type="tel" id="be-phone" name="phone" maxlength="20" placeholder="Your phone number" pattern="[0-9\s\-\+\(\)]+" required>
+                        <small class="char-count">0 / 20</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="be-email">Email (optional):</label>
+                        <input type="email" id="be-email" name="email" maxlength="254" placeholder="your.email@example.com">
+                        <small class="char-count">0 / 254</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="be-guests">Number of Guests: <span class="required-indicator">*</span></label>
+                        <input type="number" id="be-guests" name="guests" min="1" max="999" placeholder="Enter number of guests" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="be-checkIn">Check-In Date: <span class="required-indicator">*</span></label>
+                        <input type="date" id="be-checkIn" name="checkIn" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="be-checkOut">Check-Out Date: <span class="required-indicator">*</span></label>
+                        <input type="date" id="be-checkOut" name="checkOut" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="be-roomPreference">Room Preference (optional):</label>
+                        <input type="text" id="be-roomPreference" name="roomPreference" maxlength="100" placeholder="e.g., Valley View, High Floor, Quiet Zone">
+                        <small class="char-count">0 / 100</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="be-message">Additional Message (optional):</label>
+                        <textarea id="be-message" name="message" rows="4" maxlength="500" placeholder="Share any special requests or additional information..."></textarea>
+                        <small class="char-count">0 / 500</small>
+                    </div>
+                </div>
+
+                <button type="submit" id="booking-submit-button" class="btn-submit">Submit Enquiry</button>
+                <div id="booking-status" class="booking-status hidden"></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="section-contact" class="section section-contact scroll-reveal hidden" data-section="contact" data-feature="contact" aria-labelledby="contact-title">
+        <div class="contact-wrapper">
+            <div class="section-subtitle">Connect</div>
+            <h2 id="contact-title" class="section-title">Get In Touch</h2>
+            <div class="contact-info">
+                <p>Ready to experience luxury? We're here to make your stay unforgettable.</p>
+                <a id="contactPhone" class="contact-phone" href="" aria-label="Call us"></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAP / HOW TO REACH SECTION -->
+    <section id="section-map" class="section section-map scroll-reveal hidden" data-section="map" data-feature="map" aria-labelledby="map-title">
+        <div class="container">
+            <div class="section-subtitle">Location</div>
+            <h2 id="map-title" class="section-title">How To Reach Us</h2>
+            <div class="map-wrapper">
+                <iframe
+                    id="mapFrame"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen
+                    title="Google Maps location">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" role="contentinfo">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3 id="footerLogo">Resort</h3>
+                <p id="footerAbout">Experience luxury and comfort in perfect harmony with nature.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <p id="footerLinks">About • Amenities • Rooms • Gallery • Contact</p>
+            </div>
+            <div class="footer-section">
+                <h3>Location</h3>
+                <p id="footerLocation">Luxury Destination Resort</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p id="footerText">© 2024 All Rights Reserved</p>
+        </div>
+    </footer>
+
+
+
+<script>
+    (function() {
+        'use strict';
+
+        /**
+         * Property Slug Derivation
+         * Supports both URL patterns:
+         * - Path-based: webzyl-sites.pages.dev/mountview
+         * - Subdomain-based: mountview.webzyl.com
+         */
+        function getPropertySlug() {
+            // 1. Try path-based slug (legacy: /mountview)
+            const pathSlug = window.location.pathname
+                .replace(/^\/|\/$/g, '')
+                .split('/')[0];
+            
+            if (pathSlug && pathSlug !== 'index.html') {
+                console.log('[SLUG] Derived from path:', pathSlug);
+                return pathSlug;
+            }
+            
+            // 2. Try subdomain-based slug (mountview.webzyl.com)
+            const hostname = window.location.hostname;
+            const hostParts = hostname.split('.');
+            
+            // If subdomain exists and not www or localhost
+            if (hostParts.length >= 3 && hostParts[0] !== 'www') {
+                console.log('[SLUG] Derived from subdomain:', hostParts[0]);
+                return hostParts[0];
+            }
+            
+            // 3. Check if localhost with no path (development)
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                console.warn('[SLUG] Development mode - using fallback slug');
+                return 'demo'; // Fallback for local development
+            }
+            
+            // 4. Fail loudly with helpful error
+            console.error('[SLUG] Unable to determine slug from:', {
+                hostname: hostname,
+                pathname: window.location.pathname
+            });
+            throw new Error('Unable to determine property slug from URL');
+        }
+
+        /**
+         * Template Configuration
+         * dataPath: Can be injected by Worker via window.RESORT_DATA_PATH or defaults to derived slug
+         */
+        const CONFIG = {
+            dataPath: window.RESORT_DATA_PATH || `/data/${getPropertySlug()}.json`,
+            schemaVersion: '1.0',
+            templateVersion: '1.2',
+            debug: new URLSearchParams(window.location.search).has('debug')
+        };
+
+        const state = {
+            data: null,
+            error: null,
+            features: {}
+        };
+
+        function log(message, data) {
+            if (CONFIG.debug) {
+                console.log(`[Template v${CONFIG.templateVersion}] ${message}`, data || '');
+            }
+        }
+
+        function validateData(data) {
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid data structure');
+            }
+
+            if (data.schemaVersion && data.schemaVersion !== CONFIG.schemaVersion) {
+                log(`Warning: Schema version mismatch. Expected ${CONFIG.schemaVersion}, got ${data.schemaVersion}`);
+            }
+
+            return true;
+        }
+
+        function sanitizeText(text) {
+            if (typeof text !== 'string') return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function sanitizeUrl(url) {
+            if (typeof url !== 'string') return '';
+            try {
+                const parsed = new URL(url);
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                    return '';
+                }
+                return url;
+            } catch {
+                return '';
+            }
+        }
+
+        /**
+         * Feature Gate Check
+         * Default behavior: features are enabled unless explicitly disabled in data.features
+         * If the data provides an explicit boolean, use it; otherwise default to true.
+         */
+        function isFeatureEnabled(featureName, data) {
+            const features = (data && data.features) || {};
+
+            if (Object.prototype.hasOwnProperty.call(features, featureName)) {
+                const enabled = features[featureName] === true;
+                log(`Feature "${featureName}" overridden in data: ${enabled}`);
+                return enabled;
+            }
+
+            // Not specified -> enabled by default
+            log(`Feature "${featureName}" not specified — defaulting to enabled`);
+            return true;
+        }
+
+        /**
+         * Inactive Site Handler
+         * Displays branded unavailable page when status === 'inactive'
+         * Shows logo, name, and background - no navigation or content
+         */
+        function handleInactiveSite(data) {
+            const branding = data.branding || {};
+            const inactiveContainer = document.getElementById('inactive');
+            
+            let hasBackgroundImage = false;
+            
+            // Apply background (precedence: backgroundImage > heroImage > primaryColor)
+            if (branding.backgroundImage) {
+                const sanitizedUrl = sanitizeUrl(branding.backgroundImage);
+                if (sanitizedUrl) {
+                    inactiveContainer.style.backgroundImage = `url('${sanitizedUrl}')`;
+                    hasBackgroundImage = true;
+                }
+            } else if (data.heroImage) {
+                const sanitizedUrl = sanitizeUrl(data.heroImage);
+                if (sanitizedUrl) {
+                    inactiveContainer.style.backgroundImage = `url('${sanitizedUrl}')`;
+                    hasBackgroundImage = true;
+                }
+            } else if (branding.primaryColor) {
+                const color = sanitizeText(branding.primaryColor);
+                if (color && /^#[0-9A-F]{6}$/i.test(color)) {
+                    inactiveContainer.style.background = color;
+                    inactiveContainer.classList.add('color-only');
+                }
+            }
+            
+            // Apply logo
+            if (branding.logo) {
+                const logoEl = document.getElementById('inactiveLogo');
+                const sanitizedUrl = sanitizeUrl(branding.logo);
+                if (sanitizedUrl) {
+                    logoEl.src = sanitizedUrl;
+                    logoEl.alt = sanitizeText(branding.name || data.name || 'Logo');
+                    logoEl.classList.remove('hidden');
+                }
+            }
+            
+            // Apply name
+            const displayName = branding.name || data.name || 'Site';
+            document.getElementById('inactiveTitle').textContent = sanitizeText(displayName);
+            document.title = `${sanitizeText(displayName)} - Coming Soon`;
+            
+            // Show inactive page
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('inactive').classList.remove('hidden');
+            
+            log('Rendered inactive site page');
+        }
+
+        function injectSEO(data) {
+            if (!data.seo) data.seo = {};
+
+            const branding = data.branding || {};
+            const title = data.seo.title || branding.name || data.name || 'Resort';
+            const description = data.seo.description || data.tagline || data.about || '';
+            const canonical = data.seo.canonical || window.location.href;
+
+            document.title = sanitizeText(title);
+
+            const metaTags = {
+                'description': description,
+                'keywords': data.seo.keywords || '',
+                'og:title': data.seo.og?.title || title,
+                'og:description': data.seo.og?.description || description,
+                'og:image': data.seo.og?.image || data.heroImage || branding.logo || '',
+                'og:type': data.seo.og?.type || 'website'
+            };
+
+            Object.entries(metaTags).forEach(([name, content]) => {
+                const selector = name.startsWith('og:') ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+                let meta = document.querySelector(selector);
+                
+                if (!meta && content) {
+                    meta = document.createElement('meta');
+                    if (name.startsWith('og:')) {
+                        meta.setAttribute('property', name);
+                    } else {
+                        meta.setAttribute('name', name);
+                    }
+                    document.head.appendChild(meta);
+                }
+                
+                if (meta && content) {
+                    meta.setAttribute('content', sanitizeText(content));
+                }
+            });
+
+            let canonicalLink = document.querySelector('link[rel="canonical"]');
+            if (!canonicalLink) {
+                canonicalLink = document.createElement('link');
+                canonicalLink.setAttribute('rel', 'canonical');
+                document.head.appendChild(canonicalLink);
+            }
+            canonicalLink.setAttribute('href', sanitizeUrl(canonical));
+
+            if (data.seo.schema) {
+                const script = document.createElement('script');
+                script.type = 'application/ld+json';
+                script.textContent = JSON.stringify(data.seo.schema);
+                document.head.appendChild(script);
+            }
+        }
+
+        function applyBranding(data) {
+            const branding = data.branding || {};
+            const root = document.documentElement;
+
+            if (branding.primaryColor) {
+                const color = sanitizeText(branding.primaryColor);
+                if (color && /^#[0-9A-F]{6}$/i.test(color)) {
+                    log('Applying primary color:', color);
+                    root.style.setProperty('--color-primary', color);
+                    
+                    const lightColor = adjustColorBrightness(color, 20);
+                    const darkColor = adjustColorBrightness(color, -20);
+                    root.style.setProperty('--color-primary-light', lightColor);
+                    root.style.setProperty('--color-primary-dark', darkColor);
+                }
+            }
+        }
+
+        function adjustColorBrightness(hex, percent) {
+            hex = hex.replace('#', '');
+            
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            const adjust = (val) => {
+                const adjusted = Math.max(0, Math.min(255, val + (val * percent / 100)));
+                return Math.round(adjusted);
+            };
+            
+            const newR = adjust(r).toString(16).padStart(2, '0');
+            const newG = adjust(g).toString(16).padStart(2, '0');
+            const newB = adjust(b).toString(16).padStart(2, '0');
+            
+            return `#${newR}${newG}${newB}`;
+        }
+
+        /**
+         * Hero Section Renderer
+         * Note: Hero is always-on and NOT feature-gated
+         * Precedence: branding.backgroundImage > heroImage > primaryColor > default
+         */
+        function renderHero(data) {
+            const branding = data.branding || {};
+            const heroBackground = document.getElementById('hero-background');
+            
+            // Use color mode for hero background (force color instead of image)
+            log('Using color mode for hero background (images disabled)');
+            heroBackground.classList.add('color-mode');
+            heroBackground.style.backgroundImage = 'none';
+            // mark section so we can apply light-mode/premium styles and update navbar
+            const sectionHero = document.getElementById('section-hero');
+            const navbar = document.getElementById('navbar');
+            if (sectionHero) {
+                sectionHero.classList.add('color-light');
+            }
+            if (navbar) {
+                // when hero is light, ensure navbar links are visible
+                navbar.classList.add('hero-light');
+            }
+
+            // Logo handling: prefer a small nav logo image (left) instead of centered hero image
+            const sanitizedLogo = sanitizeUrl(branding.logo || '');
+            const heroLogoEl = document.getElementById('heroLogo');
+            const navLogoAnchor = document.getElementById('navLogo');
+
+            if (sanitizedLogo) {
+                // hide centered hero logo (it looks like a centered image, not a nav logo)
+                if (heroLogoEl) heroLogoEl.classList.add('hidden');
+
+                // render small image + optional text inside the left nav anchor
+                if (navLogoAnchor) {
+                    navLogoAnchor.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.className = 'nav-logo-img';
+                    img.src = sanitizedLogo;
+                    img.alt = sanitizeText(branding.name || data.name || 'Logo');
+                    img.loading = 'eager';
+
+                    const span = document.createElement('span');
+                    span.className = 'logo-text';
+                    span.textContent = sanitizeText(branding.name || data.name || 'Resort');
+
+                    navLogoAnchor.appendChild(img);
+                    navLogoAnchor.appendChild(span);
+                }
+            } else {
+                // no branding logo: ensure hero image is hidden and nav shows text
+                if (heroLogoEl) heroLogoEl.classList.add('hidden');
+                if (navLogoAnchor) {
+                    navLogoAnchor.innerHTML = '';
+                    navLogoAnchor.textContent = sanitizeText(branding.name || data.name || 'Resort');
+                }
+            }
+
+            // Name
+            const displayName = branding.name || data.name || 'Resort';
+            document.getElementById('siteName').textContent = sanitizeText(displayName);
+            document.getElementById('navLogo').textContent = sanitizeText(displayName);
+            document.getElementById('footerLogo').textContent = sanitizeText(displayName);
+
+            // Tagline
+            if (data.tagline) {
+                document.getElementById('tagline').textContent = sanitizeText(data.tagline);
+            }
+            
+            // Update hero button visibility based on features
+            updateHeroButtons(data);
+        }
+
+        function updateHeroButtons(data) {
+            const roomsBtn = document.getElementById('heroRoomsBtn');
+            const contactBtn = document.getElementById('heroContactBtn');
+            
+            // Show/hide rooms button based on rooms feature
+            if (!isFeatureEnabled('rooms', data) || !data.rooms || data.rooms.length === 0) {
+                roomsBtn.style.display = 'none';
+            }
+            
+            // Show/hide contact button based on contact feature
+            if (!isFeatureEnabled('contact', data) || !data.contact || !data.contact.phone) {
+                contactBtn.style.display = 'none';
+            }
+        }
+
+        function renderAbout(data) {
+            if (!isFeatureEnabled('about', data)) return;
+            if (!data.about) {
+                log('About feature enabled but no data provided');
+                return;
+            }
+
+            state.features.about = true;
+
+            document.getElementById('aboutText').textContent = sanitizeText(data.about);
+            
+            const truncated = data.about.substring(0, 120) + '...';
+            document.getElementById('footerAbout').textContent = sanitizeText(truncated);
+            
+            document.getElementById('section-about').classList.remove('hidden');
+            log('About section rendered');
+        }
+
+        function renderAmenities(data) {
+            if (!isFeatureEnabled('amenities', data)) return;
+            if (!data.amenities || !Array.isArray(data.amenities) || data.amenities.length === 0) {
+                log('Amenities feature enabled but no valid data provided');
+                return;
+            }
+
+            state.features.amenities = true;
+
+            const grid = document.getElementById('amenitiesGrid');
+            grid.innerHTML = '';
+
+            data.amenities.forEach((amenity, index) => {
+                if (typeof amenity !== 'string') return;
+
+                const card = document.createElement('div');
+                card.className = 'amenity-card scroll-reveal';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                const icon = document.createElement('div');
+                icon.className = 'amenity-icon';
+                icon.setAttribute('aria-hidden', 'true');
+                icon.textContent = '✓';
+                
+                const title = document.createElement('h3');
+                title.className = 'amenity-title';
+                title.textContent = sanitizeText(amenity);
+                
+                card.appendChild(icon);
+                card.appendChild(title);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('section-amenities').classList.remove('hidden');
+            log('Amenities section rendered');
+        }
+
+        function renderRooms(data) {
+            if (!isFeatureEnabled('rooms', data)) return;
+            if (!data.rooms || !Array.isArray(data.rooms) || data.rooms.length === 0) {
+                log('Rooms feature enabled but no valid data provided');
+                return;
+            }
+
+            state.features.rooms = true;
+
+            const grid = document.getElementById('roomsGrid');
+            grid.innerHTML = '';
+
+            data.rooms.forEach((room, index) => {
+                if (!room || typeof room !== 'object') return;
+
+                const card = document.createElement('article');
+                card.className = 'room-card scroll-reveal';
+                card.style.animationDelay = `${index * 0.15}s`;
+                
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'room-image-wrapper';
+                
+                if (room.image) {
+                    const img = document.createElement('img');
+                    img.className = 'room-image';
+                    const sanitizedUrl = sanitizeUrl(room.image);
+                    if (sanitizedUrl) {
+                        img.src = sanitizedUrl;
+                        img.alt = sanitizeText(room.name || 'Room');
+                        img.loading = 'lazy';
+                        imageWrapper.appendChild(img);
+                    }
+                }
+                
+                if (index === 0) {
+                    const badge = document.createElement('div');
+                    badge.className = 'room-badge';
+                    badge.textContent = 'Most Popular';
+                    imageWrapper.appendChild(badge);
+                }
+                
+                const content = document.createElement('div');
+                content.className = 'room-content';
+                
+                if (room.name) {
+                    const name = document.createElement('h3');
+                    name.className = 'room-name';
+                    name.textContent = sanitizeText(room.name);
+                    content.appendChild(name);
+                }
+                
+                if (room.description) {
+                    const desc = document.createElement('p');
+                    desc.className = 'room-description';
+                    desc.textContent = sanitizeText(room.description);
+                    content.appendChild(desc);
+                }
+                
+                const footer = document.createElement('div');
+                footer.className = 'room-footer';
+                
+                const priceWrapper = document.createElement('div');
+                priceWrapper.className = 'room-price-wrapper';
+                
+                const priceLabel = document.createElement('div');
+                priceLabel.className = 'room-price-label';
+                priceLabel.textContent = 'Starting From';
+                
+                const price = document.createElement('div');
+                price.className = 'room-price';
+                price.textContent = sanitizeText(room.price || '');
+                
+                priceWrapper.appendChild(priceLabel);
+                priceWrapper.appendChild(price);
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'enquire-now';
+                button.textContent = 'Enquire Now';
+                button.setAttribute('aria-label', `Enquire about ${sanitizeText(room.name || 'room')}`);
+                // Attach room meta so the booking form can prefill room preference when clicked
+                if (room.name) {
+                    button.dataset.roomName = room.name;
+                }
+                
+                footer.appendChild(priceWrapper);
+                footer.appendChild(button);
+                content.appendChild(footer);
+                
+                card.appendChild(imageWrapper);
+                card.appendChild(content);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('section-rooms').classList.remove('hidden');
+            log('Rooms section rendered');
+        }
+
+        function renderGallery(data) {
+            if (!isFeatureEnabled('gallery', data)) return;
+            if (!data.gallery || !Array.isArray(data.gallery) || data.gallery.length === 0) {
+                log('Gallery feature enabled but no valid data provided');
+                return;
+            }
+
+            state.features.gallery = true;
+
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+
+            data.gallery.forEach((imageUrl, index) => {
+                if (typeof imageUrl !== 'string') return;
+
+                const sanitizedUrl = sanitizeUrl(imageUrl);
+                if (!sanitizedUrl) return;
+
+                const item = document.createElement('div');
+                item.className = 'gallery-item scroll-reveal';
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.setAttribute('role', 'img');
+                item.setAttribute('aria-label', `Gallery image ${index + 1}`);
+                
+                const img = document.createElement('img');
+                img.className = 'gallery-image';
+                img.src = sanitizedUrl;
+                img.alt = `Gallery image ${index + 1}`;
+                img.loading = 'lazy';
+                
+                item.appendChild(img);
+                grid.appendChild(item);
+            });
+
+            document.getElementById('section-gallery').classList.remove('hidden');
+            log('Gallery section rendered');
+        }
+
+        function renderContact(data) {
+            if (!isFeatureEnabled('contact', data)) return;
+            if (!data.contact || !data.contact.phone) {
+                log('Contact feature enabled but no valid data provided');
+                return;
+            }
+
+            state.features.contact = true;
+
+            const phoneEl = document.getElementById('contactPhone');
+            const phoneText = sanitizeText(data.contact.phone);
+            phoneEl.textContent = phoneText;
+            phoneEl.href = `tel:${phoneText.replace(/\s/g, '')}`;
+
+            document.getElementById('section-contact').classList.remove('hidden');
+            log('Contact section rendered');
+        }
+
+        function renderMap(data) {
+            if (!data.embeds || !data.embeds.map) return;
+            if (data.features && data.features.map === false) return;
+
+            state.features.map = true;
+
+            const iframe = document.getElementById('mapFrame');
+            if (iframe) {
+                iframe.src = sanitizeUrl(data.embeds.map);
+                document.getElementById('section-map').classList.remove('hidden');
+                log('Map section rendered');
+            }
+        }
+
+        function renderTestimonials(data) {
+            if (!isFeatureEnabled('testimonials', data)) return;
+            if (!data.testimonials || !Array.isArray(data.testimonials) || data.testimonials.length === 0) {
+                log('Testimonials feature enabled but no valid data provided');
+                return;
+            }
+
+            state.features.testimonials = true;
+
+            const grid = document.getElementById('testimonialsGrid');
+            grid.innerHTML = '';
+
+            data.testimonials.forEach((testimonial, index) => {
+                if (!testimonial.name || !testimonial.text) return;
+
+                const card = document.createElement('div');
+                card.className = 'testimonial-card scroll-reveal';
+                card.style.animationDelay = `${index * 0.1}s`;
+
+                const rating = document.createElement('div');
+                rating.className = 'testimonial-rating';
+
+                const text = document.createElement('p');
+                text.className = 'testimonial-text';
+                text.textContent = sanitizeText(testimonial.text);
+
+                const author = document.createElement('div');
+                author.className = 'testimonial-author';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'testimonial-avatar';
+                avatar.textContent = sanitizeText(testimonial.name).charAt(0).toUpperCase();
+
+                const info = document.createElement('div');
+                info.className = 'testimonial-info';
+
+                const name = document.createElement('div');
+                name.className = 'testimonial-name';
+                name.textContent = sanitizeText(testimonial.name);
+
+                const location = document.createElement('div');
+                location.className = 'testimonial-location';
+                location.textContent = sanitizeText(testimonial.location || 'Guest');
+
+                info.appendChild(name);
+                info.appendChild(location);
+                author.appendChild(avatar);
+                author.appendChild(info);
+
+                card.appendChild(rating);
+                card.appendChild(text);
+                card.appendChild(author);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('section-testimonials').classList.remove('hidden');
+            log('Testimonials section rendered');
+        }
+
+        function updateNavigation() {
+            const navItems = document.querySelectorAll('[data-nav]');
+            const activeFeatures = [];
+            
+            navItems.forEach(item => {
+                const feature = item.getAttribute('data-nav');
+                if (state.features[feature]) {
+                    item.classList.add('visible');
+                    activeFeatures.push(feature.charAt(0).toUpperCase() + feature.slice(1));
+                } else {
+                    item.classList.remove('visible');
+                }
+            });
+
+            // Update footer links
+            if (activeFeatures.length > 0) {
+                document.getElementById('footerLinks').textContent = activeFeatures.join(' • ');
+            }
+
+            log('Navigation updated for active features:', activeFeatures);
+        }
+
+        function renderFooter(data) {
+            const branding = data.branding || {};
+            const displayName = branding.name || data.name || 'Resort';
+            
+            document.getElementById('footerText').textContent = `© 2024 ${sanitizeText(displayName)}. All Rights Reserved`;
+
+            if (data.location && data.location.address) {
+                document.getElementById('footerLocation').textContent = sanitizeText(data.location.address);
+            }
+        }
+
+        function renderSocialLinks(data) {
+            try {
+                // Render in About section
+                const aboutContent = document.querySelector('#section-about .about-content');
+                if (aboutContent) {
+                    const prev = aboutContent.querySelector('[data-generated="about-social"]');
+                    if (prev) prev.remove();
+
+                    const social = (data && data.social) || {};
+                    if (social.instagram || social.facebook || social.youtube) {
+                        const container = document.createElement('div');
+                        container.setAttribute('data-generated', 'about-social');
+                        container.className = 'about-social-links';
+
+                        // Add icons
+                        if (social.instagram) {
+                            const url = sanitizeUrl(social.instagram);
+                            if (url) {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.target = '_blank';
+                                a.rel = 'noopener noreferrer';
+                                a.setAttribute('aria-label', 'Instagram (opens in new tab)');
+                                a.title = 'Instagram';
+                                a.className = 'social-link';
+                                a.innerHTML = '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.2"/><path d="M16 11.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>';
+                                container.appendChild(a);
+                            }
+                        }
+
+                        if (social.facebook) {
+                            const url = sanitizeUrl(social.facebook);
+                            if (url) {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.target = '_blank';
+                                a.rel = 'noopener noreferrer';
+                                a.setAttribute('aria-label', 'Facebook (opens in new tab)');
+                                a.title = 'Facebook';
+                                a.className = 'social-link';
+                                a.innerHTML = '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 8h2V5h-2c-1.657 0-3 1.343-3 3v1H10v3h2v6h3v-6h2.5l.5-3H15V8z" fill="currentColor"/></svg>';
+                                container.appendChild(a);
+                            }
+                        }
+
+                        if (social.youtube) {
+                            const url = sanitizeUrl(social.youtube);
+                            if (url) {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.target = '_blank';
+                                a.rel = 'noopener noreferrer';
+                                a.setAttribute('aria-label', 'YouTube (opens in new tab)');
+                                a.title = 'YouTube';
+                                a.className = 'social-link';
+                                a.innerHTML = '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23 7s-.2-1.5-.8-2.2c-.8-.9-1.7-.9-2.1-1C17.6 3 12 3 12 3s-5.6 0-8 .8c-.4.1-1.3.2-2.1 1C1.2 5.5 1 7 1 7S1 8.9 1 10.7v2.6C1 16.1 1.2 18 1.2 18s.2 1.5.8 2.2c.8.9 1.9.9 2.4 1C6.4 22 12 22 12 22s5.6 0 8-.8c.4-.1 1.3-.2 2.1-1 .6-.7.8-2.2.8-2.2S23 13.1 23 11.3V8.7C23 6.9 23 7 23 7z" fill="currentColor"/><path d="M10 15l5-3-5-3v6z" fill="#fff"/></svg>';
+                                container.appendChild(a);
+                            }
+                        }
+
+                        if (container.children.length > 0) {
+                            const aboutText = aboutContent.querySelector('#aboutText');
+                            if (aboutText && aboutText.nextSibling) {
+                                aboutContent.insertBefore(container, aboutText.nextSibling);
+                            } else {
+                                aboutContent.appendChild(container);
+                            }
+                            log('Social links rendered in About section');
+                        }
+
+                        // Add YouTube thumbnail if YouTube URL is present
+                        if (social.youtube) {
+                            const url = sanitizeUrl(social.youtube);
+                            if (url) {
+                                try {
+                                    const u = new URL(url);
+                                    let videoId = null;
+                                    
+                                    if (u.hostname && (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be'))) {
+                                        if (u.hostname.includes('youtu.be')) {
+                                            videoId = u.pathname.split('/').filter(Boolean)[0] || null;
+                                        } else {
+                                            videoId = u.searchParams.get('v') || null;
+                                        }
+                                    }
+                                    
+                                    if (videoId) {
+                                        const thumbnailUrl = `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/maxresdefault.jpg`;
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.target = '_blank';
+                                        link.rel = 'noopener noreferrer';
+                                        link.setAttribute('aria-label', 'Watch our video on YouTube (opens in new tab)');
+                                        
+                                        const img = document.createElement('img');
+                                        img.src = thumbnailUrl;
+                                        img.alt = 'YouTube video thumbnail';
+                                        img.className = 'about-youtube-thumbnail';
+                                        
+                                        link.appendChild(img);
+                                        aboutContent.appendChild(link);
+                                        log('YouTube thumbnail rendered in About section');
+                                    }
+                                } catch (e) {
+                                    log('YouTube thumbnail error:', e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                log('renderSocialLinks error:', err);
+            }
+        }
+
+        function setupScrollReveal() {
+            if (document.body.classList.contains('motion-disabled')) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function setupNavigation() {
+            window.addEventListener('scroll', () => {
+                const navbar = document.getElementById('navbar');
+                if (window.scrollY > 100) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }, { passive: true });
+
+            document.querySelectorAll('a[href^="#section-"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#section-hero') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+                    const target = document.querySelector(targetId);
+                    if (target && !target.classList.contains('hidden')) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        function setupMotionPreference() {
+            const data = state.data;
+            if (data && data.ui && data.ui.motion === false) {
+                document.body.classList.remove('motion-enabled');
+                document.body.classList.add('motion-disabled');
+                log('Motion disabled via config');
+            }
+
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.body.classList.remove('motion-enabled');
+                document.body.classList.add('motion-disabled');
+                log('Motion disabled via OS preference');
+            }
+        }
+
+        function renderSite(data) {
+            try {
+                validateData(data);
+				                state.data = data;
+
+                log('Rendering site with data:', data);
+
+                // Check if site is inactive
+                if (data.status === 'inactive') {
+                    log('Site status is inactive, showing unavailable page');
+                    handleInactiveSite(data);
+                    return;
+                }
+
+                setupMotionPreference();
+                injectSEO(data);
+                applyBranding(data);
+                renderHero(data);
+                
+                // Feature-gated rendering
+                renderAbout(data);
+                renderSocialLinks(data);
+                renderAmenities(data);
+                renderRooms(data);
+                renderGallery(data);
+                renderTestimonials(data);
+                renderBookingEnquiry();
+                renderContact(data);
+                renderMap(data);
+                
+                renderFooter(data);
+                updateNavigation();
+
+                setupNavigation();
+                setupScrollReveal();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+
+                log('Site rendered successfully with features:', state.features);
+            } catch (error) {
+                throw new Error(`Render error: ${error.message}`);
+            }
+        }
+
+        function showError(message) {
+            state.error = message;
+            log('Error:', message);
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.add('hidden');
+            document.getElementById('inactive').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        async function loadSite() {
+            try {
+                log('Loading site data from:', CONFIG.dataPath);
+
+                const response = await fetch(CONFIG.dataPath);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                renderSite(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Function to toggle the Booking Enquiry modal
+        function toggleBookingEnquiryModal(show) {
+          const modal = document.getElementById('booking-enquiry-modal');
+          if (show) {
+            modal.classList.add('show');
+          } else {
+            modal.classList.remove('show');
+          }
+        }
+
+        // Function to render the Booking Enquiry feature
+        function renderBookingEnquiry() {
+          log('renderBookingEnquiry called, state.data:', state.data);
+          
+          if (!state.data) {
+            log('No state.data, hiding booking section');
+            const bookingSection = document.getElementById('section-booking');
+            if (bookingSection) bookingSection.classList.add('hidden');
+            return;
+          }
+
+          const isEnabled = isFeatureEnabled('bookingEnquiry', state.data);
+          log('bookingEnquiry feature enabled:', isEnabled);
+          
+          if (!isEnabled) {
+            log('Booking enquiry feature disabled');
+            const bookingSection = document.getElementById('section-booking');
+            if (bookingSection) bookingSection.classList.add('hidden');
+            return;
+          }
+
+          state.features.bookingEnquiry = true;
+
+          // Update form slug from URL pathname
+          const slugInput = document.querySelector('#booking-enquiry-form input[name="slug"]');
+          if (slugInput) {
+            const slug = window.location.pathname
+              .replace(/\/$/, '')
+              .split('/')
+              .pop();
+            
+            if (!slug) {
+              slugInput.value = '';
+              log('WARNING: Could not determine slug from URL');
+            } else {
+              slugInput.value = slug;
+              log('Updated slug from URL to:', slug);
+            }
+          }
+
+          const pageUrlInput = document.querySelector('#booking-enquiry-form input[name="page_url"]');
+          if (pageUrlInput) {
+            pageUrlInput.value = window.location.href;
+            log('Updated page_url to:', window.location.href);
+          }
+
+          // Setup character counters and validation
+          setupFormValidation();
+
+                    // Attach delegated click handler for dynamic enquire-now buttons (prefill + scroll)
+                    if (!state._bookingHandlersAdded) {
+                        document.addEventListener('click', (event) => {
+                            const btn = event.target.closest && event.target.closest('button.enquire-now');
+                            if (!btn) return;
+                            event.preventDefault();
+                            // Prefill room preference if available
+                            const roomName = btn.dataset.roomName || '';
+                            const roomPrefInput = document.getElementById('be-roomPreference');
+                            if (roomPrefInput && roomName) {
+                                roomPrefInput.value = roomName;
+                                // update counter if present
+                                const counter = roomPrefInput.parentElement.querySelector('.char-count');
+                                if (counter) counter.textContent = `${roomPrefInput.value.length} / ${roomPrefInput.getAttribute('maxlength') || 100}`;
+                            }
+                            // Scroll to booking section
+                            const bookingSection = document.getElementById('section-booking');
+                            if (bookingSection) bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                        state._bookingHandlersAdded = true;
+                    }
+
+          // Show the booking section
+          const bookingSection = document.getElementById('section-booking');
+          if (bookingSection) {
+            bookingSection.classList.remove('hidden');
+            log('Booking section made visible');
+          } else {
+            log('ERROR: booking section element not found!');
+          }
+          
+          log('Booking enquiry feature enabled');
+        }
+
+        // Function to setup form validation and character counters
+        function setupFormValidation() {
+          const form = document.getElementById('booking-enquiry-form');
+          if (!form) return;
+
+                    // Bind submit handler here (no inline handlers)
+                    if (!form.dataset.submitBound) {
+                        form.addEventListener('submit', submitBookingEnquiry);
+                        form.dataset.submitBound = 'true';
+                    }
+
+          // Setup character counters for fields with maxlength
+          const fieldsWithCounters = [
+            { id: 'be-name', maxLength: 100 },
+            { id: 'be-phone', maxLength: 20 },
+            { id: 'be-email', maxLength: 254 },
+            { id: 'be-roomPreference', maxLength: 100 },
+            { id: 'be-message', maxLength: 500 }
+          ];
+
+          fieldsWithCounters.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element) return;
+
+            // Update character counter on input
+            element.addEventListener('input', () => {
+              const charCount = element.value.length;
+              const charCountDisplay = element.parentElement.querySelector('.char-count');
+              
+              if (charCountDisplay) {
+                charCountDisplay.textContent = `${charCount} / ${field.maxLength}`;
+                
+                // Add warning class at 80% capacity
+                if (charCount > field.maxLength * 0.8) {
+                  charCountDisplay.classList.add('warning');
+                  charCountDisplay.classList.remove('error');
+                } 
+                // Add error class at 100% capacity
+                else if (charCount >= field.maxLength) {
+                  charCountDisplay.classList.add('error');
+                  charCountDisplay.classList.remove('warning');
+                } else {
+                  charCountDisplay.classList.remove('warning', 'error');
+                }
+              }
+            });
+
+            // Trigger initial count display
+            element.dispatchEvent(new Event('input'));
+          });
+
+          // Real-time validation for guests field
+          const guestsField = document.getElementById('be-guests');
+          if (guestsField) {
+            guestsField.addEventListener('change', () => {
+              const value = parseInt(guestsField.value);
+              if (value < 1) {
+                guestsField.value = 1;
+              } else if (value > 999) {
+                guestsField.value = 999;
+              }
+            });
+          }
+
+          // Real-time validation for phone field
+          const phoneField = document.getElementById('be-phone');
+          if (phoneField) {
+            phoneField.addEventListener('blur', () => {
+              if (phoneField.value && !/^[0-9\s\-\+\(\)]+$/.test(phoneField.value)) {
+                phoneField.classList.add('input-error');
+              } else {
+                phoneField.classList.remove('input-error');
+              }
+            });
+          }
+
+          log('Form validation setup complete');
+        }
+
+        // Function to submit the Booking Enquiry form
+        async function submitBookingEnquiry(event) {
+          event.preventDefault();
+
+          const form = document.getElementById('booking-enquiry-form');
+          const submitButton = document.getElementById('booking-submit-button');
+          const statusDiv = document.getElementById('booking-status');
+          submitButton.disabled = true;
+
+          const formData = new FormData(form);
+          const payload = Object.fromEntries(formData.entries());
+
+          // Comprehensive Validation
+
+          // 0. Slug validation
+          if (!payload.slug || payload.slug.trim().length === 0) {
+            showBookingError(statusDiv, 'Booking is temporarily unavailable');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 1. Name validation
+          if (!payload.name || payload.name.trim().length === 0) {
+            showBookingError(statusDiv, 'Please enter your full name.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (payload.name.length > 100) {
+            showBookingError(statusDiv, 'Name cannot exceed 100 characters.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 2. Phone validation
+          if (!payload.phone || payload.phone.trim().length === 0) {
+            showBookingError(statusDiv, 'Phone number is required.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (!/^[0-9\s\-\+\(\)]{7,20}$/.test(payload.phone)) {
+            showBookingError(statusDiv, 'Please enter a valid phone number (7-20 characters, numbers and symbols only).');
+            submitButton.disabled = false;
+            return;
+          }
+          if (payload.phone.length > 20) {
+            showBookingError(statusDiv, 'Phone number cannot exceed 20 characters.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 3. Email validation (if provided)
+          if (payload.email && payload.email.trim().length > 0) {
+            if (payload.email.length > 254) {
+              showBookingError(statusDiv, 'Email cannot exceed 254 characters.');
+              submitButton.disabled = false;
+              return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(payload.email)) {
+              showBookingError(statusDiv, 'Please enter a valid email address.');
+              submitButton.disabled = false;
+              return;
+            }
+          }
+
+          // 4. Guests validation
+          const guests = parseInt(payload.guests);
+          if (isNaN(guests) || guests < 1) {
+            showBookingError(statusDiv, 'Number of guests must be at least 1.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (guests > 999) {
+            showBookingError(statusDiv, 'Please enter a valid number of guests.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (payload.guests.length > 3) {
+            showBookingError(statusDiv, 'Please enter a valid number of guests (max 3 digits).');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 5. Check-In and Check-Out dates validation
+          if (!payload.checkIn || !payload.checkIn.trim()) {
+            showBookingError(statusDiv, 'Please select a check-in date.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (!payload.checkOut || !payload.checkOut.trim()) {
+            showBookingError(statusDiv, 'Please select a check-out date.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          const checkIn = new Date(payload.checkIn);
+          const checkOut = new Date(payload.checkOut);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (checkIn < today) {
+            showBookingError(statusDiv, 'Check-in date cannot be in the past.');
+            submitButton.disabled = false;
+            return;
+          }
+          if (checkOut <= checkIn) {
+            showBookingError(statusDiv, 'Check-out date must be after check-in date.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 6. Room preference validation
+          if (payload.roomPreference && payload.roomPreference.length > 100) {
+            showBookingError(statusDiv, 'Room preference cannot exceed 100 characters.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // 7. Message validation
+          if (payload.message && payload.message.length > 500) {
+            showBookingError(statusDiv, 'Additional message cannot exceed 500 characters.');
+            submitButton.disabled = false;
+            return;
+          }
+
+          // All validations passed - submit the form
+          try {
+            //const response = await fetch('/api/booking-enquiry', {
+			const response = await fetch('https://webzyl-worker.rinil-kuriakose093.workers.dev/api/booking', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.status === 'ok') {
+              showBookingSuccess(statusDiv, 'Enquiry submitted successfully! Opening chat with resort owner...');
+              form.reset();
+              // Trigger input events to reset character counts
+              form.querySelectorAll('input, textarea').forEach(el => {
+                el.dispatchEvent(new Event('input'));
+              });
+              
+              // Auto-open WhatsApp chat with resort owner
+              if (state.data && state.data.contact && state.data.contact.whatsapp) {
+                const ownerPhone = state.data.contact.whatsapp.replace(/\D/g, ''); // Remove non-digits
+                const guestName = payload.name || 'Guest';
+                const checkIn = payload.checkIn || 'TBD';
+                const checkOut = payload.checkOut || 'TBD';
+                const message = `Hi! I just submitted a booking inquiry for ${checkIn} to ${checkOut}. Looking forward to hearing from you!`;
+                const whatsappUrl = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(message)}`;
+                
+                // Open WhatsApp after a brief delay to show success message
+                setTimeout(() => {
+                  window.open(whatsappUrl, '_blank');
+                  log('WhatsApp chat opened for resort:', state.data.name);
+                }, 1500);
+              }
+            } else {
+              showBookingError(statusDiv, `Error: ${result.message || 'Unable to submit enquiry. Please try again.'}`);
+            }
+          } catch (error) {
+            showBookingError(statusDiv, 'An error occurred while submitting your enquiry. Please try again later.');
+            log('Booking enquiry submission error:', error);
+          } finally {
+            submitButton.disabled = false;
+          }
+        }
+
+        // Helper function to display success message
+        function showBookingSuccess(statusDiv, message) {
+          statusDiv.textContent = message;
+          statusDiv.classList.remove('hidden', 'error');
+          statusDiv.classList.add('success');
+          statusDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Helper function to display error message
+        function showBookingError(statusDiv, message) {
+          statusDiv.textContent = message;
+          statusDiv.classList.remove('hidden', 'success');
+          statusDiv.classList.add('error');
+          statusDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadSite);
+        } else {
+            loadSite();
+        }
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webzyl Admin Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 1200px;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .header .subtitle {
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+    
+    .auth-form {
+      padding: 3rem 2rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .auth-form h2 {
+      margin-bottom: 1.5rem;
+      color: #2d3748;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 0.875rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    
+    .error.show {
+      display: block;
+    }
+    
+    .dashboard {
+      display: none;
+    }
+    
+    .dashboard.active {
+      display: block;
+    }
+    
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem;
+      background: #f7fafc;
+      border-bottom: 2px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+    
+    .nav button {
+      padding: 0.75rem 1.5rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      color: #4a5568;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .nav button:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .nav button.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .nav .logout {
+      margin-left: auto;
+      background: #fc8181;
+      color: white;
+      border-color: #fc8181;
+    }
+    
+    .nav .logout:hover {
+      background: #f56565;
+      border-color: #f56565;
+    }
+    
+    .content {
+      padding: 2rem;
+      min-height: 500px;
+    }
+    
+    .content h2 {
+      color: #2d3748;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card .label {
+      opacity: 0.9;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    th, td {
+      text-align: left;
+      padding: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    th {
+      background: #f7fafc;
+      color: #2d3748;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    
+    tr:hover {
+      background: #f7fafc;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .badge.active {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    
+    .badge.inactive {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #718096;
+      font-size: 1.125rem;
+    }
+    
+    .loading::after {
+      content: '...';
+      animation: dots 1.5s infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #718096;
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    @media (max-width: 768px) {
+      .nav {
+        flex-direction: column;
+      }
+      
+      .nav .logout {
+        margin-left: 0;
+      }
+      
+      .stat-card .value {
+        font-size: 1.5rem;
+      }
+      
+      table {
+        font-size: 0.875rem;
+      }
+      
+      th, td {
+        padding: 0.75rem 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>
+        <span>🔧</span>
+        Webzyl Admin Dashboard
+      </h1>
+      <p class="subtitle">System Visibility & Metrics</p>
+    </div>
+    
+    <!-- Authentication Form -->
+    <div id="authForm" class="auth-form">
+      <h2>Admin Access</h2>
+      <div id="authError" class="error"></div>
+      <form onsubmit="return handleLogin(event)">
+        <div class="form-group">
+          <label for="token">Admin Token</label>
+          <input 
+            type="password" 
+            id="token" 
+            placeholder="Enter your admin token" 
+            required
+            autocomplete="off"
+          >
+        </div>
+        <button type="submit" class="btn">Access Dashboard</button>
+      </form>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+      <div class="nav">
+        <button onclick="loadSites()" id="btnSites">
+          📋 Sites
+        </button>
+        <button onclick="loadExperiments()" id="btnExperiments">
+          🧪 Experiments
+        </button>
+        <button onclick="loadMetrics()" id="btnMetrics">
+          📊 Metrics
+        </button>
+        <button onclick="loadWorkspaces()" id="btnWorkspaces">
+          🧩 Workspaces
+        </button>
+        <button onclick="logout()" class="logout">
+          🚪 Logout
+        </button>
+      </div>
+      
+      <div id="content" class="content">
+        <p class="loading">Select an option to view data</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const API_BASE = 'https://webzyl.com/__admin';
+    const API_ADMIN_MUT = 'https://webzyl.com/api/admin';
+    let adminToken = localStorage.getItem('webzyl_admin_token');
+    
+    // Initialize
+    if (adminToken) {
+      showDashboard();
+    }
+    
+    function handleLogin(event) {
+      event.preventDefault();
+      const token = document.getElementById('token').value;
+      const errorEl = document.getElementById('authError');
+      
+      // Test token
+      fetch(`${API_BASE}/sites`, {
+        headers: { 'X-Admin-Token': token }
+      })
+      .then(res => {
+        if (res.ok) {
+          adminToken = token;
+          localStorage.setItem('webzyl_admin_token', token);
+          errorEl.classList.remove('show');
+          showDashboard();
+          loadSites();
+        } else {
+          throw new Error('Invalid token');
+        }
+      })
+      .catch(() => {
+        errorEl.textContent = '❌ Invalid admin token. Please try again.';
+        errorEl.classList.add('show');
+      });
+      
+      return false;
+    }
+    
+    function showDashboard() {
+      document.getElementById('authForm').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+    }
+    
+    function logout() {
+      localStorage.removeItem('webzyl_admin_token');
+      adminToken = null;
+      document.getElementById('authForm').style.display = 'block';
+      document.getElementById('dashboard').classList.remove('active');
+      document.getElementById('token').value = '';
+    }
+    
+    async function fetchAdmin(path) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        headers: { 'X-Admin-Token': adminToken }
+      });
+      if (!res.ok) {
+        if (res.status === 403) logout();
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.json();
+    }
+
+    async function fetchAdminMut(path, opts = {}) {
+      const res = await fetch(`${API_ADMIN_MUT}${path}`, {
+        method: opts.method || 'GET',
+        headers: {
+          'X-Admin-Token': adminToken,
+          ...(opts.body ? { 'Content-Type': 'application/json' } : {})
+        },
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) logout();
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.json();
+    }
+    
+    function setActiveNav(btnId) {
+      document.querySelectorAll('.nav button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (btnId) {
+        document.getElementById(btnId).classList.add('active');
+      }
+    }
+    
+    async function loadSites() {
+      const content = document.getElementById('content');
+      setActiveNav('btnSites');
+      content.innerHTML = '<p class="loading">Loading sites</p>';
+      
+      try {
+        const data = await fetchAdmin('/sites');
+        
+        content.innerHTML = `
+          <h2>📋 Sites</h2>
+          <div class="stats">
+            <div class="stat-card">
+              <div class="label">Total Sites</div>
+              <div class="value">${data.total}</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Active</div>
+              <div class="value">${data.sites.filter(s => s.status === 'active').length}</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">With Design Profiles</div>
+              <div class="value">${data.sites.filter(s => s.designProfileId).length}</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">In Experiments</div>
+              <div class="value">${data.sites.filter(s => s.experimentId).length}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Slug</th>
+                <th>Category</th>
+                <th>Design Profile</th>
+                <th>Variant</th>
+                <th>Experiment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.sites.map(s => `
+                <tr>
+                  <td><strong>${s.slug}</strong></td>
+                  <td>${s.category || '-'}</td>
+                  <td>${s.designProfileId || '-'}</td>
+                  <td>${s.variantId || '-'}</td>
+                  <td>${s.experimentId || '-'}</td>
+                  <td><span class="badge ${s.status}">${s.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p class="error show">Error loading sites: ${err.message}</p>`;
+      }
+    }
+    
+    async function loadExperiments() {
+      const content = document.getElementById('content');
+      setActiveNav('btnExperiments');
+      content.innerHTML = '<p class="loading">Loading experiments</p>';
+      
+      try {
+        const data = await fetchAdmin('/experiments');
+        
+        if (data.total === 0) {
+          content.innerHTML = `
+            <h2>🧪 Experiments</h2>
+            <div class="empty-state">
+              <svg fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
+              </svg>
+              <p>No active experiments found</p>
+              <small>Add design profiles to sites to enable A/B testing</small>
+            </div>
+          `;
+          return;
+        }
+        
+        content.innerHTML = `
+          <h2>🧪 Experiments</h2>
+          <div class="stats">
+            <div class="stat-card">
+              <div class="label">Active Experiments</div>
+              <div class="value">${data.total}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Experiment ID</th>
+                <th>Base Profile</th>
+                <th>Variant A</th>
+                <th>Variant B</th>
+                <th>Sites A / B</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.experiments.map(e => `
+                <tr>
+                  <td><strong>${e.experimentId}</strong></td>
+                  <td>${e.baseProfileId}</td>
+                  <td>${e.variants.A}</td>
+                  <td>${e.variants.B}</td>
+                  <td>${e.sitesPerVariant.A} / ${e.sitesPerVariant.B}</td>
+                  <td><span class="badge ${e.status}">${e.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p class="error show">Error loading experiments: ${err.message}</p>`;
+      }
+    }
+    
+    async function loadMetrics() {
+      const content = document.getElementById('content');
+      setActiveNav('btnMetrics');
+      content.innerHTML = '<p class="loading">Loading metrics</p>';
+      
+      try {
+        const data = await fetchAdmin('/metrics');
+        
+        content.innerHTML = `
+          <h2>📊 Metrics</h2>
+          <div class="stats">
+            <div class="stat-card">
+              <div class="label">Total Page Views</div>
+              <div class="value">${data.summary.totalPageViews.toLocaleString()}</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Total CTA Clicks</div>
+              <div class="value">${data.summary.totalCTAClicks.toLocaleString()}</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Conversion Rate</div>
+              <div class="value">${data.summary.conversionRate.toFixed(2)}%</div>
+            </div>
+          </div>
+          
+          ${data.bySite.length > 0 ? `
+            <h3 style="margin: 2rem 0 1rem 0; color: #2d3748;">By Site</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Slug</th>
+                  <th>Page Views</th>
+                  <th>CTA Clicks</th>
+                  <th>Conversion Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.bySite.map(s => `
+                  <tr>
+                    <td><strong>${s.slug}</strong></td>
+                    <td>${s.pageViews.toLocaleString()}</td>
+                    <td>${s.ctaClicks.toLocaleString()}</td>
+                    <td>${s.conversionRate.toFixed(2)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `
+            <div class="empty-state">
+              <svg fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+              </svg>
+              <p>No metrics data yet</p>
+              <small>Metrics will appear as visitors interact with your sites</small>
+            </div>
+          `}
+          
+          ${data.byExperiment && data.byExperiment.length > 0 ? `
+            <h3 style="margin: 2rem 0 1rem 0; color: #2d3748;">By Experiment</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Experiment</th>
+                  <th>Variant</th>
+                  <th>Page Views</th>
+                  <th>CTA Clicks</th>
+                  <th>Conversion Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.byExperiment.map(e => `
+                  <tr>
+                    <td><strong>${e.experimentId}</strong></td>
+                    <td>${e.variant}</td>
+                    <td>${e.pageViews.toLocaleString()}</td>
+                    <td>${e.ctaClicks.toLocaleString()}</td>
+                    <td>${e.conversionRate.toFixed(2)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : ''}
+        `;
+      } catch (err) {
+        content.innerHTML = `<p class="error show">Error loading metrics: ${err.message}</p>`;
+      }
+    }
+
+    async function loadWorkspaces() {
+      const content = document.getElementById('content');
+      setActiveNav('btnWorkspaces');
+      content.innerHTML = '<p class="loading">Loading workspaces</p>';
+
+      try {
+        const data = await fetchAdminMut('/workspaces');
+        const registry = data.registry || {};
+
+        content.innerHTML = `
+          <h2>🧩 Booking Workspaces</h2>
+          <p style="color:#4a5568; margin-bottom: 1rem;">KV key: <strong>booking:workspaces</strong>. Default capacity is <strong>50,000 sites</strong> per workspace.</p>
+
+          <div style="display:grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background:#f7fafc; border:2px solid #e2e8f0; border-radius:8px; padding: 1rem;">
+              <div style="font-weight:700; margin-bottom:0.5rem; color:#2d3748;">Registry JSON</div>
+              <textarea id="wsRegistry" style="width:100%; min-height:220px; padding: 0.75rem; border:2px solid #e2e8f0; border-radius:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px;">${escapeHtml(JSON.stringify(registry, null, 2))}</textarea>
+              <div style="display:flex; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap;">
+                <button class="btn" style="width:auto; padding:0.75rem 1rem;" onclick="reloadWorkspaces()">🔄 Reload</button>
+                <button class="btn" style="width:auto; padding:0.75rem 1rem;" onclick="saveWorkspaces()">💾 Save</button>
+              </div>
+              <div id="wsMsg" style="margin-top:0.75rem; color:#2d3748;"></div>
+            </div>
+
+            <div style="background:#f7fafc; border:2px solid #e2e8f0; border-radius:8px; padding: 1rem;">
+              <div style="font-weight:700; margin-bottom:0.5rem; color:#2d3748;">Set Site Workspace</div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div>
+                  <label style="display:block; margin-bottom:0.25rem; color:#4a5568;">Slug</label>
+                  <input id="wsSlug" placeholder="grand-royal" style="width:100%; padding:0.75rem 1rem; border:2px solid #e2e8f0; border-radius:6px;" />
+                </div>
+                <div>
+                  <label style="display:block; margin-bottom:0.25rem; color:#4a5568;">Workspace ID</label>
+                  <input id="wsId" placeholder="ws1" style="width:100%; padding:0.75rem 1rem; border:2px solid #e2e8f0; border-radius:6px;" />
+                </div>
+              </div>
+              <button class="btn" style="margin-top:0.75rem;" onclick="setSiteWorkspace()">✅ Update Site</button>
+              <div id="wsSiteMsg" style="margin-top:0.75rem; color:#2d3748;"></div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p class="error show">Error loading workspaces: ${err.message}</p>`;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    async function reloadWorkspaces() {
+      const msg = document.getElementById('wsMsg');
+      msg.textContent = 'Reloading...';
+      try {
+        const data = await fetchAdminMut('/workspaces');
+        document.getElementById('wsRegistry').value = JSON.stringify(data.registry || {}, null, 2);
+        msg.textContent = 'Reloaded.';
+      } catch (e) {
+        msg.textContent = `Error: ${e.message}`;
+      }
+    }
+
+    async function saveWorkspaces() {
+      const msg = document.getElementById('wsMsg');
+      msg.textContent = 'Saving...';
+      try {
+        const raw = document.getElementById('wsRegistry').value;
+        const parsed = JSON.parse(raw);
+        const data = await fetchAdminMut('/workspaces', { method: 'PUT', body: parsed });
+        document.getElementById('wsRegistry').value = JSON.stringify(data.registry || {}, null, 2);
+        msg.textContent = 'Saved.';
+      } catch (e) {
+        msg.textContent = `Error: ${e.message}`;
+      }
+    }
+
+    async function setSiteWorkspace() {
+      const msg = document.getElementById('wsSiteMsg');
+      msg.textContent = 'Updating...';
+      try {
+        const slug = document.getElementById('wsSlug').value.trim();
+        const workspaceId = document.getElementById('wsId').value.trim();
+        const data = await fetchAdminMut('/site-workspace', { method: 'POST', body: { slug, workspaceId } });
+        msg.textContent = `Updated: ${data.slug} → ${data.workspaceId}`;
+      } catch (e) {
+        msg.textContent = `Error: ${e.message}`;
+      }
+    }
+  </script>
+</body>
+</html>

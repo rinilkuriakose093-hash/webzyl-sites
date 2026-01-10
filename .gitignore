@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.wrangler/
+
+# Environment files
+.env
+.dev.vars
+
+# Test files
+test-image.jpg
+downloaded-test.jpg
+medium-1024.jpg
+small-640.jpg
+thumbnail-320.jpg
+
+# Temporary files
+_tmp_*.html
+_render_*.html
+*.tmp
+tmp_*.ps1
+
+# Broken/old configs
+_broken_*.txt
+*.revert.json
+*.force-*.json
+
+# Build outputs
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local development
+*-local.html
+history.txt
+
+# External dependencies
+_external/
+Webzyl-Notifications-*/
+Webzyl Main Page/
+
+# Chat/discussion files
+Chat_History/

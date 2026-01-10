@@ -1,0 +1,9 @@
+﻿{
+  "rules": [
+    {
+      "AllowedOrigins": ["https://webzyl-admin.pages.dev"],
+      "AllowedMethods": ["GET", "PUT", "HEAD"],
+      "AllowedHeaders": ["*"]
+    }
+  ]
+}

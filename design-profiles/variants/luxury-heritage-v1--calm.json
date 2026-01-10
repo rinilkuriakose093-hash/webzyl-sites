@@ -1,0 +1,15 @@
+{
+  "extends": "luxury-heritage-v1",
+  "overrides": {
+    "spacing": {
+      "section": "clamp(7rem, 12vw, 16rem)"
+    },
+    "motion": {
+      "type": "fade",
+      "duration": "slower"
+    },
+    "color": {
+      "accent": "#6A6AF5"
+    }
+  }
+}

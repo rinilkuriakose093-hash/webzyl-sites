@@ -1,5 +1,217 @@
 # Webzyl Platform - Version History
 
+## v2.0.0 - Super Admin Dashboard (January 10, 2026)
+
+**Git Commit:** `81c2d7b`
+**Git Tag:** `v2.0.0`
+**Status:** ✅ Production Ready
+
+### Major Features
+
+#### 1. Super Admin Controls in Operator Dashboard
+Complete property management integrated into operator dashboard:
+
+**Accessible at:** `https://webzyl.com/operator?slug={property}`
+
+**Super Admin Controls (Red Border Section):**
+- **Property Slug Manager** - Change property URL with validation
+- **Plan Tier Selector** - Trial, Basic, Standard, Premium
+- **Property Status** - Active, Inactive, Suspended
+- **WhatsApp Quota Management** - Edit used/monthly limits + instant reset
+- **Plan Expiry** - Date picker for subscription management
+- **Category Selector** - Hotel, Resort, Homestay, Villa, Apartment
+- **Base Price Editor** - Per night pricing
+
+**Quick Actions:**
+- 🔄 Reset WhatsApp Quota (one-click, updates month)
+- 🔗 Change Slug (validates format, checks duplicates, auto-redirects)
+
+#### 2. Gallery Upload with Cloudflare R2
+Full gallery management replacing ImageKit placeholder:
+
+**Upload Flow:**
+1. Select image (max 10MB)
+2. Get signed upload URL from `/api/media/sign-upload`
+3. Upload directly to R2 bucket
+4. Confirm via `/api/media/confirm-upload`
+5. Auto-add to gallery array and save
+
+**Features:**
+- Delete images with 🗑️ button
+- Immediate save to backend
+- Image URLs: `https://img.webzyl.com/{slug}/gallery/{assetId}`
+- Proper error handling and progress indicators
+
+#### 3. Testimonials/Reviews System
+Manual review management with brand protection:
+
+**Data Structure:**
+```javascript
+{
+  name: "John Doe",
+  rating: 5,           // 1-5 stars
+  text: "Amazing!",
+  date: "2026-01-10",
+  visible: true,       // Hide negative reviews
+  source: "manual"
+}
+```
+
+**Features:**
+- Star rating selector (1-5)
+- Visibility toggle for brand protection
+- Display on live website with navigation menu
+- Responsive card layout with CSS styling
+- Location: template.html lines 1250-1275
+
+#### 4. New API Endpoints (Super Admin)
+
+**`/api/admin/config/update`** (POST)
+- Update any config field
+- Requires X-Admin-Token header
+- Accepts updates object with any properties
+- Returns list of updated fields
+
+**`/api/admin/config/change-slug`** (POST)
+```javascript
+{
+  oldSlug: "grand-royal",
+  newSlug: "royal-grand"
+}
+```
+- Validates slug format (lowercase, numbers, hyphens)
+- Checks for duplicates (returns 409 if exists)
+- Updates config slug/subdomain fields
+- Moves KV storage: `config:{oldSlug}` → `config:{newSlug}`
+- Deletes old key
+
+**`/api/admin/quota/reset`** (POST)
+```javascript
+{
+  slug: "grand-royal",
+  quotaType: "whatsapp"
+}
+```
+- Resets quota_whatsapp_used to 0
+- Updates quota_used_month to current month
+- Returns success confirmation
+
+**Route Handler:**
+- `/super-admin` - Standalone admin dashboard (for future use)
+
+### Bug Fixes
+
+1. **Gallery Delete Implementation**
+   - Fixed `renderGallery()` to use `config.gallery` array
+   - Implemented `deleteGalleryImage()` with immediate API save
+   - Changed delete icon from × to 🗑️
+
+2. **Reviews Persistence**
+   - Fixed `handleOperatorUpdateWithUpdates()` missing reviews field
+   - Added reviews handling at worker.js lines 1909-1913
+   - Reviews now properly save and persist
+
+3. **Empty Amenities Auto-Population**
+   - Changed worker.js line 5196 from hardcoded defaults to empty array
+   - Amenities section no longer appears when nothing selected
+
+4. **Category Selection Trigger**
+   - Added initialization trigger in CEO dashboard
+   - Fixed null checks for DOM operations
+   - Category change now fires on initial load
+
+### Technical Implementation
+
+**Worker.js Changes:**
+```javascript
+// Lines 950-976: Super admin config update
+if (path === '/api/admin/config/update') { ... }
+
+// Lines 979-1015: Slug change with validation
+if (path === '/api/admin/config/change-slug') { ... }
+
+// Lines 1017-1046: Quota reset
+if (path === '/api/admin/quota/reset') { ... }
+
+// Lines 1516-1543: Super admin dashboard handler
+async function handleSuperAdminDashboard(request, env) { ... }
+```
+
+**Operator Dashboard (operator-dashboard.html):**
+```javascript
+// Lines 1295-1369: Super admin UI fields
+// Lines 2274-2282: Load super admin fields from config
+// Lines 2833-2838: Save super admin fields to config
+// Lines 3668-3750: Super admin action functions
+```
+
+**Template (template.html):**
+```javascript
+// Lines 1250-1275: Reviews section HTML
+// Lines 830-884: Reviews CSS styling
+// Line 1126: Navigation menu link
+```
+
+### Files Changed
+
+**Core:**
+- `worker.js` (212KB → 214KB) - 3 new API endpoints, slug change logic
+- `operator-dashboard.html` (NEW) - Full operator dashboard with super admin controls
+- `template.html` (55KB) - Reviews section added
+- `super-admin-dashboard.html` (NEW) - Standalone admin interface
+
+**Configuration:**
+- `VERSION.md` - Updated with v2.0.0 documentation
+
+### Deployment Information
+```bash
+# Deploy worker
+npx wrangler deploy
+
+# Upload operator dashboard
+npx wrangler kv:key put --binding=RESORT_CONFIGS "page:operator-dashboard" \
+  --path="operator-dashboard.html"
+
+# Upload super admin dashboard
+npx wrangler kv:key put --binding=RESORT_CONFIGS "page:super-admin-dashboard" \
+  --path="super-admin-dashboard.html"
+```
+
+### Security
+
+**Authentication:**
+- All super admin endpoints require `X-Admin-Token` header
+- Token: `webzyl-admin-dev-2026` (defined in wrangler.toml)
+- Change token for production deployment
+
+**Validation:**
+- Slug format: `/^[a-z0-9-]+$/`
+- Duplicate slug checks before rename
+- Plan tier enum validation
+- Status enum validation
+
+### Restoration Instructions
+```bash
+# Restore from git tag
+git checkout v2.0.0
+
+# Deploy
+npx wrangler deploy
+
+# Upload dashboards
+npx wrangler kv:key put --binding=RESORT_CONFIGS "page:operator-dashboard" \
+  --path="operator-dashboard.html"
+```
+
+### What's Next
+- [ ] Role-based access control (separate owner/employee dashboards)
+- [ ] Audit log for super admin changes
+- [ ] Bulk property operations
+- [ ] Advanced analytics dashboard
+- [ ] Email notification system
+
+---
+
 ## v1.0.0 - Production Release (January 10, 2026)
 
 **Git Commit:** `aad35eb`

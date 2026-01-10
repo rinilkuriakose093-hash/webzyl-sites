@@ -827,6 +827,63 @@
         }
 
         /* ========== CONTACT SECTION ========== */
+        /* ========== REVIEWS ========== */
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .review-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .review-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .review-rating {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #fbbf24;
+        }
+
+        .review-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .review-author strong {
+            color: var(--text-dark);
+        }
+
+        .review-date {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .reviews-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========== CONTACT ========== */
         .contact-section {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: var(--white);
@@ -1066,6 +1123,7 @@
                 {{#HAS_BOOKING}}<li><a href="#booking" class="nav-link">Booking</a></li>{{/HAS_BOOKING}}
                 {{#HAS_GALLERY}}<li><a href="#gallery" class="nav-link">Gallery</a></li>{{/HAS_GALLERY}}
                 {{#HAS_VIDEOS}}<li><a href="#videos" class="nav-link">Videos</a></li>{{/HAS_VIDEOS}}
+                {{#HAS_REVIEWS}}<li><a href="#reviews" class="nav-link">Testimonials</a></li>{{/HAS_REVIEWS}}
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </div>
@@ -1188,6 +1246,32 @@
         </div>
     </section>
     {{/HAS_VIDEOS}}
+
+    <!-- Testimonials -->
+    {{#HAS_REVIEWS}}
+    <section id="reviews" class="bg-light">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Guest Testimonials</h2>
+                <p class="section-description">Hear from our valued guests</p>
+            </div>
+            <div class="reviews-grid">
+                {{#REVIEWS}}
+                <div class="review-card">
+                    <div class="review-rating">
+                        {{#STARS}}⭐{{/STARS}}
+                    </div>
+                    <p class="review-text">"{{text}}"</p>
+                    <div class="review-author">
+                        <strong>{{name}}</strong>
+                        {{#date}}<span class="review-date"> • {{date}}</span>{{/date}}
+                    </div>
+                </div>
+                {{/REVIEWS}}
+            </div>
+        </div>
+    </section>
+    {{/HAS_REVIEWS}}
 
     <!-- Booking Enquiry (Hospitality) -->
     {{#HAS_BOOKING}}

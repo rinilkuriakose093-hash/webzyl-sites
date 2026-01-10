@@ -458,6 +458,10 @@ export default {
     if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
       // Skip API paths - they're handled later
       if (!path.startsWith('/api/')) {
+        // Serve super admin dashboard at /super-admin path
+        if (path === '/super-admin' || path === '/super-admin/') {
+          return handleSuperAdminDashboard(request, env);
+        }
         // Serve admin dashboard (CEO dashboard) at /admin path
         if (path === '/admin' || path === '/admin/') {
           return handleCEOAdminDashboard(request, env);
@@ -947,6 +951,104 @@ export default {
       return jsonResponse({ ok: true, slug: s, workspaceId: w }, 200);
     }
 
+    // SUPER ADMIN: Update any config field
+    if (path === '/api/admin/config/update' && request.method === 'POST') {
+      if (!validateAdminToken(request, env)) {
+        return jsonResponse({ error: 'Unauthorized' }, 401);
+      }
+
+      const { slug, updates } = await request.json().catch(() => ({}));
+      const s = (slug || '').toString().trim();
+
+      if (!VALID_SLUG_PATTERN.test(s)) {
+        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
+      }
+
+      const config = await getPropertyConfigSafeUncached(env, s);
+      if (!config) {
+        return jsonResponse({ ok: false, error: 'not_found' }, 404);
+      }
+
+      // Apply all updates from super admin
+      Object.keys(updates).forEach(key => {
+        config[key] = updates[key];
+      });
+
+      config.updatedAt = new Date().toISOString();
+
+      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
+      return jsonResponse({ ok: true, slug: s, updated: Object.keys(updates) }, 200);
+    }
+
+    // SUPER ADMIN: Change property slug
+    if (path === '/api/admin/config/change-slug' && request.method === 'POST') {
+      if (!validateAdminToken(request, env)) {
+        return jsonResponse({ error: 'Unauthorized' }, 401);
+      }
+
+      const { oldSlug, newSlug } = await request.json().catch(() => ({}));
+      const oldS = (oldSlug || '').toString().trim();
+      const newS = (newSlug || '').toString().trim();
+
+      if (!VALID_SLUG_PATTERN.test(oldS) || !VALID_SLUG_PATTERN.test(newS)) {
+        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
+      }
+
+      const oldConfig = await getPropertyConfigSafeUncached(env, oldS);
+      if (!oldConfig) {
+        return jsonResponse({ ok: false, error: 'old_slug_not_found' }, 404);
+      }
+
+      const newExists = await getPropertyConfigSafeUncached(env, newS);
+      if (newExists) {
+        return jsonResponse({ ok: false, error: 'new_slug_already_exists' }, 409);
+      }
+
+      // Update slug in config
+      oldConfig.slug = newS;
+      oldConfig.subdomain = newS;
+      oldConfig.updatedAt = new Date().toISOString();
+
+      // Save to new key
+      await env.RESORT_CONFIGS.put(`config:${newS}`, JSON.stringify(oldConfig));
+
+      // Delete old key
+      await env.RESORT_CONFIGS.delete(`config:${oldS}`);
+
+      return jsonResponse({ ok: true, oldSlug: oldS, newSlug: newS }, 200);
+    }
+
+    // SUPER ADMIN: Reset WhatsApp quota
+    if (path === '/api/admin/quota/reset' && request.method === 'POST') {
+      if (!validateAdminToken(request, env)) {
+        return jsonResponse({ error: 'Unauthorized' }, 401);
+      }
+
+      const { slug, quotaType } = await request.json().catch(() => ({}));
+      const s = (slug || '').toString().trim();
+
+      if (!VALID_SLUG_PATTERN.test(s)) {
+        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
+      }
+
+      const config = await getPropertyConfigSafeUncached(env, s);
+      if (!config) {
+        return jsonResponse({ ok: false, error: 'not_found' }, 404);
+      }
+
+      // Reset quota based on type
+      if (quotaType === 'whatsapp' || !quotaType) {
+        config.quota_whatsapp_used = 0;
+        const now = new Date();
+        config.quota_used_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+
+      config.updatedAt = new Date().toISOString();
+
+      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
+      return jsonResponse({ ok: true, slug: s, quotaType: quotaType || 'whatsapp', reset: true }, 200);
+    }
+
     // CEO variants (same capabilities, CEO auth)
     if (path === '/api/ceo/workspaces') {
       if (request.method === 'OPTIONS') {
@@ -1408,6 +1510,35 @@ async function handleBrandHomepage(request, env, ctx) {
   } catch (error) {
     console.error('[BRAND] Error serving homepage:', error);
     return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+async function handleSuperAdminDashboard(request, env) {
+  try {
+    // Fetch super admin dashboard HTML from KV
+    const html = await env.RESORT_CONFIGS.get('page:super-admin-dashboard', { type: 'text' });
+
+    if (!html) {
+      return new Response('Super Admin dashboard not found. Please upload to KV with key: page:super-admin-dashboard', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+
+    // Serve the dashboard HTML
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache' // Don't cache to always get latest data
+      }
+    });
+  } catch (error) {
+    console.error('[SUPER-ADMIN-DASHBOARD] Error serving dashboard:', error);
+    return new Response('Error loading super admin dashboard: ' + error.message, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 }
 
@@ -1893,7 +2024,7 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     // Update hero image
     if (updates.heroImage) config.heroImage = updates.heroImage;
     
-    // --- Amenities & Room Types wiring ---
+    // --- Amenities, Room Types & Reviews wiring ---
     // Defensive: Only update if valid array, else fallback to empty array
     // This ensures dashboard changes are always reflected and prevents undefined/null issues
     if (Array.isArray(updates.rooms)) {
@@ -1906,9 +2037,14 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     } else if (updates.amenities !== undefined) {
       config.amenities = [];
     }
+    if (Array.isArray(updates.reviews)) {
+      config.reviews = updates.reviews;
+    } else if (updates.reviews !== undefined) {
+      config.reviews = [];
+    }
     // Gallery update remains as-is
     if (updates.gallery) config.gallery = updates.gallery;
-    // --- End amenities/room types wiring ---
+    // --- End amenities/room types/reviews wiring ---
     if (Object.prototype.hasOwnProperty.call(updates, 'videos')) {
       const rawVideos = Array.isArray(updates.videos) ? updates.videos : [];
       const normalizedVideos = rawVideos
@@ -4229,6 +4365,18 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const has_social = config.social && (config.social.facebook || config.social.instagram || config.social.twitter || config.social.youtube);
   const has_booking = intent === 'hospitality' && Boolean(config.booking);
 
+  // Reviews processing
+  const visibleReviews = (Array.isArray(config.reviews) ? config.reviews : [])
+    .filter(r => r && r.visible !== false && r.name && r.text)
+    .map(r => ({
+      name: String(r.name || '').trim(),
+      text: String(r.text || '').trim(),
+      rating: parseInt(r.rating) || 5,
+      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+      STARS: Array(parseInt(r.rating) || 5).fill('⭐')
+    }));
+  const has_reviews = visibleReviews.length > 0;
+
   // Hero title (separate from property name)
   const heroTitleText = String(
     config.heroTitle ?? config.branding?.heroTitle ?? ''
@@ -4354,6 +4502,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   html = handleConditional(html, 'HAS_VIDEOS', has_videos);
   html = handleConditional(html, 'HAS_OFFERINGS', has_offerings);
   html = handleConditional(html, 'HAS_HIGHLIGHTS', has_highlights);
+  html = handleConditional(html, 'HAS_REVIEWS', has_reviews);
   html = handleConditional(html, 'HAS_BOOKING', has_booking);
   html = handleConditional(html, 'HAS_PRIMARY_ACTION', has_primary_action);
   html = handleConditional(html, 'HAS_SOCIAL', has_social);
@@ -4414,7 +4563,26 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     }).filter(Boolean).join('\n');
     html = html.replace(/{{#VIDEOS}}[\s\S]*?{{\/VIDEOS}}/g, videosHTML);
   }
-  
+
+  // Reviews
+  if (has_reviews) {
+    const reviewsHTML = visibleReviews.map(review => {
+      const stars = '⭐'.repeat(review.rating);
+      const dateText = review.date ? ` • ${review.date}` : '';
+      return `
+        <div class="review-card">
+          <div class="review-rating">${stars}</div>
+          <p class="review-text">"${review.text}"</p>
+          <div class="review-author">
+            <strong>${review.name}</strong>
+            ${dateText ? `<span class="review-date">${dateText}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('\n');
+    html = html.replace(/{{#REVIEWS}}[\s\S]*?{{\/REVIEWS}}/g, reviewsHTML);
+  }
+
   if (has_highlights) {
     const highlightsHTML = config.amenities.map(amenity => {
       const name = typeof amenity === 'string' ? amenity : amenity.name;
@@ -5161,9 +5329,7 @@ function generatePropertyTemplate(input, slug) {
     : [];
 
   const inputAmenities = (Array.isArray(input.amenities) ? input.amenities : []).map(a => String(a || '').trim()).filter(Boolean);
-  const amenitiesList = inputAmenities.length
-    ? inputAmenities
-    : (isAccommodationCategory ? ['Free WiFi', 'Parking', 'Hot Water', 'Power Backup', 'Room Service', '24/7 Support'] : []);
+  const amenitiesList = inputAmenities.length ? inputAmenities : [];
 
   const bookingModeRaw = String(input.bookingMode || '').trim().toLowerCase();
   const bookingMode = (bookingModeRaw === 'sheet' || bookingModeRaw === 'whatsapp' || bookingModeRaw === 'both')
@@ -5268,18 +5434,22 @@ function generatePropertyTemplate(input, slug) {
     videos: Array.isArray(input.videos) ? input.videos : [],
     rooms: (Array.isArray(input.rooms) && input.rooms.length > 0) ? input.rooms : [],
     amenities: amenitiesList.map(a => ({ name: a, icon: '✨' })),
+
+    // Reviews/Testimonials (NEW)
+    reviews: Array.isArray(input.reviews) && input.reviews.length > 0 ? input.reviews : [],
+
     social: {
       facebook: input.facebook || '',
       instagram: input.instagram || '',
       twitter: input.twitter || '',
       youtube: input.youtube || ''
     },
-    
+
     embeds: {
       youtube: input.youtubeEmbed || '',
       map: input.mapsEmbed || input.mapLink || ''
     },
-    
+
     customDomain: '',
     subdomainEnabled: true,
     createdAt: new Date().toISOString(),

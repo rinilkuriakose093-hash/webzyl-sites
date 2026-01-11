@@ -1,0 +1,140 @@
+# WRANGLER.TOML - Cloudflare Worker Configuration
+# Phase 4: Booking Enquiry Backend
+
+name = "resort-booking-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+# Account details
+account_id = "" # Your Cloudflare account ID
+
+# Routes (configure after testing on workers.dev)
+# routes = [
+#   { pattern = "your-domain.com/api/*", zone_name = "your-domain.com" }
+# ]
+
+# =============================================================================
+# KV NAMESPACE BINDINGS
+# =============================================================================
+
+[[kv_namespaces]]
+binding = "RESORT_CONFIGS"
+id = "" # Your KV namespace ID for production
+preview_id = "" # Your KV namespace ID for preview/dev
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+
+[vars]
+# Non-sensitive configuration (can be committed)
+RATE_LIMIT_MAX_REQUESTS = 5
+RATE_LIMIT_WINDOW_MINUTES = 60
+DEFAULT_BOOKING_MODE = "sheet"
+ENABLE_RATE_LIMITING = true
+ENABLE_HONEYPOT = true
+
+# =============================================================================
+# SECRETS (Set via CLI or Dashboard)
+# =============================================================================
+
+# These should NOT be in this file
+# Set them using:
+# wrangler secret put BOOKING_WEBHOOK_URL
+# wrangler secret put BOOKING_HMAC_SECRET
+
+# Required secrets:
+# - BOOKING_WEBHOOK_URL: Apps Script Web App URL
+# - BOOKING_HMAC_SECRET: HMAC signing secret (must match Apps Script)
+
+# =============================================================================
+# WORKER CONFIGURATION
+# =============================================================================
+
+[build]
+command = "" # No build step needed for vanilla JS
+
+# Compatibility flags
+compatibility_flags = []
+
+# =============================================================================
+# LIMITS & PERFORMANCE
+# =============================================================================
+
+# Worker limits (Free tier)
+# - CPU time: 10ms
+# - Memory: 128MB
+# - Requests: 100,000/day
+
+# KV limits (Free tier)
+# - Reads: 100,000/day
+# - Writes: 1,000/day
+# - Storage: 1GB
+
+# =============================================================================
+# DEVELOPMENT
+# =============================================================================
+
+[env.development]
+name = "resort-booking-api-dev"
+vars = { ENABLE_DEBUG_LOGGING = true }
+
+[[env.development.kv_namespaces]]
+binding = "RESORT_CONFIGS"
+id = "" # Dev KV namespace
+
+# =============================================================================
+# STAGING
+# =============================================================================
+
+[env.staging]
+name = "resort-booking-api-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "RESORT_CONFIGS"
+id = "" # Staging KV namespace
+
+# =============================================================================
+# PRODUCTION
+# =============================================================================
+
+[env.production]
+name = "resort-booking-api"
+
+[[env.production.kv_namespaces]]
+binding = "RESORT_CONFIGS"
+id = "" # Production KV namespace
+
+# =============================================================================
+# DEPLOYMENT COMMANDS
+# =============================================================================
+
+# Deploy to dev:
+# wrangler deploy --env development
+
+# Deploy to staging:
+# wrangler deploy --env staging
+
+# Deploy to production:
+# wrangler deploy --env production
+
+# Set secrets:
+# wrangler secret put BOOKING_WEBHOOK_URL --env production
+# wrangler secret put BOOKING_HMAC_SECRET --env production
+
+# View logs:
+# wrangler tail --env production
+
+# Test locally:
+# wrangler dev
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# 1. Replace empty strings with your actual IDs
+# 2. Set secrets via CLI, never commit them
+# 3. Test thoroughly in dev before deploying to production
+# 4. Monitor worker analytics in Cloudflare Dashboard
+# 5. Set up alerts for error rates > 5%

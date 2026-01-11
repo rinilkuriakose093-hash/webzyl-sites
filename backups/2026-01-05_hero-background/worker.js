@@ -100,17 +100,6 @@ const RESERVED_SUBDOMAINS = [
 const VALID_SLUG_PATTERN = /^[a-z0-9-]{3,30}$/;
 
 // =====================================================
-// BOOKING WORKSPACE SHARDING (Zero-Ops Scale)
-// =====================================================
-// Goal:
-// - Route booking sink (Apps Script) by workspaceId.
-// - Allocate workspaceId at site creation time (publish) with capacity guardrails.
-// - Keep backward compatible defaults: if registry/config missing, fall back to env.BOOKING_WEBHOOK_URL.
-
-const BOOKING_WORKSPACE_REGISTRY_KEY = 'booking:workspaces';
-const DEFAULT_WORKSPACE_CAPACITY_SITES = 50000;
-
-// =====================================================
 // PERFORMANCE: SSR EDGE CACHE + IN-MEM KV CACHE
 // =====================================================
 // Goals:
@@ -178,111 +167,6 @@ async function getPropertyConfigSafeUncached(env, slug) {
   // Use for mutation endpoints (read-modify-write) to reduce risk of stale overwrites.
   const key = `config:${slug}`;
   return await kvGetJSONSafe(env.RESORT_CONFIGS, key);
-}
-
-async function getBookingWorkspaceRegistry(env) {
-  let registry = null;
-  try {
-    registry = await kvGetJSONSafe(env.RESORT_CONFIGS, BOOKING_WORKSPACE_REGISTRY_KEY);
-  } catch (e) {
-    registry = null;
-  }
-
-  if (!registry || typeof registry !== 'object') {
-    return buildDefaultBookingWorkspaceRegistry(env);
-  }
-
-  return normalizeBookingWorkspaceRegistry(registry, env);
-}
-
-function buildDefaultBookingWorkspaceRegistry(env) {
-  // Single-workspace default for backward compatibility.
-  const url = (env.BOOKING_WEBHOOK_URL || '').toString().trim();
-  return {
-    version: 1,
-    defaultCapacitySites: DEFAULT_WORKSPACE_CAPACITY_SITES,
-    workspaces: [
-      {
-        id: 'ws1',
-        label: 'Workspace 1',
-        bookingWebhookUrl: url,
-        capacitySites: DEFAULT_WORKSPACE_CAPACITY_SITES,
-        siteCount: 0,
-        enabled: true
-      }
-    ],
-    updatedAt: new Date().toISOString()
-  };
-}
-
-function normalizeBookingWorkspaceRegistry(registry, env) {
-  const out = { ...registry };
-  out.version = out.version || 1;
-  out.defaultCapacitySites = Number(out.defaultCapacitySites || DEFAULT_WORKSPACE_CAPACITY_SITES) || DEFAULT_WORKSPACE_CAPACITY_SITES;
-  out.workspaces = Array.isArray(out.workspaces) ? out.workspaces : [];
-
-  if (out.workspaces.length === 0) {
-    const fallback = buildDefaultBookingWorkspaceRegistry(env);
-    out.workspaces = fallback.workspaces;
-  }
-
-  out.workspaces = out.workspaces.map((ws, idx) => {
-    const id = (ws?.id || `ws${idx + 1}`).toString().trim();
-    return {
-      id,
-      label: (ws?.label || id).toString(),
-      bookingWebhookUrl: (ws?.bookingWebhookUrl || '').toString().trim(),
-      capacitySites: Number(ws?.capacitySites || out.defaultCapacitySites) || out.defaultCapacitySites,
-      siteCount: Number(ws?.siteCount || 0) || 0,
-      enabled: ws?.enabled !== false
-    };
-  });
-
-  return out;
-}
-
-function resolveWorkspaceById(registry, workspaceId) {
-  const id = (workspaceId || '').toString().trim();
-  if (!id) return null;
-  return (registry.workspaces || []).find(w => w.id === id) || null;
-}
-
-async function allocateWorkspaceIdForNewSite(env, requestedWorkspaceId) {
-  const registry = await getBookingWorkspaceRegistry(env);
-
-  // Manual override (if provided and exists).
-  if (requestedWorkspaceId) {
-    const ws = resolveWorkspaceById(registry, requestedWorkspaceId);
-    if (ws && ws.enabled) {
-      return { registry, workspaceId: ws.id, chosen: ws, updatedRegistry: null };
-    }
-  }
-
-  // Auto allocation: fill in order until capacity (default 50k).
-  const enabled = (registry.workspaces || []).filter(w => w.enabled);
-  let chosen = enabled.find(w => (w.siteCount || 0) < (w.capacitySites || registry.defaultCapacitySites));
-  if (!chosen) chosen = enabled[0] || null;
-
-  if (!chosen) {
-    // Worst-case fallback to ws1.
-    chosen = { id: 'ws1', bookingWebhookUrl: (env.BOOKING_WEBHOOK_URL || '').toString().trim(), enabled: true };
-  }
-
-  // Increment siteCount (best-effort).
-  const updatedRegistry = { ...registry };
-  updatedRegistry.workspaces = (registry.workspaces || []).map(w => {
-    if (w.id !== chosen.id) return w;
-    return { ...w, siteCount: (Number(w.siteCount || 0) || 0) + 1 };
-  });
-  updatedRegistry.updatedAt = new Date().toISOString();
-
-  try {
-    await env.RESORT_CONFIGS.put(BOOKING_WORKSPACE_REGISTRY_KEY, JSON.stringify(updatedRegistry));
-  } catch (e) {
-    console.warn('[WORKSPACES] Failed to persist registry update:', e?.message || e);
-  }
-
-  return { registry, workspaceId: chosen.id, chosen, updatedRegistry };
 }
 
 // 8 Pre-built Themes (NEW in v7.2)
@@ -450,31 +334,7 @@ export default {
       const rewrittenRequest = new Request(rewrittenUrl.toString(), request);
       return handleMediaServe(rewrittenRequest, env);
     }
-
-    // =====================================================
-    // WEBZYL BRAND HOMEPAGE (www.webzyl.com and webzyl.com)
-    // =====================================================
-
-    if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
-      // Skip API paths - they're handled later
-      if (!path.startsWith('/api/')) {
-        // Serve super admin dashboard at /super-admin path
-        if (path === '/super-admin' || path === '/super-admin/') {
-          return handleSuperAdminDashboard(request, env);
-        }
-        // Serve admin dashboard (CEO dashboard) at /admin path
-        if (path === '/admin' || path === '/admin/') {
-          return handleCEOAdminDashboard(request, env);
-        }
-        // Serve operator dashboard at /operator path
-        if (path === '/operator' || path === '/operator/') {
-          return handleOperatorDashboard(request, env);
-        }
-        // Serve the Webzyl brand identity page
-        return handleBrandHomepage(request, env, ctx);
-      }
-    }
-
+    
     // =====================================================
     // IMAGE SERVING (Check FIRST - highest priority)
     // =====================================================
@@ -501,89 +361,6 @@ export default {
     
     if (propertySlug) {
       console.log(`[SUBDOMAIN] Detected property: ${propertySlug}`);
-
-      // IMPORTANT: Subdomain requests may still need API routes.
-      // Without this, endpoints like /api/booking fall through to SSR and return HTML.
-      if (path.startsWith('/api/') && request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, X-CEO-Token, X-Admin-Token',
-            'Access-Control-Max-Age': '86400'
-          }
-        });
-      }
-
-      // Admin dashboard routes should also work on subdomains (token-protected, read-only).
-      // This is used for production diagnostics (e.g., email routing inspection).
-      if (path.startsWith('/__admin')) {
-        // Handle CORS preflight
-        if (request.method === 'OPTIONS') {
-          return new Response(null, {
-            status: 204,
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-              'Access-Control-Allow-Headers': 'X-Admin-Token, Content-Type',
-              'Access-Control-Max-Age': '86400',
-            }
-          });
-        }
-
-        // Access guard: Require admin token
-        if (!validateAdminToken(request, env)) {
-          console.warn(`[ADMIN] Unauthorized access attempt to ${path}`);
-          return new Response('Forbidden', {
-            status: 403,
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-            }
-          });
-        }
-
-        if (path === '/__admin' && request.method === 'GET') {
-          return handleAdminDashboard(request, env);
-        }
-
-        if (path === '/__admin/sites' && request.method === 'GET') {
-          return handleAdminSites(request, env);
-        }
-
-        if (path === '/__admin/site' && request.method === 'GET') {
-          return handleAdminSite(request, env);
-        }
-
-        // Maintenance/debug endpoint: reset booking throttles for a site.
-        // POST /__admin/booking/reset?slug=grand-royal
-        if (path === '/__admin/booking/reset' && request.method === 'POST') {
-          return handleAdminResetBooking(request, env);
-        }
-
-        if (path === '/__admin/experiments' && request.method === 'GET') {
-          return handleAdminExperiments(request, env);
-        }
-
-        if (path === '/__admin/metrics' && request.method === 'GET') {
-          return handleAdminMetrics(request, env);
-        }
-
-        return new Response('Not Found', {
-          status: 404,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-          }
-        });
-      }
-
-      if (path === '/api/booking') {
-        return handleBookingRequest(request, env, ctx);
-      }
-
-      if (path === '/api/event' && request.method === 'POST') {
-        return handleEventTrackingRequest(request, env);
-      }
 
       // Edge cache for SSR HTML (fast TTFB). Short TTL to keep config changes fresh.
       const bypassSSRCache = shouldBypassSSRCache(request, url);
@@ -625,9 +402,6 @@ export default {
       if (!config || config.status !== 'active') {
         return new Response('Property not found', { status: 404 });
       }
-
-      // Ensure slug is present for client-side booking form submissions.
-      if (!config.slug) config.slug = propertySlug;
       
       // Load design profile (optional - fallback to legacy template)
       const designProfileId = config.branding?.designProfileId;
@@ -646,7 +420,7 @@ export default {
         if (config.experiment?.id) {
           const experimentVariant = resolveExperimentVariant(config);
           const mappedVariant = mapExperimentToDesignVariant(config.experiment.id, experimentVariant, designProfileId);
-
+          
           if (mappedVariant) {
             variantId = mappedVariant;
             console.log(`[Experiment] ${propertySlug} → ${config.experiment.id} : ${experimentVariant}`);
@@ -678,7 +452,7 @@ export default {
         return new Response('Template not configured. Please upload template to KV.', { status: 500 });
       }
       
-      const html = renderSmartTemplate(config, template, designProfile, env, ctx);
+      const html = renderSmartTemplate(config, template, designProfile);
       
       // Phase 5: Emit page_view event (non-blocking, fire-and-forget)
       emitEvent(env, {
@@ -740,31 +514,7 @@ export default {
     
     if (path.startsWith('/api/operator/dashboard/')) {
       const operatorSlug = path.split('/')[4];
-      return handleOperatorDashboardData(operatorSlug, env);
-    }
-
-    // Backward/alternate operator update endpoint (no slug in path)
-    // Some operator UIs POST to /api/operator/update with slug in body/query.
-    if (path === '/api/operator/update' && request.method === 'POST') {
-      let updates = null;
-      try {
-        updates = await request.json();
-      } catch (e) {
-        updates = null;
-      }
-
-      const url = new URL(request.url);
-      const slugFromQuery = (url.searchParams.get('slug') || '').toString().trim();
-      const slugFromBody = (updates && typeof updates === 'object' ? (updates.slug || updates.propertySlug || updates.operatorSlug) : '')
-        .toString()
-        .trim();
-
-      const resolvedSlug = slugFromQuery || slugFromBody;
-      if (!resolvedSlug) {
-        return jsonResponse({ error: 'Slug is required' }, 400);
-      }
-
-      return handleOperatorUpdateWithUpdates(env, resolvedSlug, updates || {});
+      return handleOperatorDashboard(operatorSlug, env);
     }
     
     if (path.startsWith('/api/operator/update/') && request.method === 'POST') {
@@ -791,12 +541,7 @@ export default {
       const operatorSlug = path.split('/')[5];
       return handleLogoUpload(request, env, operatorSlug);
     }
-
-    if (path.startsWith('/api/operator/room/upload/') && request.method === 'POST') {
-      const operatorSlug = path.split('/')[5];
-      return handleRoomImageUpload(request, env, operatorSlug);
-    }
-
+    
     if (path.startsWith('/api/operator/gallery/update/') && request.method === 'POST') {
       const operatorSlug = path.split('/')[5];
       return handleGalleryUpdate(request, env, operatorSlug);
@@ -862,275 +607,6 @@ export default {
         headers: { 'Access-Control-Allow-Origin': '*' }
       });
     }
-
-    // =====================================================
-    // BOOKING WORKSPACE REGISTRY (Admin + CEO)
-    // =====================================================
-    // Stored in KV key: booking:workspaces
-    // Used for routing booking sink (Apps Script) by workspaceId.
-
-    if (path === '/api/admin/workspaces') {
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-Admin-Token, Content-Type',
-            'Access-Control-Max-Age': '86400',
-          }
-        });
-      }
-
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      if (request.method === 'GET') {
-        const registry = await getBookingWorkspaceRegistry(env);
-        return jsonResponse({ ok: true, registry }, 200);
-      }
-
-      if (request.method === 'PUT') {
-        const body = await request.json().catch(() => null);
-        const incoming = body?.registry || body;
-        const normalized = normalizeBookingWorkspaceRegistry(incoming || {}, env);
-        normalized.updatedAt = new Date().toISOString();
-        await env.RESORT_CONFIGS.put(BOOKING_WORKSPACE_REGISTRY_KEY, JSON.stringify(normalized));
-        return jsonResponse({ ok: true, registry: normalized }, 200);
-      }
-
-      return new Response('Method Not Allowed', { status: 405, headers: { 'Access-Control-Allow-Origin': '*' } });
-    }
-
-    if (path === '/api/admin/site-workspace' && request.method === 'POST') {
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-Admin-Token, Content-Type',
-            'Access-Control-Max-Age': '86400',
-          }
-        });
-      }
-
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, workspaceId } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-      const w = (workspaceId || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-      if (!w) {
-        return jsonResponse({ ok: false, error: 'missing_workspaceId' }, 400);
-      }
-
-      const registry = await getBookingWorkspaceRegistry(env);
-      const ws = resolveWorkspaceById(registry, w);
-      if (!ws || ws.enabled === false) {
-        return jsonResponse({ ok: false, error: 'invalid_workspace' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      config.workspaceId = w;
-      if (!config.booking) config.booking = {};
-      config.booking.workspaceId = w;
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, workspaceId: w }, 200);
-    }
-
-    // SUPER ADMIN: Update any config field
-    if (path === '/api/admin/config/update' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, updates } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Apply all updates from super admin
-      Object.keys(updates).forEach(key => {
-        config[key] = updates[key];
-      });
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, updated: Object.keys(updates) }, 200);
-    }
-
-    // SUPER ADMIN: Change property slug
-    if (path === '/api/admin/config/change-slug' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { oldSlug, newSlug } = await request.json().catch(() => ({}));
-      const oldS = (oldSlug || '').toString().trim();
-      const newS = (newSlug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(oldS) || !VALID_SLUG_PATTERN.test(newS)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const oldConfig = await getPropertyConfigSafeUncached(env, oldS);
-      if (!oldConfig) {
-        return jsonResponse({ ok: false, error: 'old_slug_not_found' }, 404);
-      }
-
-      const newExists = await getPropertyConfigSafeUncached(env, newS);
-      if (newExists) {
-        return jsonResponse({ ok: false, error: 'new_slug_already_exists' }, 409);
-      }
-
-      // Update slug in config
-      oldConfig.slug = newS;
-      oldConfig.subdomain = newS;
-      oldConfig.updatedAt = new Date().toISOString();
-
-      // Save to new key
-      await env.RESORT_CONFIGS.put(`config:${newS}`, JSON.stringify(oldConfig));
-
-      // Delete old key
-      await env.RESORT_CONFIGS.delete(`config:${oldS}`);
-
-      return jsonResponse({ ok: true, oldSlug: oldS, newSlug: newS }, 200);
-    }
-
-    // SUPER ADMIN: Reset WhatsApp quota
-    if (path === '/api/admin/quota/reset' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, quotaType } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Reset quota based on type
-      if (quotaType === 'whatsapp' || !quotaType) {
-        config.quota_whatsapp_used = 0;
-        const now = new Date();
-        config.quota_used_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      }
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, quotaType: quotaType || 'whatsapp', reset: true }, 200);
-    }
-
-    // CEO variants (same capabilities, CEO auth)
-    if (path === '/api/ceo/workspaces') {
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-CEO-Token, Content-Type',
-            'Access-Control-Max-Age': '86400',
-          }
-        });
-      }
-
-      if (!validateCEOToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      if (request.method === 'GET') {
-        const registry = await getBookingWorkspaceRegistry(env);
-        return jsonResponse({ ok: true, registry }, 200);
-      }
-
-      if (request.method === 'PUT') {
-        const body = await request.json().catch(() => null);
-        const incoming = body?.registry || body;
-        const normalized = normalizeBookingWorkspaceRegistry(incoming || {}, env);
-        normalized.updatedAt = new Date().toISOString();
-        await env.RESORT_CONFIGS.put(BOOKING_WORKSPACE_REGISTRY_KEY, JSON.stringify(normalized));
-        return jsonResponse({ ok: true, registry: normalized }, 200);
-      }
-
-      return new Response('Method Not Allowed', { status: 405, headers: { 'Access-Control-Allow-Origin': '*' } });
-    }
-
-    if (path === '/api/ceo/site-workspace' && request.method === 'POST') {
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-CEO-Token, Content-Type',
-            'Access-Control-Max-Age': '86400',
-          }
-        });
-      }
-
-      if (!validateCEOToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, workspaceId } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-      const w = (workspaceId || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-      if (!w) {
-        return jsonResponse({ ok: false, error: 'missing_workspaceId' }, 400);
-      }
-
-      const registry = await getBookingWorkspaceRegistry(env);
-      const ws = resolveWorkspaceById(registry, w);
-      if (!ws || ws.enabled === false) {
-        return jsonResponse({ ok: false, error: 'invalid_workspace' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      config.workspaceId = w;
-      if (!config.booking) config.booking = {};
-      config.booking.workspaceId = w;
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, workspaceId: w }, 200);
-    }
     
     // =====================================================
     // ADMIN DASHBOARD ROUTES - PHASE 6 (READ-ONLY)
@@ -1148,7 +624,7 @@ export default {
           status: 204,
           headers: {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
             'Access-Control-Allow-Headers': 'X-Admin-Token, Content-Type',
             'Access-Control-Max-Age': '86400',
           }
@@ -1173,16 +649,6 @@ export default {
       
       if (path === '/__admin/sites' && request.method === 'GET') {
         return handleAdminSites(request, env);
-      }
-
-      if (path === '/__admin/site' && request.method === 'GET') {
-        return handleAdminSite(request, env);
-      }
-
-      // Maintenance/debug endpoint: reset booking throttles for a site.
-      // POST /__admin/booking/reset?slug=grand-royal
-      if (path === '/__admin/booking/reset' && request.method === 'POST') {
-        return handleAdminResetBooking(request, env);
       }
       
       if (path === '/__admin/experiments' && request.method === 'GET') {
@@ -1315,9 +781,6 @@ export default {
       if (!config || config.status !== 'active') {
         return new Response('Property not found', { status: 404 });
       }
-
-      // Ensure slug is present for client-side booking form submissions.
-      if (!config.slug) config.slug = slug;
       
       // Load design profile (optional - fallback to legacy template)
       const designProfileId = config.branding?.designProfileId;
@@ -1366,7 +829,7 @@ export default {
         return new Response('Template not configured. Please upload template to KV.', { status: 500 });
       }
       
-      const html = renderSmartTemplate(config, template, designProfile, env, ctx);
+      const html = renderSmartTemplate(config, template, designProfile);
       
       // Phase 5: Emit page_view event (non-blocking, fire-and-forget)
       emitEvent(env, {
@@ -1475,129 +938,6 @@ function extractPropertySlug(hostname) {
   }
   
   return subdomain;
-}
-
-// =====================================================
-// BRAND HOMEPAGE HANDLER
-// =====================================================
-// Serves the Webzyl brand identity page for www.webzyl.com
-// Template is stored in KV as 'template:brand-homepage'
-// =====================================================
-
-async function handleBrandHomepage(request, env, ctx) {
-  try {
-    // TEMPORARY: Bypass all caching to force fresh content
-    // Fetch template from KV directly
-    const template = await env.RESORT_CONFIGS.get('template:brand-homepage', { type: 'text' });
-
-    if (!template) {
-      return new Response('Brand homepage not configured. Please upload template to KV.', { status: 500 });
-    }
-
-    // Return HTML with no-cache headers to prevent any caching
-    const response = new Response(template, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'CDN-Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'X-Webzyl-Cache': 'BYPASS'
-      }
-    });
-
-    return response;
-  } catch (error) {
-    console.error('[BRAND] Error serving homepage:', error);
-    return new Response('Internal Server Error', { status: 500 });
-  }
-}
-
-async function handleSuperAdminDashboard(request, env) {
-  try {
-    // Fetch super admin dashboard HTML from KV
-    const html = await env.RESORT_CONFIGS.get('page:super-admin-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Super Admin dashboard not found. Please upload to KV with key: page:super-admin-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[SUPER-ADMIN-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading super admin dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
-}
-
-async function handleCEOAdminDashboard(request, env) {
-  try {
-    // Fetch CEO admin dashboard HTML from KV (single source of truth)
-    const html = await env.RESORT_CONFIGS.get('page:ceo-admin-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Admin dashboard not found. Please upload to KV with key: page:ceo-admin-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[CEO-ADMIN-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading admin dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
-}
-
-async function handleOperatorDashboard(request, env) {
-  try {
-    // Fetch operator dashboard HTML from KV (single source of truth)
-    const html = await env.RESORT_CONFIGS.get('page:operator-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Operator dashboard not found. Please upload to KV with key: page:operator-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML - same domain as API, so no CORS issues
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[OPERATOR-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading operator dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
 }
 
 async function handlePropertyRequest(slug, path, request, env) {
@@ -1803,34 +1143,34 @@ async function handleOperatorLogin(request, env) {
   }
 }
 
-async function handleOperatorDashboardData(slug, env) {
+async function handleOperatorDashboard(slug, env) {
   try {
     if (!slug) {
       return jsonResponse({ error: 'Slug is required' }, 400);
     }
-
+    
     const configKey = `config:${slug}`;
     const config = await getPropertyConfigSafe(env, slug);
-
+    
     if (!config) {
       return jsonResponse({ error: 'Property not found' }, 404);
     }
-
+    
     // Handle both flat and nested config structures
     const whatsappUsed = config.quota_whatsapp_used || 0;
     const whatsappLimit = config.quota_whatsapp_monthly || 0;
     const smsUsed = config.quota_sms_used || 0;
     const smsLimit = config.quota_sms_monthly || 0;
-
+    
     const stats = {
       total_bookings: 0,
       this_month: 0,
       quota_whatsapp_percent: calculateQuotaPercent(whatsappUsed, whatsappLimit),
       quota_sms_percent: calculateQuotaPercent(smsUsed, smsLimit)
     };
-
+    
     console.log(`[OPERATOR] Dashboard data for ${slug}`);
-
+    
     return jsonResponse({
       property: config,
       stats: stats,
@@ -1843,7 +1183,7 @@ async function handleOperatorDashboardData(slug, env) {
         current_month: config.quota_used_month || new Date().toISOString().substring(0, 7)
       }
     });
-
+    
   } catch (error) {
     console.error('[OPERATOR] Dashboard error:', error);
     return jsonResponse({ error: error.message }, 500);
@@ -1857,21 +1197,7 @@ async function handleOperatorUpdate(request, env, slug) {
     }
     
     const updates = await request.json();
-
-    return await handleOperatorUpdateWithUpdates(env, slug, updates);
     
-  } catch (error) {
-    console.error('[OPERATOR] Update error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-async function handleOperatorUpdateWithUpdates(env, slug, updates) {
-  try {
-    if (!slug) {
-      return jsonResponse({ error: 'Slug is required' }, 400);
-    }
-
     const configKey = `config:${slug}`;
     const config = await getPropertyConfigSafeUncached(env, slug);
     
@@ -1901,57 +1227,7 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
       const raw = updates.heroImageContainsBrand;
       config.heroImageContainsBrand = (raw === true || String(raw).trim().toLowerCase() === 'true');
     }
-
-    // Header style profile (auto | light | dark | custom)
-    if (Object.prototype.hasOwnProperty.call(updates, 'headerStyle')) {
-      const hs = updates.headerStyle;
-      if (hs && typeof hs === 'object') {
-        const mode = String(hs.mode ?? '').trim().toLowerCase();
-        const okMode = (mode === 'auto' || mode === 'light' || mode === 'dark' || mode === 'custom') ? mode : 'auto';
-
-        const headerStyle = {
-          mode: okMode
-        };
-
-        if (okMode === 'custom') {
-          // Keep values as-is; SSR sanitizes at render time.
-          if (Object.prototype.hasOwnProperty.call(hs, 'textColor')) headerStyle.textColor = (hs.textColor ?? '').toString();
-          if (Object.prototype.hasOwnProperty.call(hs, 'brandFontStyle')) headerStyle.brandFontStyle = (hs.brandFontStyle ?? '').toString();
-          if (Object.prototype.hasOwnProperty.call(hs, 'brandFontWeight')) headerStyle.brandFontWeight = hs.brandFontWeight;
-          if (Object.prototype.hasOwnProperty.call(hs, 'brandFontSizePx')) headerStyle.brandFontSizePx = hs.brandFontSizePx;
-        }
-
-        config.headerStyle = headerStyle;
-      } else if (hs === null) {
-        // Allow clearing
-        config.headerStyle = null;
-      }
-    }
-
-    // Hero background (explicit: none | preset | custom)
-    if (Object.prototype.hasOwnProperty.call(updates, 'heroBackground')) {
-      const hb = updates.heroBackground;
-      if (hb && typeof hb === 'object') {
-        const type = String(hb.type ?? '').trim().toLowerCase();
-        const value = hb.value == null ? null : String(hb.value).trim();
-        if (type === 'none' || type === 'preset' || type === 'custom') {
-          config.heroBackground = { type, value: value || null };
-        }
-      } else if (hb === null) {
-        // Allow clearing
-        config.heroBackground = null;
-      }
-    }
     
-    // Track whether UI supplied a contact email change.
-    const contactEmailProvided = !!(updates && updates.contact && typeof updates.contact === 'object' && Object.prototype.hasOwnProperty.call(updates.contact, 'email'));
-
-    // Track whether UI explicitly supplied an ownerEmail change.
-    const ownerEmailProvided = !!(
-      (updates && updates.notifications && typeof updates.notifications === 'object' && Object.prototype.hasOwnProperty.call(updates.notifications, 'ownerEmail'))
-      || (updates && Object.prototype.hasOwnProperty.call(updates, 'ownerEmail'))
-    );
-
     // Handle nested contact object (v7.2) or flat structure (v7.1)
     if (updates.contact) {
       if (config.contact) {
@@ -1962,42 +1238,6 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
         if (updates.contact.phone) config.contact_phone = updates.contact.phone;
         if (updates.contact.email) config.contact_email = updates.contact.email;
       }
-    }
-
-    // Notifications (v7.2)
-    // Needed so dashboards can change where booking emails route (payload.ownerEmail).
-    if (updates.notifications && typeof updates.notifications === 'object') {
-      if (!config.notifications || typeof config.notifications !== 'object') {
-        config.notifications = {};
-      }
-
-      const n = updates.notifications;
-      if (Object.prototype.hasOwnProperty.call(n, 'enabled')) config.notifications.enabled = !!n.enabled;
-      if (Object.prototype.hasOwnProperty.call(n, 'notifyOwner')) config.notifications.notifyOwner = !!n.notifyOwner;
-      if (Object.prototype.hasOwnProperty.call(n, 'notifyCustomer')) config.notifications.notifyCustomer = !!n.notifyCustomer;
-      if (Object.prototype.hasOwnProperty.call(n, 'language')) config.notifications.language = (n.language ?? '').toString();
-      if (Object.prototype.hasOwnProperty.call(n, 'maxPerHour')) config.notifications.maxPerHour = Number(n.maxPerHour || 0) || config.notifications.maxPerHour || 10;
-
-      if (Object.prototype.hasOwnProperty.call(n, 'ownerWhatsapp')) config.notifications.ownerWhatsapp = (n.ownerWhatsapp ?? '').toString();
-      if (Object.prototype.hasOwnProperty.call(n, 'ownerEmail')) config.notifications.ownerEmail = (n.ownerEmail ?? '').toString();
-    }
-
-    // Backward/alternate payload shapes (some dashboards send ownerEmail at top-level)
-    if (Object.prototype.hasOwnProperty.call(updates, 'ownerEmail')) {
-      if (!config.notifications || typeof config.notifications !== 'object') {
-        config.notifications = {};
-      }
-      config.notifications.ownerEmail = (updates.ownerEmail ?? '').toString();
-    }
-
-    // If the UI updated Contact Email but did NOT explicitly update notifications.ownerEmail,
-    // keep them in sync so booking emails route correctly and KV reflects the UI.
-    if (contactEmailProvided && !ownerEmailProvided) {
-      if (!config.notifications || typeof config.notifications !== 'object') {
-        config.notifications = {};
-      }
-      const nextContactEmail = (updates?.contact?.email ?? '').toString();
-      config.notifications.ownerEmail = nextContactEmail;
     }
     
     // Update branding & design profile
@@ -2024,64 +1264,10 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     // Update hero image
     if (updates.heroImage) config.heroImage = updates.heroImage;
     
-    // --- Amenities, Room Types & Reviews wiring ---
-    // Defensive: Only update if valid array, else fallback to empty array
-    // This ensures dashboard changes are always reflected and prevents undefined/null issues
-    if (Array.isArray(updates.rooms)) {
-      config.rooms = updates.rooms;
-    } else if (updates.rooms !== undefined) {
-      config.rooms = [];
-    }
-    if (Array.isArray(updates.amenities)) {
-      config.amenities = updates.amenities;
-    } else if (updates.amenities !== undefined) {
-      config.amenities = [];
-    }
-    if (Array.isArray(updates.reviews)) {
-      config.reviews = updates.reviews;
-    } else if (updates.reviews !== undefined) {
-      config.reviews = [];
-    }
-    // Menu Labels
-    if (updates.menuLabels && typeof updates.menuLabels === 'object') {
-      config.menuLabels = updates.menuLabels;
-    }
-    // Gallery update remains as-is
+    // Update arrays (rooms, gallery, amenities)
+    if (updates.rooms) config.rooms = updates.rooms;
     if (updates.gallery) config.gallery = updates.gallery;
-    // --- End amenities/room types/reviews wiring ---
-    if (Object.prototype.hasOwnProperty.call(updates, 'videos')) {
-      const rawVideos = Array.isArray(updates.videos) ? updates.videos : [];
-      const normalizedVideos = rawVideos
-        .map(v => {
-          if (!v) return null;
-          if (typeof v === 'string') return { url: v };
-          if (typeof v === 'object') return v;
-          return null;
-        })
-        .filter(Boolean)
-        .map(v => {
-          const url = normalizeHttpUrl(v.url || v.link || '');
-          const title = (v.title ?? '').toString().trim();
-          const thumbnail = normalizeHttpUrl(v.thumbnail || v.thumb || '');
-          return url ? { url, title, thumbnail } : null;
-        })
-        .filter(Boolean);
-
-      // Best-effort resolve a couple of missing thumbnails during save.
-      // Remaining missing ones will be backfilled on next SSR request.
-      let resolvedCount = 0;
-      for (const v of normalizedVideos) {
-        if (!v.thumbnail && resolvedCount < 2) {
-          const resolved = await resolveVideoThumbnailNoFallback(v.url);
-          if (resolved) {
-            v.thumbnail = resolved;
-          }
-          resolvedCount++;
-        }
-      }
-
-      config.videos = normalizedVideos;
-    }
+    if (updates.amenities) config.amenities = updates.amenities;
     if (updates.social) config.social = { ...config.social, ...updates.social };
     
     config.updatedAt = new Date().toISOString();
@@ -2431,72 +1617,6 @@ async function handleLogoUpload(request, env, slug) {
     });
   } catch (error) {
     console.error('[OPERATOR] Logo upload error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-async function handleRoomImageUpload(request, env, slug) {
-  try {
-    if (!slug) {
-      return jsonResponse({ error: 'Slug is required' }, 400);
-    }
-
-    const formData = await request.formData();
-    const file = formData.get('file');
-
-    if (!file) {
-      return jsonResponse({ error: 'No file provided' }, 400);
-    }
-
-    if (!ALLOWED_CONTENT_TYPES.includes(file.type)) {
-      return jsonResponse({
-        error: `Invalid file type. Allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`
-      }, 400);
-    }
-
-    // Validate file size (room image - same as hero)
-    if (file.size > MAX_SIZES.hero) {
-      return jsonResponse({
-        error: `File too large. Max ${Math.round(MAX_SIZES.hero / 1024 / 1024)}MB`
-      }, 400);
-    }
-
-    const assetId = generateRandomId(8);
-    const randomHash = generateRandomId(12);
-    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 255);
-    const objectPath = `${slug}/rooms/${randomHash}/${sanitizedFilename}`;
-
-    console.log(`[OPERATOR] Room image upload started for ${slug}: ${assetId}`);
-
-    const arrayBuffer = await file.arrayBuffer();
-
-    await env.MEDIA_R2.put(objectPath, arrayBuffer, {
-      httpMetadata: {
-        contentType: file.type
-      }
-    });
-
-    await env.MEDIA_DB.prepare(`
-      INSERT INTO assets (
-        id, tenantId, mediaType, objectPath, filename,
-        size, contentType, status, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', CURRENT_TIMESTAMP)
-    `).bind(assetId, slug, 'room', objectPath, sanitizedFilename, file.size, file.type).run();
-
-    const imageUrl = `https://img.webzyl.com/${slug}/rooms/${assetId}`;
-
-    console.log(`[OPERATOR] Room image upload successful for ${slug}: ${assetId}`);
-
-    return jsonResponse({
-      success: true,
-      message: 'Room image uploaded successfully',
-      assetId,
-      imageUrl,
-      filename: sanitizedFilename,
-      size: file.size
-    });
-  } catch (error) {
-    console.error('[OPERATOR] Room image upload error:', error);
     return jsonResponse({ error: error.message }, 500);
   }
 }
@@ -2987,166 +2107,6 @@ async function handleAdminSites(request, env) {
   }
 }
 
-async function handleAdminSite(request, env) {
-  try {
-    const url = new URL(request.url);
-    const slug = (url.searchParams.get('slug') || '').toString().trim();
-    if (!slug) {
-      return new Response(JSON.stringify({ error: 'missing_slug' }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        }
-      });
-    }
-
-    const config = await env.RESORT_CONFIGS.get(`config:${slug}`, { type: 'json' });
-    if (!config) {
-      return new Response(JSON.stringify({ error: 'not_found', slug }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        }
-      });
-    }
-
-    const normalizeEmail = (value) => {
-      if (value === null || value === undefined) return '';
-      return String(value).trim().replace(/\s+/g, '');
-    };
-
-    const isValidEmail = (email) => {
-      if (!email) return false;
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email));
-    };
-
-    const notificationsOwnerEmailRaw = (config?.notifications?.ownerEmail || '').toString();
-    const contactEmailRaw = (config?.contact?.email || '').toString();
-
-    const notificationsOwnerEmail = notificationsOwnerEmailRaw.toString().trim();
-    const contactEmail = contactEmailRaw.toString().trim();
-
-    const notificationsOwnerEmailNormalized = normalizeEmail(notificationsOwnerEmailRaw);
-    const contactEmailNormalized = normalizeEmail(contactEmailRaw);
-
-    const effectiveOwnerEmail = (notificationsOwnerEmail || contactEmail || '').toString().trim();
-    const effectiveOwnerEmailNormalized = isValidEmail(notificationsOwnerEmailNormalized)
-      ? notificationsOwnerEmailNormalized
-      : (isValidEmail(contactEmailNormalized) ? contactEmailNormalized : '');
-
-    const payload = {
-      slug,
-      status: config.status || 'unknown',
-      category: config.category || 'unknown',
-      booking: {
-        mode: config?.booking?.mode || 'unknown',
-        sheetName: config?.booking?.sheetName || '',
-        workspaceId: (config?.workspaceId || config?.booking?.workspaceId || '').toString().trim(),
-      },
-      routing: {
-        notificationsOwnerEmail,
-        contactEmail,
-        effectiveOwnerEmail,
-        notificationsOwnerEmailRaw,
-        contactEmailRaw,
-        notificationsOwnerEmailNormalized,
-        contactEmailNormalized,
-        effectiveOwnerEmailNormalized,
-        effectiveOwnerEmailNormalizedValid: isValidEmail(effectiveOwnerEmailNormalized),
-      },
-      updatedAt: config.updatedAt || config.lastUpdated || null,
-    };
-
-    return new Response(JSON.stringify(payload), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
-  } catch (error) {
-    console.error('[ADMIN] Site error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to load site' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
-  }
-}
-
-async function handleAdminResetBooking(request, env) {
-  try {
-    const url = new URL(request.url);
-    const slug = (url.searchParams.get('slug') || '').toString().trim();
-
-    if (!slug || !VALID_SLUG_PATTERN.test(slug)) {
-      return new Response(JSON.stringify({ ok: false, error: 'invalid_slug' }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        }
-      });
-    }
-
-    const key = `config:${slug}`;
-    const config = await env.RESORT_CONFIGS.get(key, { type: 'json' });
-
-    if (!config) {
-      return new Response(JSON.stringify({ ok: false, error: 'not_found', slug }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        }
-      });
-    }
-
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    const updatedConfig = {
-      ...config,
-      quota_whatsapp_used: 0,
-      quota_sms_used: 0,
-      quota_used_month: currentMonth,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await env.RESORT_CONFIGS.put(key, JSON.stringify(updatedConfig));
-
-    // Clear the hourly rate limit counter (used by booking API).
-    const rateKey = `rate:${slug}`;
-    await env.RESORT_CONFIGS.delete(rateKey);
-
-    return new Response(JSON.stringify({
-      ok: true,
-      slug,
-      reset: {
-        quota: true,
-        rate: true,
-      },
-      month: currentMonth,
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
-  } catch (error) {
-    console.error('[ADMIN] Reset booking error:', error);
-    return new Response(JSON.stringify({ ok: false, error: 'reset_failed' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
-  }
-}
-
 async function handleAdminExperiments(request, env) {
   try {
     console.log('[ADMIN] Experiments request');
@@ -3510,24 +2470,6 @@ async function handleCEOPublish(request, env) {
     // Add metadata
     config.slug = slug;
     config.updatedAt = new Date().toISOString();
-
-    // Workspace sharding (booking sink routing)
-    // Assign workspaceId only when publishing a NEW site.
-    const existingConfigRaw = await env.RESORT_CONFIGS.get(`config:${slug}`);
-    const isNewSite = !existingConfigRaw;
-
-    if (isNewSite) {
-      const requestedWorkspaceId = config.workspaceId || config.booking?.workspaceId || null;
-      const allocation = await allocateWorkspaceIdForNewSite(env, requestedWorkspaceId);
-      config.workspaceId = allocation.workspaceId;
-      if (!config.booking) config.booking = {};
-      config.booking.workspaceId = allocation.workspaceId;
-    } else {
-      // Preserve existing workspaceId if present.
-      if (config.workspaceId && config.booking) {
-        config.booking.workspaceId = config.workspaceId;
-      }
-    }
     
     // Write to KV
     await env.RESORT_CONFIGS.put(`config:${slug}`, JSON.stringify(config));
@@ -3569,7 +2511,7 @@ async function handleCEOPublish(request, env) {
       success: true,
       slug: slug,
       url: `https://${slug}.webzyl.com`,
-      operatorDashboard: `https://webzyl.com/operator?slug=${slug}`,
+      operatorDashboard: `https://webzyl-operator.pages.dev/operator-dashboard?slug=${slug}`,
       message: 'Property published successfully'
     });
     
@@ -4013,7 +2955,7 @@ function formatPrice(value, unit = '', currencySymbol = '₹') {
   return `${currencySymbol}${text}${unit ? ` ${unit}` : ''}`;
 }
 
-function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
+function renderSmartTemplate(config, templateHTML, designProfile) {
   const intent = deriveBusinessIntent(config.category);
   const labels = getIntentLabels(intent);
   const themeId = config.templateId || 'ocean-breeze';
@@ -4093,11 +3035,10 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
 
     // Allowlist keys -> safe built-in font stacks (no external loads)
     const map = {
-      // Use single quotes so we can safely embed this into HTML attributes like: style="--var:..."
-      modern: `ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, 'Noto Sans', 'Liberation Sans', sans-serif`,
-      classic: `ui-serif, Georgia, 'Times New Roman', Times, serif`,
-      elegant: `ui-serif, 'Palatino Linotype', Palatino, Georgia, serif`,
-      mono: `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace`
+      modern: `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif`,
+      classic: `ui-serif, Georgia, "Times New Roman", Times, serif`,
+      elegant: `ui-serif, "Palatino Linotype", Palatino, Georgia, serif`,
+      mono: `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`
     };
 
     return map[raw] || '';
@@ -4116,8 +3057,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const heroFitClass = heroFitMode === 'cover' ? 'hero-fit-cover' : 'hero-fit-contain';
 
   const mobileHeroBoxedRaw = config.branding?.mobileHeroBoxed ?? config.mobileHeroBoxed;
-  // Default to false (off) for a cleaner mobile hero look
-  const mobileHeroBoxed = (mobileHeroBoxedRaw === true || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'true') ? true : false;
+  const mobileHeroBoxed = (mobileHeroBoxedRaw === false || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'false') ? false : true;
   const mobileHeroBoxClass = mobileHeroBoxed ? 'mobile-hero-boxed' : '';
 
   // Back-compat: heroContentPositionDesktop/Mobile and heroTextPositionDesktop/Mobile map to headline position
@@ -4224,21 +3164,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
       `"`
     : '';
 
-  // FOUC Fix: Generate CSS variables for :root to prevent position shift on refresh
-  const heroPositionCssVars = [
-    heroHeadlinePosDesktop ? `--hero-headline-x-desktop:${heroHeadlinePosDesktop.x}%; --hero-headline-y-desktop:${heroHeadlinePosDesktop.y}%;` : '',
-    heroHeadlinePosMobile ? `--hero-headline-x-mobile:${heroHeadlinePosMobile.x}%; --hero-headline-y-mobile:${heroHeadlinePosMobile.y}%;` : '',
-    heroTaglinePosDesktop ? `--hero-tagline-x-desktop:${heroTaglinePosDesktop.x}%; --hero-tagline-y-desktop:${heroTaglinePosDesktop.y}%;` : '',
-    heroTaglinePosMobile ? `--hero-tagline-x-mobile:${heroTaglinePosMobile.x}%; --hero-tagline-y-mobile:${heroTaglinePosMobile.y}%;` : '',
-    heroPrimaryCtaPosDesktop ? `--hero-cta-primary-x-desktop:${heroPrimaryCtaPosDesktop.x}%; --hero-cta-primary-y-desktop:${heroPrimaryCtaPosDesktop.y}%;` : '',
-    heroPrimaryCtaPosMobile ? `--hero-cta-primary-x-mobile:${heroPrimaryCtaPosMobile.x}%; --hero-cta-primary-y-mobile:${heroPrimaryCtaPosMobile.y}%;` : '',
-    heroSecondaryCtaPosDesktop ? `--hero-cta-secondary-x-desktop:${heroSecondaryCtaPosDesktop.x}%; --hero-cta-secondary-y-desktop:${heroSecondaryCtaPosDesktop.y}%;` : '',
-    heroSecondaryCtaPosMobile ? `--hero-cta-secondary-x-mobile:${heroSecondaryCtaPosMobile.x}%; --hero-cta-secondary-y-mobile:${heroSecondaryCtaPosMobile.y}%;` : '',
-    whatsappFloatPosDesktop ? `--whatsapp-float-x-desktop:${whatsappFloatPosDesktop.x}%; --whatsapp-float-y-desktop:${whatsappFloatPosDesktop.y}%;` : '',
-    whatsappFloatPosMobile ? `--whatsapp-float-x-mobile:${whatsappFloatPosMobile.x}%; --whatsapp-float-y-mobile:${whatsappFloatPosMobile.y}%;` : ''
-  ].filter(Boolean).join(' ');
-  const heroPositionCssVarsBlock = heroPositionCssVars ? `${heroPositionCssVars}` : '';
-
   const heroTextColor = sanitizeHexColor(config.branding?.heroTextColor ?? config.heroTextColor ?? '');
   const heroFontFamily = sanitizeHeroFontStyle(config.branding?.heroFontStyle ?? config.heroFontStyle ?? '');
   const heroPrimaryCtaFontFamily = sanitizeHeroFontStyle(
@@ -4251,61 +3176,8 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const heroH1SizeMobile = sanitizePx(config.branding?.heroTitleFontSizeMobilePx ?? config.heroTitleFontSizeMobilePx ?? '', 20, 120);
   const heroTaglineSizeDesktop = sanitizePx(config.branding?.heroTaglineFontSizeDesktopPx ?? config.heroTaglineFontSizeDesktopPx ?? '', 12, 48);
   const heroTaglineSizeMobile = sanitizePx(config.branding?.heroTaglineFontSizeMobilePx ?? config.heroTaglineFontSizeMobilePx ?? '', 12, 48);
-  const heroBg = resolveHeroBackground(config);
-  const heroBgHasImage = Boolean(heroBg && heroBg.hasImage && heroBg.url);
-  const heroBgMode = (heroBg && heroBg.type) ? heroBg.type : 'preset';
-
-  // ===============================
-  // Header Style Profile
-  // ===============================
-  const sanitizeHeaderWeight = (value) => {
-    if (value === undefined || value === null || value === '') return '';
-    const n = Number(value);
-    if (!Number.isFinite(n)) return '';
-    const clamped = Math.max(300, Math.min(900, Math.round(n / 50) * 50));
-    return String(clamped);
-  };
-
-  const headerStyle = (config.headerStyle && typeof config.headerStyle === 'object')
-    ? config.headerStyle
-    : ((config.branding?.headerStyle && typeof config.branding.headerStyle === 'object') ? config.branding.headerStyle : null);
-
-  const headerModeRaw = String(headerStyle?.mode ?? '').trim().toLowerCase();
-  const headerMode = (headerModeRaw === 'auto' || headerModeRaw === 'light' || headerModeRaw === 'dark' || headerModeRaw === 'custom')
-    ? headerModeRaw
-    : 'auto';
-
-  // Structural header style: auto/custom resolve based on hero background (blank => dark header, image => light header).
-  const headerModeResolved = (headerMode === 'light' || headerMode === 'dark')
-    ? headerMode
-    : (heroBgMode === 'none' ? 'dark' : 'light');
-
-  const headerTextColorCustom = sanitizeHexColor(headerStyle?.textColor ?? '');
-  // In custom mode without explicit color, use empty string to allow CSS fallback to Auto behavior
-  const headerTextColor = (headerMode === 'custom' && !headerTextColorCustom)
-    ? ''
-    : (headerTextColorCustom || (headerModeResolved === 'dark' ? '#1a202c' : '#ffffff'));
-
-  const headerBrandFontFamily = sanitizeHeroFontStyle(headerStyle?.brandFontStyle ?? '');
-  const headerBrandFontWeight = sanitizeHeaderWeight(headerStyle?.brandFontWeight ?? '');
-  const headerBrandFontSize = sanitizePx(headerStyle?.brandFontSizePx ?? '', 14, 40);
-
-  // Default to classic serif font for a more stylish look
-  const headerBrandFontFamilyEffective = headerBrandFontFamily || `ui-serif, Georgia, 'Times New Roman', Times, serif`;
-  const headerBrandFontWeightEffective = headerBrandFontWeight || '800';
-  const headerBrandFontSizeEffective = headerBrandFontSize || '24px';
-
-  const bodyClasses = [];
-  if (heroBgMode === 'none') bodyClasses.push('hero-bg-none');
-  bodyClasses.push(`header-style-${headerModeResolved}`);
-  // Only add custom class if actually using a custom color
-  if (headerMode === 'custom' && headerTextColorCustom) bodyClasses.push('header-style-custom');
-  const bodyClass = bodyClasses.join(' ').trim();
-
-  // If background is explicitly none and no custom hero text color was provided, default to dark for readability.
-  const heroTextColorEffective = (!heroTextColor && heroBgMode === 'none') ? '#1a202c' : heroTextColor;
   const hasHeroTextStyle = Boolean(
-    heroTextColorEffective ||
+    heroTextColor ||
     heroFontFamily ||
     heroPrimaryCtaFontFamily ||
     heroSecondaryCtaFontFamily ||
@@ -4316,7 +3188,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   );
   const heroTextStyleAttr = hasHeroTextStyle
     ? `style="` +
-      (heroTextColorEffective ? `--hero-text-color:${heroTextColorEffective}; ` : '') +
+      (heroTextColor ? `--hero-text-color:${heroTextColor}; ` : '') +
       (heroFontFamily ? `--hero-font-family:${heroFontFamily}; ` : '') +
       (heroPrimaryCtaFontFamily ? `--hero-cta-primary-font-family:${heroPrimaryCtaFontFamily}; ` : '') +
       (heroSecondaryCtaFontFamily ? `--hero-cta-secondary-font-family:${heroSecondaryCtaFontFamily}; ` : '') +
@@ -4338,54 +3210,10 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const has_logo = Boolean(rawLogoUrl);
   
   const has_gallery = Array.isArray(config.gallery) && config.gallery.length > 0;
-  const fallbackVideoThumb = (() => {
-    const fromHero = (heroBgHasImage ? heroBg.url : '');
-    if (fromHero) return String(fromHero);
-    const first = (Array.isArray(config.gallery) && config.gallery.length > 0) ? config.gallery[0] : null;
-    const firstUrl = (typeof first === 'string') ? first : (first?.url || '');
-    return firstUrl ? String(firstUrl) : '';
-  })();
-  const videos = normalizeVideoItems(config, fallbackVideoThumb);
-  const has_videos = videos.length > 0;
-
-  // Best-effort background backfill for missing thumbnails (non-blocking).
-  // This makes Instagram/Vimeo/etc automatically pick up a thumbnail over time.
-  try {
-    if (env && ctx && config?.slug) {
-      const rawVideos = Array.isArray(config?.videos) ? config.videos : [];
-      const hasAnyMissingThumb = rawVideos.some(v => {
-        if (!v) return false;
-        if (typeof v === 'string') return true;
-        const url = normalizeHttpUrl(v.url || v.link || '');
-        if (!url) return false;
-        const thumb = normalizeHttpUrl(v.thumbnail || v.thumb || '');
-        return !thumb;
-      });
-
-      if (hasAnyMissingThumb) {
-        ctx.waitUntil(backfillVideoThumbnails(env, String(config.slug), fallbackVideoThumb));
-      }
-    }
-  } catch (e) {
-    console.warn('[VIDEOS] Thumbnail backfill scheduling failed:', e?.message || e);
-  }
   const has_offerings = Array.isArray(config.rooms) && config.rooms.length > 0;
   const has_highlights = Array.isArray(config.amenities) && config.amenities.length > 0;
   const has_primary_action = ['hospitality', 'retail', 'service'].includes(intent);
   const has_social = config.social && (config.social.facebook || config.social.instagram || config.social.twitter || config.social.youtube);
-  const has_booking = intent === 'hospitality' && Boolean(config.booking);
-
-  // Reviews processing
-  const visibleReviews = (Array.isArray(config.reviews) ? config.reviews : [])
-    .filter(r => r && r.visible !== false && r.name && r.text)
-    .map(r => ({
-      name: String(r.name || '').trim(),
-      text: String(r.text || '').trim(),
-      rating: parseInt(r.rating) || 5,
-      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-      STARS: Array(parseInt(r.rating) || 5).fill('⭐')
-    }));
-  const has_reviews = visibleReviews.length > 0;
 
   // Hero title (separate from property name)
   const heroTitleText = String(
@@ -4434,30 +3262,18 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
 
   const primaryActionLabelOverride = String(config.branding?.primaryActionLabel ?? config.primaryActionLabel ?? '').trim();
   const primaryActionLabel = primaryActionLabelOverride || labels.primaryAction;
-
-  // Map embed: template expects a URL for <iframe src="{{MAP_EMBED}}">.
-  // Some configs may store the full <iframe ...> markup; normalize to a safe src URL.
-  const mapEmbedSrc = normalizeMapEmbedSrc(config.embeds?.map);
   
   let html = templateHTML
     .replace(/{{BUSINESS_NAME}}/g, config.name || '')
     .replace(/{{HERO_TITLE}}/g, heroTitleText)
     .replace(/{{HERO_TITLE_DISPLAY_DESKTOP}}/g, heroTitleDisplayDesktop)
     .replace(/{{HERO_TITLE_DISPLAY_MOBILE}}/g, heroTitleDisplayMobile)
-    .replace(/{{HERO_TITLE_MODE_MOBILE}}/g, heroTitleModeMobile)
-    .replace(/{{HERO_POSITION_CSS_VARS}}/g, heroPositionCssVarsBlock)
     .replace(/{{TAGLINE}}/g, config.tagline || '')
     .replace(/{{DESCRIPTION}}/g, config.about || '')
     .replace(/{{PRIMARY_COLOR}}/g, colors.primary)
     .replace(/{{PRIMARY_DARK}}/g, colors.primaryDark)
     .replace(/{{PRIMARY_LIGHT}}/g, colors.primaryLight)
-    .replace(/{{HERO_IMAGE}}/g, (heroBgHasImage ? heroBg.url : ''))
-    .replace(/{{HERO_BG_CLASS}}/g, heroBgMode === 'none' ? 'hero-bg-none' : '')
-    .replace(/{{BODY_CLASS}}/g, bodyClass)
-    .replace(/{{HEADER_TEXT_COLOR}}/g, headerTextColor)
-    .replace(/{{HEADER_BRAND_FONT_FAMILY}}/g, headerBrandFontFamilyEffective)
-    .replace(/{{HEADER_BRAND_FONT_WEIGHT}}/g, headerBrandFontWeightEffective)
-    .replace(/{{HEADER_BRAND_FONT_SIZE}}/g, headerBrandFontSizeEffective)
+    .replace(/{{HERO_IMAGE}}/g, (config.heroImage || config.branding?.heroImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945') + (config.heroImage && config.heroImage.includes('img.webzyl.com') ? '?w=1920&q=90' : ''))
     .replace(/{{HERO_FIT_CLASS}}/g, heroFitClass)
     .replace(/{{MOBILE_HERO_BOX_CLASS}}/g, mobileHeroBoxClass)
     .replace(/{{HERO_TEXT_STYLE_ATTR}}/g, heroTextStyleAttr)
@@ -4480,60 +3296,29 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     .replace(/{{EMAIL}}/g, config.contact?.email || '')
     .replace(/{{WHATSAPP}}/g, config.contact?.whatsapp || '')
     .replace(/{{ADDRESS}}/g, config.location?.address || '')
-    .replace(/{{MAP_LINK}}/g, config.location?.mapLink || '')
-    .replace(/{{SLUG}}/g, String(config.slug || ''));
+    .replace(/{{MAP_LINK}}/g, config.location?.mapLink || '');
   
-  // Menu Labels - custom or defaults
-  const menuLabels = config.menuLabels || {};
-  const MENU_LABEL_ABOUT = menuLabels.about || 'About';
-  const MENU_LABEL_GALLERY = menuLabels.gallery || 'Gallery';
-  const MENU_LABEL_VIDEOS = menuLabels.videos || 'Videos';
-  const MENU_LABEL_REVIEWS = menuLabels.reviews || 'Testimonials';
-  const MENU_LABEL_CONTACT = menuLabels.contact || 'Contact';
-  const MENU_LABEL_BOOKING = menuLabels.booking || 'Booking';
-
   html = html
     .replace(/{{OFFERINGS_LABEL}}/g, labels.offerings)
     .replace(/{{OFFERINGS_MENU_LABEL}}/g, labels.offeringsMenu)
     .replace(/{{HIGHLIGHTS_LABEL}}/g, labels.highlights)
     .replace(/{{HIGHLIGHTS_MENU_LABEL}}/g, labels.highlightsMenu)
-    .replace(/{{MENU_LABEL_ABOUT}}/g, MENU_LABEL_ABOUT)
-    .replace(/{{MENU_LABEL_GALLERY}}/g, MENU_LABEL_GALLERY)
-    .replace(/{{MENU_LABEL_VIDEOS}}/g, MENU_LABEL_VIDEOS)
-    .replace(/{{MENU_LABEL_REVIEWS}}/g, MENU_LABEL_REVIEWS)
-    .replace(/{{MENU_LABEL_CONTACT}}/g, MENU_LABEL_CONTACT)
-    .replace(/{{MENU_LABEL_BOOKING}}/g, MENU_LABEL_BOOKING)
     .replace(/{{PRIMARY_ACTION_LABEL}}/g, primaryActionLabel)
     .replace(/{{PRIMARY_ACTION_WHATSAPP}}/g, `${labels.primaryActionWhatsApp} ${config.name}`)
     .replace(/{{PRIMARY_ACTION_ICON}}/g, labels.primaryActionIcon);
 
-  const primaryActionLink = has_booking
-    ? '#booking'
-    : (config.contact?.whatsapp
-      ? `https://wa.me/${config.contact.whatsapp}?text=${encodeURIComponent(`${labels.primaryActionWhatsApp} ${config.name || ''}`)}`
-      : '#contact');
+  const primaryActionLink = config.contact?.whatsapp
+    ? `https://wa.me/${config.contact.whatsapp}?text=${encodeURIComponent(`${labels.primaryActionWhatsApp} ${config.name || ''}`)}`
+    : '#contact';
   html = html.replace(/{{PRIMARY_ACTION_LINK}}/g, primaryActionLink);
-
-  const bookingRoomsSource = (Array.isArray(config.rooms) && config.rooms.length > 0) ? config.rooms : [];
-  const bookingRoomOptions = bookingRoomsSource.map(r => {
-    const name = (typeof r === 'string' ? r : (r?.name || '')).toString().trim();
-    if (!name) return '';
-    const safe = name.replace(/\"/g, '&quot;');
-    return `<option value="${safe}">${name}</option>`;
-  }).filter(Boolean).join('\n');
-  html = html.replace(/{{BOOKING_ROOM_OPTIONS}}/g, bookingRoomOptions);
   
   html = handleConditional(html, 'HAS_GALLERY', has_gallery);
-  html = handleConditional(html, 'HAS_VIDEOS', has_videos);
   html = handleConditional(html, 'HAS_OFFERINGS', has_offerings);
   html = handleConditional(html, 'HAS_HIGHLIGHTS', has_highlights);
-  html = handleConditional(html, 'HAS_REVIEWS', has_reviews);
-  html = handleConditional(html, 'HAS_BOOKING', has_booking);
   html = handleConditional(html, 'HAS_PRIMARY_ACTION', has_primary_action);
   html = handleConditional(html, 'HAS_SOCIAL', has_social);
   html = handleConditional(html, 'HAS_LOGO', has_logo);
   html = handleConditional(html, 'HAS_HERO_TITLE', has_hero_title);
-  html = handleConditional(html, 'HAS_HERO_BG_IMAGE', heroBgHasImage);
   html = handleConditional(html, 'HAS_SECONDARY_ACTION', has_secondary_action);
   
   html = handleConditional(html, 'FACEBOOK', config.social?.facebook);
@@ -4541,7 +3326,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   html = handleConditional(html, 'TWITTER', config.social?.twitter);
   html = handleConditional(html, 'YOUTUBE_SOCIAL', config.social?.youtube);
   html = handleConditional(html, 'MAP_LINK', config.location?.mapLink);
-  html = handleConditional(html, 'MAP_EMBED', mapEmbedSrc);
+  html = handleConditional(html, 'MAP_EMBED', config.embeds?.map);
   
   if (config.social) {
     html = html.replace(/{{FACEBOOK}}/g, config.social.facebook || '');
@@ -4550,8 +3335,8 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     html = html.replace(/{{YOUTUBE_SOCIAL}}/g, config.social.youtube || '');
   }
 
-  if (mapEmbedSrc) {
-    html = html.replace(/{{MAP_EMBED}}/g, escapeHtmlAttribute(mapEmbedSrc));
+  if (config.embeds?.map) {
+    html = html.replace(/{{MAP_EMBED}}/g, config.embeds.map);
   }
 
   if (has_secondary_action) {
@@ -4572,320 +3357,31 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     }).filter(Boolean).join('\n');
     html = html.replace(/{{#GALLERY}}[\s\S]*?{{\/GALLERY}}/g, galleryHTML);
   }
-
-  if (has_videos) {
-    const videosHTML = videos.map(v => {
-      const href = escapeHtmlAttribute(v.url);
-      const thumb = escapeHtmlAttribute(v.thumbnail || '');
-      const title = escapeHtmlAttribute(v.title || 'Video');
-      if (!href) return '';
-      const imgTag = thumb ? `<img src="${thumb}" alt="${title}">` : '';
+  
+  if (has_highlights) {
+    const highlightsHTML = config.amenities.map(amenity => {
+      const name = typeof amenity === 'string' ? amenity : amenity.name;
+      const icon = (typeof amenity === 'object' && amenity.icon) ? amenity.icon : '✨';
       return `
-        <a class="gallery-item" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="${title}">
-          ${imgTag}
-        </a>
-      `;
-    }).filter(Boolean).join('\n');
-    html = html.replace(/{{#VIDEOS}}[\s\S]*?{{\/VIDEOS}}/g, videosHTML);
-  }
-
-  // Reviews
-  if (has_reviews) {
-    const reviewsHTML = visibleReviews.map(review => {
-      const stars = '⭐'.repeat(review.rating);
-      const dateText = review.date ? ` • ${review.date}` : '';
-      return `
-        <div class="review-card">
-          <div class="review-rating">${stars}</div>
-          <p class="review-text">"${review.text}"</p>
-          <div class="review-author">
-            <strong>${review.name}</strong>
-            ${dateText ? `<span class="review-date">${dateText}</span>` : ''}
-          </div>
+        <div class="amenity-card">
+          <div class="amenity-icon">${icon}</div>
+          <h3>${name}</h3>
         </div>
       `;
     }).join('\n');
-    html = html.replace(/{{#REVIEWS}}[\s\S]*?{{\/REVIEWS}}/g, reviewsHTML);
-  }
-
-  if (has_highlights) {
-    // Property-level amenity icons mapping
-    const propertyAmenityIcons = {
-      'Free WiFi': '📶', 'WiFi': '📶', 'Free Parking': '🅿️', 'Parking': '🅿️',
-      'Hot Water': '♨️', 'Power Backup': '🔋', 'Room Service': '🛎️', '24/7 Room Service': '🛎️',
-      '24/7 Support': '📞', 'Air Conditioning': '❄️', 'AC': '❄️', 'Heating': '🔥', 'Heater': '🔥',
-      'Swimming Pool': '🏊', 'Pool': '🏊', 'Gym': '💪', 'Fitness Center': '💪',
-      'Restaurant': '🍽️', 'Dining': '🍽️', 'Bar': '🍸', 'Spa': '💆', 'Massage': '💆',
-      'Garden': '🌳', 'Pet Friendly': '🐕', 'Laundry': '🧺', 'Airport Shuttle': '✈️',
-      'Conference Room': '📊', 'Business Center': '💼', 'Kids Play Area': '🎮',
-      'Bonfire': '🔥', 'BBQ': '🍖', 'BBQ Facilities': '🍖', 'Barbecue': '🍖',
-      'Complimentary Breakfast': '🍳', 'Breakfast': '🍳',
-      'TV': '📺', 'Cable TV': '📺', 'Kitchen': '🍳', 'Kitchenette': '🍳',
-      'Balcony': '🏞️', 'Terrace': '🏞️', 'Safe': '🔒', 'Security': '🔒'
-    };
-
-    // Adaptive sizing based on amenity count
-    const totalAmenities = config.amenities.length;
-    const getSizeConfig = (count) => {
-      if (count <= 6) {
-        return { iconSize: '2.5rem', fontSize: '0.95rem', padding: '1.2rem 1.5rem', minWidth: '140px' };
-      } else if (count <= 12) {
-        return { iconSize: '2rem', fontSize: '0.85rem', padding: '1rem 1.3rem', minWidth: '120px' };
-      } else {
-        return { iconSize: '1.8rem', fontSize: '0.75rem', padding: '0.9rem 1.1rem', minWidth: '110px' };
-      }
-    };
-
-    const sizeConfig = getSizeConfig(totalAmenities);
-
-    const highlightsHTML = config.amenities.map((amenity, idx) => {
-      const name = (typeof amenity === 'string' ? amenity : (amenity?.name || '')).toString().trim();
-      // Check if amenity object has icon, otherwise lookup from mapping, default to ✨
-      const icon = (typeof amenity === 'object' && amenity.icon)
-        ? amenity.icon.toString()
-        : (propertyAmenityIcons[name] || '✨');
-      const safeName = name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      if (!name) return '';
-
-      // Alternating gradient colors
-      const gradients = [
-        `linear-gradient(135deg, ${colors.primary}18, ${colors.primary}28)`,
-        `linear-gradient(135deg, ${colors.secondary}18, ${colors.secondary}28)`,
-        `linear-gradient(135deg, ${colors.primary}12, ${colors.secondary}22)`
-      ];
-      const bgGradient = gradients[idx % 3];
-
-      return `
-        <div style="
-          background: ${bgGradient};
-          border: 2px solid ${idx % 2 === 0 ? colors.primary : colors.secondary}35;
-          border-radius: 16px;
-          padding: ${sizeConfig.padding};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.6rem;
-          min-width: ${sizeConfig.minWidth};
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-          cursor: default;
-        " onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)';"
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
-          <div style="font-size: ${sizeConfig.iconSize}; line-height: 1;">${icon}</div>
-          <div style="font-size: ${sizeConfig.fontSize}; font-weight: 600; text-align: center; color: #2d3748; line-height: 1.3;">${safeName}</div>
-        </div>
-      `;
-    }).filter(Boolean).join('\n');
     html = html.replace(/{{#HIGHLIGHTS}}[\s\S]*?{{\/HIGHLIGHTS}}/g, highlightsHTML);
   }
   
   if (has_offerings) {
-    // Amenity icons mapping
-    const amenityIcons = {
-      'AC': '❄️', 'Heater': '🔥', 'Single Bed': '🛏️', 'Double Bed': '🛏️', 'King Bed': '🛏️', 'Twin Beds': '🛏️',
-      'Attached Bathroom': '🚿', 'Private Bathroom': '🚿', 'TV': '📺', 'WiFi': '📶', 'Mini Fridge': '🧊',
-      'Coffee Maker': '☕', 'Balcony': '🏞️', 'Sea View': '🌊', 'Mountain View': '⛰️', 'Garden View': '🌳',
-      'Work Desk': '💼', 'Safe': '🔒', 'Wardrobe': '👔', 'Hair Dryer': '💨', 'Iron': '🔌', 'Kettle': '🫖'
-    };
-
     const offeringsHTML = config.rooms.map(room => {
       const roomData = typeof room === 'object' ? room : { name: room };
       const priceValue = roomData.price ?? config.basePrice ?? '';
       const priceUnit = roomData.priceUnit || (intent === 'hospitality' ? '/night' : '');
       const priceLabel = formatPrice(priceValue, priceUnit);
-      const image = roomData.image || null;
-
-      // Get room amenities
-      const roomAmenities = roomData.amenities || [];
-      // Adaptive display based on amenity count - show ALL amenities
-      const totalAmenities = roomAmenities.length;
-
-      // Generate amenity visual card if no image
-      let visualContent = '';
-      if (!image && totalAmenities > 0) {
-        // Adaptive sizing based on amenity count
-        const getSizeConfig = (count) => {
-          if (count <= 4) {
-            return { iconSize: '2rem', fontSize: '0.8rem', padding: '0.85rem 1.1rem', minWidth: '100px', gridMin: '95px' };
-          } else if (count <= 8) {
-            return { iconSize: '1.6rem', fontSize: '0.72rem', padding: '0.7rem 0.95rem', minWidth: '85px', gridMin: '80px' };
-          } else if (count <= 12) {
-            return { iconSize: '1.4rem', fontSize: '0.65rem', padding: '0.6rem 0.85rem', minWidth: '75px', gridMin: '70px' };
-          } else {
-            return { iconSize: '1.2rem', fontSize: '0.6rem', padding: '0.5rem 0.75rem', minWidth: '65px', gridMin: '60px' };
-          }
-        };
-
-        const sizeConfig = getSizeConfig(totalAmenities);
-
-        // Create modern, attractive amenity grid - show ALL amenities
-        const amenityGrid = roomAmenities.map((amenity, idx) => {
-          const icon = amenityIcons[amenity] || '✨';
-          // Alternating gradient colors for each badge
-          const gradients = [
-            `linear-gradient(135deg, ${colors.primary}20, ${colors.primary}30)`,
-            `linear-gradient(135deg, ${colors.secondary}20, ${colors.secondary}30)`,
-            `linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}25)`
-          ];
-          const bgGradient = gradients[idx % 3];
-
-          return `
-            <div style="
-              background: ${bgGradient};
-              border: 1.5px solid ${idx % 2 === 0 ? colors.primary : colors.secondary}40;
-              border-radius: 12px;
-              padding: ${sizeConfig.padding};
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 0.3rem;
-              min-width: ${sizeConfig.minWidth};
-              transition: transform 0.2s;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            ">
-              <div style="font-size: ${sizeConfig.iconSize}; line-height: 1;">${icon}</div>
-              <div style="font-size: ${sizeConfig.fontSize}; font-weight: 600; text-align: center; color: #2d3748; line-height: 1.2;">${amenity}</div>
-            </div>
-          `;
-        }).join('');
-
-        visualContent = `
-          <div class="card-image" style="
-            background: linear-gradient(135deg, ${colors.primary}08 0%, ${colors.secondary}12 50%, ${colors.primary}08 100%);
-            position: relative;
-            overflow: hidden;
-            padding: 1.75rem 1.25rem;
-            min-height: 220px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-          ">
-            <!-- Decorative background pattern -->
-            <div style="
-              position: absolute;
-              top: -50px;
-              right: -50px;
-              width: 200px;
-              height: 200px;
-              background: ${colors.primary}08;
-              border-radius: 50%;
-              filter: blur(40px);
-            "></div>
-            <div style="
-              position: absolute;
-              bottom: -30px;
-              left: -30px;
-              width: 150px;
-              height: 150px;
-              background: ${colors.secondary}08;
-              border-radius: 50%;
-              filter: blur(40px);
-            "></div>
-
-            <!-- Enhanced header badge with dark/light contrast -->
-            <div style="
-              background:
-                linear-gradient(135deg,
-                  rgba(0,0,0,0.85) 0%,
-                  rgba(30,30,30,0.9) 50%,
-                  rgba(0,0,0,0.85) 100%);
-              color: white;
-              padding: 0.7rem 1.5rem;
-              border-radius: 30px;
-              font-size: 0.95rem;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 1.5px;
-              margin-bottom: 1.2rem;
-              align-self: center;
-              position: relative;
-              box-shadow:
-                0 0 60px ${colors.primary}FF,
-                0 0 40px ${colors.secondary}FF,
-                0 0 30px rgba(255,255,255,0.8),
-                0 12px 35px rgba(0,0,0,0.6),
-                0 0 0 3px ${colors.primary},
-                0 0 0 6px white,
-                0 0 0 9px ${colors.secondary},
-                0 0 0 12px rgba(0,0,0,0.3),
-                inset 0 2px 0 rgba(255,255,255,0.3),
-                inset 0 -2px 0 rgba(0,0,0,0.5);
-              border: none;
-              text-shadow:
-                0 0 30px ${colors.primary}FF,
-                0 0 20px ${colors.secondary}FF,
-                0 0 10px rgba(255,255,255,0.8),
-                0 3px 8px rgba(0,0,0,0.8),
-                2px 2px 4px rgba(0,0,0,0.9);
-            ">✨ ROOM FEATURES ✨</div>
-
-            <!-- Scrollable amenity grid container -->
-            <div style="
-              position: relative;
-              max-height: ${totalAmenities > 12 ? '280px' : 'auto'};
-              overflow-y: ${totalAmenities > 12 ? 'auto' : 'visible'};
-              overflow-x: hidden;
-              padding-right: ${totalAmenities > 12 ? '8px' : '0'};
-              margin-right: ${totalAmenities > 12 ? '-8px' : '0'};
-            ">
-              <!-- Beautiful custom scrollbar styles -->
-              <style>
-                .amenity-scroll::-webkit-scrollbar {
-                  width: 8px;
-                }
-                .amenity-scroll::-webkit-scrollbar-track {
-                  background: rgba(255,255,255,0.3);
-                  border-radius: 10px;
-                  margin: 4px 0;
-                }
-                .amenity-scroll::-webkit-scrollbar-thumb {
-                  background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
-                  border-radius: 10px;
-                  border: 2px solid rgba(255,255,255,0.3);
-                }
-                .amenity-scroll::-webkit-scrollbar-thumb:hover {
-                  background: linear-gradient(135deg, ${colors.secondary}, ${colors.primary});
-                }
-              </style>
-
-              <!-- Adaptive amenity grid -->
-              <div class="amenity-scroll" style="
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(${sizeConfig.gridMin}, 1fr));
-                gap: 0.6rem;
-                justify-content: center;
-              ">
-                ${amenityGrid}
-              </div>
-            </div>
-
-            ${totalAmenities > 12 ? `
-              <div style="
-                margin-top: 0.8rem;
-                text-align: center;
-                font-size: 0.7rem;
-                font-weight: 600;
-                color: ${colors.primary};
-                background: linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}15);
-                padding: 0.4rem 0.8rem;
-                border-radius: 12px;
-                display: inline-block;
-                align-self: center;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                border: 1px solid ${colors.primary}30;
-              ">
-                ↕️ Scroll to see all ${totalAmenities} amenities
-              </div>
-            ` : ''}
-          </div>
-        `;
-      } else if (image) {
-        visualContent = `<img src="${image}" alt="${roomData.name || 'Offering'}" class="card-image">`;
-      }
-
+      const image = roomData.image || config.branding?.heroImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945';
       return `
         <div class="card">
-          ${visualContent}
+          <img src="${image}" alt="${roomData.name || 'Offering'}" class="card-image">
           <div class="card-content">
             <h3 class="card-title">${roomData.name || ''}</h3>
             <p class="card-text">${roomData.description || ''}</p>
@@ -4907,246 +3403,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   return html;
 }
 
-// ============================================================================
-// VIDEO THUMBNAIL AUTO-DETECTION (Best-effort)
-// ============================================================================
-
-async function fetchTextWithLimit(url, opts) {
-  const maxBytes = opts?.maxBytes ?? 120_000;
-  const timeoutMs = opts?.timeoutMs ?? 1200;
-  const headers = opts?.headers || {};
-
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort('timeout'), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      headers,
-      signal: controller.signal
-    });
-    if (!res.ok) return '';
-
-    const contentType = (res.headers.get('content-type') || '').toLowerCase();
-    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
-      // Still allow unknown content-type; some sites omit it.
-    }
-
-    if (!res.body) {
-      const text = await res.text();
-      return text.slice(0, maxBytes);
-    }
-
-    const reader = res.body.getReader();
-    const chunks = [];
-    let received = 0;
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) {
-        const remaining = maxBytes - received;
-        if (remaining <= 0) break;
-        const slice = value.byteLength > remaining ? value.slice(0, remaining) : value;
-        chunks.push(slice);
-        received += slice.byteLength;
-        if (received >= maxBytes) break;
-      }
-    }
-
-    try { reader.cancel(); } catch (_) {}
-
-    const total = chunks.reduce((sum, c) => sum + c.byteLength, 0);
-    const buf = new Uint8Array(total);
-    let offset = 0;
-    for (const c of chunks) {
-      buf.set(c, offset);
-      offset += c.byteLength;
-    }
-    return new TextDecoder('utf-8', { fatal: false }).decode(buf);
-  } catch (_) {
-    return '';
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-function extractMetaContent(html, predicate) {
-  if (!html) return '';
-  const head = html.slice(0, 120_000);
-  const metaTags = head.match(/<meta\b[^>]*>/gi) || [];
-  for (const tag of metaTags) {
-    const attrs = {};
-    tag.replace(/([a-zA-Z:_-]+)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/g, (_m, k, v) => {
-      const key = String(k || '').toLowerCase();
-      let val = String(v || '').trim();
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-      }
-      attrs[key] = val;
-      return '';
-    });
-    if (predicate(attrs)) {
-      return String(attrs.content || '').trim();
-    }
-  }
-  return '';
-}
-
-function resolveToAbsoluteHttpUrl(candidate, baseUrl) {
-  const raw = String(candidate || '').replace(/&amp;/g, '&').trim();
-  if (!raw) return '';
-
-  try {
-    // Handle protocol-relative URLs
-    if (raw.startsWith('//')) {
-      const b = new URL(baseUrl);
-      return normalizeHttpUrl(`${b.protocol}${raw}`);
-    }
-
-    const u = new URL(raw, baseUrl);
-    return normalizeHttpUrl(u.href);
-  } catch (_) {
-    return '';
-  }
-}
-
-async function getOpenGraphThumbnailUrl(pageUrl) {
-  const html = await fetchTextWithLimit(pageUrl, {
-    timeoutMs: 1500,
-    maxBytes: 120_000,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; WebzylBot/1.0; +https://webzyl.com)'
-    }
-  });
-  if (!html) return '';
-
-  const ogImage = extractMetaContent(html, (a) => {
-    const prop = String(a.property || '').toLowerCase();
-    return prop === 'og:image' || prop === 'og:image:url' || prop === 'og:image:secure_url';
-  });
-  if (ogImage) return resolveToAbsoluteHttpUrl(ogImage, pageUrl);
-
-  const twitterImage = extractMetaContent(html, (a) => {
-    const name = String(a.name || '').toLowerCase();
-    return name === 'twitter:image' || name === 'twitter:image:src';
-  });
-  if (twitterImage) return resolveToAbsoluteHttpUrl(twitterImage, pageUrl);
-
-  return '';
-}
-
-async function getVimeoThumbnailUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase();
-    if (!host.includes('vimeo.com')) return '';
-    const oembed = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
-    const res = await fetch(oembed, {
-      method: 'GET',
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; WebzylBot/1.0; +https://webzyl.com)'
-      }
-    });
-    if (!res.ok) return '';
-    const data = await res.json().catch(() => null);
-    const thumb = data && (data.thumbnail_url || data.thumbnail_url_with_play_button);
-    return normalizeHttpUrl(thumb || '');
-  } catch (_) {
-    return '';
-  }
-}
-
-async function resolveVideoThumbnailBestEffort(url, fallbackThumb) {
-  const cleanUrl = normalizeHttpUrl(url);
-  if (!cleanUrl) return '';
-
-  const yt = getYouTubeThumbnailUrl(cleanUrl);
-  if (yt) return yt;
-
-  const vimeo = await getVimeoThumbnailUrl(cleanUrl);
-  if (vimeo) return vimeo;
-
-  const og = await getOpenGraphThumbnailUrl(cleanUrl);
-  if (og) return og;
-
-  return normalizeHttpUrl(fallbackThumb);
-}
-
-async function resolveVideoThumbnailNoFallback(url) {
-  const cleanUrl = normalizeHttpUrl(url);
-  if (!cleanUrl) return '';
-
-  const yt = getYouTubeThumbnailUrl(cleanUrl);
-  if (yt) return yt;
-
-  const vimeo = await getVimeoThumbnailUrl(cleanUrl);
-  if (vimeo) return vimeo;
-
-  const og = await getOpenGraphThumbnailUrl(cleanUrl);
-  if (og) return og;
-
-  return '';
-}
-
-async function backfillVideoThumbnails(env, slug, fallbackThumb) {
-  try {
-    const config = await getPropertyConfigSafeUncached(env, slug);
-    if (!config) return;
-
-    const list = Array.isArray(config.videos) ? config.videos : [];
-    if (list.length === 0) return;
-
-    let changed = false;
-    let attempts = 0;
-
-    const updated = list.map((entry) => {
-      if (!entry) return entry;
-
-      // Only update object entries; keep strings untouched.
-      if (typeof entry === 'string') return entry;
-
-      const url = normalizeHttpUrl(entry.url || entry.link || '');
-      if (!url) return entry;
-
-      const existingThumb = normalizeHttpUrl(entry.thumbnail || entry.thumb || '');
-      if (existingThumb) return entry;
-
-      // Cap external fetch work per request to keep it safe.
-      if (attempts >= 2) return entry;
-      attempts++;
-
-      // Placeholder; actual resolution below
-      return { ...entry, __needsThumb: true, url };
-    });
-
-    for (let i = 0; i < updated.length; i++) {
-      const entry = updated[i];
-      if (!entry || typeof entry !== 'object' || entry.__needsThumb !== true) continue;
-
-      const resolved = await resolveVideoThumbnailNoFallback(entry.url);
-      if (resolved) {
-        const { __needsThumb, ...rest } = entry;
-        updated[i] = { ...rest, thumbnail: resolved };
-        changed = true;
-      } else {
-        const { __needsThumb, ...rest } = entry;
-        updated[i] = rest;
-      }
-    }
-
-    if (!changed) return;
-
-    config.videos = updated;
-    config.updatedAt = new Date().toISOString();
-    await env.RESORT_CONFIGS.put(`config:${slug}`, JSON.stringify(config));
-    console.log(`[VIDEOS] Backfilled thumbnails: ${slug}`);
-  } catch (e) {
-    console.warn('[VIDEOS] Backfill failed:', e?.message || e);
-  }
-}
-
 function handleConditional(html, tag, condition) {
   const regex = new RegExp(`{{#${tag}}}([\\s\\S]*?){{\/${tag}}}`, 'g');
   
@@ -5155,150 +3411,6 @@ function handleConditional(html, tag, condition) {
   } else {
     return html.replace(regex, '');
   }
-}
-
-function escapeHtmlAttribute(value) {
-  return value === null || value === undefined
-    ? ''
-    : String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function normalizeMapEmbedSrc(raw) {
-  if (raw === null || raw === undefined) return '';
-
-  let s = String(raw).trim();
-  if (!s) return '';
-
-  // If a full iframe embed snippet was pasted, extract src="...".
-  // Example: <iframe src="https://www.google.com/maps/embed?..." ...></iframe>
-  const iframeMatch = s.match(/<iframe\b[^>]*\bsrc\s*=\s*(["'])(.*?)\1/i);
-  if (iframeMatch && iframeMatch[2]) {
-    s = String(iframeMatch[2]).trim();
-  }
-
-  // Guardrails: `{{MAP_EMBED}}` is injected into an attribute.
-  // If any tag-ish characters remain, do not render.
-  if (!s || /[<>]/.test(s)) return '';
-
-  // Basic URL check. (If empty or non-URL, browsers may iframe the current page.)
-  if (!/^https?:\/\//i.test(s)) return '';
-
-  return s;
-}
-
-function normalizeHttpUrl(raw) {
-  if (raw === null || raw === undefined) return '';
-  const s = String(raw).trim();
-  if (!s) return '';
-
-  // Allow users to paste full embed markup (e.g., Instagram blockquote) by extracting the first URL.
-  let candidate = s;
-  if (/[<>]/.test(candidate)) {
-    const m = candidate.match(/https?:\/\/[^\s"'<>]+/i);
-    candidate = (m && m[0]) ? m[0] : '';
-  }
-
-  candidate = String(candidate || '').replace(/&amp;/g, '&').trim();
-  if (!candidate) return '';
-  if (!/^https?:\/\//i.test(candidate)) return '';
-  if (/[<>]/.test(candidate)) return '';
-  return candidate;
-}
-
-function isYouTubeUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase();
-    return host.includes('youtube.com') || host.includes('youtu.be');
-  } catch (_) {
-    return false;
-  }
-}
-
-function getYouTubeThumbnailUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase();
-    let id = '';
-
-    if (host.includes('youtu.be')) {
-      id = (u.pathname || '').replace(/^\//, '').split('/')[0] || '';
-    } else if (host.includes('youtube.com')) {
-      if (u.pathname.startsWith('/watch')) {
-        id = u.searchParams.get('v') || '';
-      } else if (u.pathname.startsWith('/shorts/')) {
-        id = (u.pathname.split('/shorts/')[1] || '').split('/')[0] || '';
-      } else if (u.pathname.startsWith('/embed/')) {
-        id = (u.pathname.split('/embed/')[1] || '').split('/')[0] || '';
-      }
-    }
-
-    id = String(id || '').trim();
-    if (!id) return '';
-    return `https://img.youtube.com/vi/${encodeURIComponent(id)}/maxresdefault.jpg`;
-  } catch (_) {
-    return '';
-  }
-}
-
-function convertYouTubeEmbedToWatchUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase();
-
-    // Convert /embed/VIDEO_ID to /watch?v=VIDEO_ID for direct viewing
-    if (host.includes('youtube.com') && u.pathname.startsWith('/embed/')) {
-      const videoId = (u.pathname.split('/embed/')[1] || '').split('/')[0];
-      if (videoId) {
-        return `https://www.youtube.com/watch?v=${videoId}`;
-      }
-    }
-
-    return url; // Return original URL if not a YouTube embed URL
-  } catch (_) {
-    return url;
-  }
-}
-
-function normalizeVideoItems(config, fallbackThumb) {
-  const items = [];
-  const rawList = Array.isArray(config?.videos) ? config.videos : [];
-
-  for (const entry of rawList) {
-    if (!entry) continue;
-    const originalUrl = normalizeHttpUrl(typeof entry === 'string' ? entry : (entry.url || entry.link || ''));
-    if (!originalUrl) continue;
-
-    // Convert YouTube embed URLs to watch URLs for clickable links
-    const url = convertYouTubeEmbedToWatchUrl(originalUrl);
-
-    let thumbnail = normalizeHttpUrl(typeof entry === 'object' ? (entry.thumbnail || entry.thumb || '') : '');
-    if (!thumbnail) {
-      // Use original URL (might be embed) to get thumbnail, as getYouTubeThumbnailUrl handles both
-      const yt = getYouTubeThumbnailUrl(originalUrl);
-      thumbnail = yt || normalizeHttpUrl(fallbackThumb);
-    }
-
-    const title = (typeof entry === 'object' && entry.title) ? String(entry.title).trim() : '';
-    items.push({ url, thumbnail, title });
-  }
-
-  // Backward compatible: single YouTube URL stored in embeds.youtube
-  const legacy = normalizeHttpUrl(config?.embeds?.youtube);
-  if (legacy && isYouTubeUrl(legacy) && !items.some(v => v.url === legacy)) {
-    items.push({
-      url: legacy,
-      thumbnail: getYouTubeThumbnailUrl(legacy) || normalizeHttpUrl(fallbackThumb),
-      title: ''
-    });
-  }
-
-  return items;
 }
 
 async function kvGetJSONSafe(namespace, key) {
@@ -5354,69 +3466,6 @@ function generatePropertyTemplate(input, slug) {
   const tagline = input.tagline || generateDefaultTagline(category, input.businessName);
   const description = input.description || generateDefaultDescription(category, input.businessName, input.city);
   const basePrice = input.basePrice || CATEGORY_PRICES[input.category] || 0;
-
-  // Hero background (explicit, onboarding default can be "none")
-  const heroBackgroundType = String(input.heroBackgroundType ?? '').trim().toLowerCase();
-  const heroBackgroundValue = (input.heroBackgroundValue == null ? null : String(input.heroBackgroundValue).trim()) || null;
-  const heroBackground = (heroBackgroundType === 'none' || heroBackgroundType === 'preset' || heroBackgroundType === 'custom')
-    ? { type: heroBackgroundType, value: heroBackgroundValue }
-    : null;
-
-  // Defaults for accommodation categories (homestay/resort/etc.) so sections don't disappear
-  const accommodationTypes = ['homestay', 'resort', 'hotel', 'villa', 'cottage'];
-  const isAccommodationCategory = accommodationTypes.includes(String(input.category || '').trim().toLowerCase());
-
-  const normalizedBasePrice = (() => {
-    const n = Number(basePrice);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  })();
-
-  const defaultRooms = isAccommodationCategory
-    ? (() => {
-        const fallbackImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945';
-        const roomImage = (heroBackground?.type === 'custom' ? (heroBackground.value || '') : '') || fallbackImage;
-
-        if (String(input.category || '').trim().toLowerCase() === 'villa') {
-          return [
-            {
-              name: 'Entire Villa',
-              description: 'Private stay with comfortable amenities and great views.',
-              price: normalizedBasePrice || undefined,
-              priceUnit: '/night',
-              image: roomImage
-            }
-          ];
-        }
-
-        const base = normalizedBasePrice || undefined;
-        const plus = normalizedBasePrice ? Math.round(normalizedBasePrice * 1.25) : undefined;
-
-        return [
-          {
-            name: 'Standard Room',
-            description: 'A comfortable room for a relaxed stay.',
-            price: base,
-            priceUnit: '/night',
-            image: roomImage
-          },
-          {
-            name: 'Deluxe Room',
-            description: 'More space and upgraded comfort for families and couples.',
-            price: plus,
-            priceUnit: '/night',
-            image: roomImage
-          }
-        ];
-      })()
-    : [];
-
-  const inputAmenities = (Array.isArray(input.amenities) ? input.amenities : []).map(a => String(a || '').trim()).filter(Boolean);
-  const amenitiesList = inputAmenities.length ? inputAmenities : [];
-
-  const bookingModeRaw = String(input.bookingMode || '').trim().toLowerCase();
-  const bookingMode = (bookingModeRaw === 'sheet' || bookingModeRaw === 'whatsapp' || bookingModeRaw === 'both')
-    ? bookingModeRaw
-    : 'sheet';
   
   return {
     // Core identity (camelCase)
@@ -5433,17 +3482,13 @@ function generatePropertyTemplate(input, slug) {
     branding: {
       primaryColor: theme.primary,
       logo: input.logoUrl || '',
-      // Legacy: keep heroImage only when background is explicitly custom
-      heroImage: (heroBackground?.type === 'custom' ? (heroBackground.value || '') : ''),
+      heroImage: input.heroImage || '',
       heroFitMode: (input.heroFitMode === 'contain' || input.heroFitMode === 'fit' || input.heroFitMode === 'nocrop') ? 'contain' : 'cover',
       heroObjectPosition: input.heroObjectPosition || '',
-      mobileHeroBoxed: (input.mobileHeroBoxed === true || String(input.mobileHeroBoxed).trim().toLowerCase() === 'true') ? true : false,
+      mobileHeroBoxed: (input.mobileHeroBoxed === false || String(input.mobileHeroBoxed).trim().toLowerCase() === 'false') ? false : true,
       heroContentPositionDesktop: input.heroContentPositionDesktop || '',
       heroContentPositionMobile: input.heroContentPositionMobile || ''
     },
-
-    // Explicit hero background (recommended)
-    heroBackground: heroBackground,
     
     about: description,
     notes: `Created via CEO Dashboard on ${new Date().toISOString()}`,
@@ -5473,7 +3518,7 @@ function generatePropertyTemplate(input, slug) {
     
     // Nested booking object
     booking: {
-      mode: bookingMode,
+      mode: 'sheet',
       sheetName: `Bookings_${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`,
       whatsappTemplate: 'Thank you for your booking request! We will contact you shortly.',
       payment: {
@@ -5513,25 +3558,20 @@ function generatePropertyTemplate(input, slug) {
     
     // Empty arrays for operator to fill later (or filled from input)
     gallery: input.gallery || [],
-    videos: Array.isArray(input.videos) ? input.videos : [],
-    rooms: (Array.isArray(input.rooms) && input.rooms.length > 0) ? input.rooms : [],
-    amenities: amenitiesList.map(a => ({ name: a, icon: '✨' })),
-
-    // Reviews/Testimonials (NEW)
-    reviews: Array.isArray(input.reviews) && input.reviews.length > 0 ? input.reviews : [],
-
+    rooms: [],
+    amenities: input.amenities ? input.amenities.map(a => ({ name: a, icon: '✨' })) : [],
     social: {
       facebook: input.facebook || '',
       instagram: input.instagram || '',
       twitter: input.twitter || '',
       youtube: input.youtube || ''
     },
-
+    
     embeds: {
       youtube: input.youtubeEmbed || '',
       map: input.mapsEmbed || input.mapLink || ''
     },
-
+    
     customDomain: '',
     subdomainEnabled: true,
     createdAt: new Date().toISOString(),
@@ -5539,134 +3579,21 @@ function generatePropertyTemplate(input, slug) {
   };
 }
 
-function getHeroBackgroundPresetUrl(presetId) {
-  const id = String(presetId || '').trim();
-  // A small curated set (3–6). Keep IDs stable.
-  const PRESETS = {
-    // Backward-compat default
-    'platform-default': 'https://images.unsplash.com/photo-1566073771259-6a8506099945',
-
-    // Curated options
-    'minimal-light-01': 'https://images.unsplash.com/photo-1526498460520-4c246339dccb',
-    'nature-01': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-    'luxury-01': 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb',
-    'beach-01': 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21'
-  };
-  return PRESETS[id] || PRESETS['platform-default'];
-}
-
-function resolveHeroBackground(config) {
-  // Priority: explicit heroBackground -> legacy heroImage fields -> platform default
-  const hb = (config && typeof config === 'object') ? (config.heroBackground ?? config.branding?.heroBackground ?? null) : null;
-  const legacyHeroImage = String(config?.heroImage || config?.branding?.heroImage || '').trim();
-
-  if (hb && typeof hb === 'object') {
-    const type = String(hb.type ?? '').trim().toLowerCase();
-    const value = (hb.value == null ? '' : String(hb.value)).trim();
-
-    if (type === 'none') {
-      return { type: 'none', value: null, hasImage: false, url: '' };
-    }
-
-    if (type === 'preset') {
-      const baseUrl = getHeroBackgroundPresetUrl(value || 'platform-default');
-      return { type: 'preset', value: value || 'platform-default', hasImage: true, url: baseUrl };
-    }
-
-    if (type === 'custom') {
-      if (value) {
-        return { type: 'custom', value, hasImage: true, url: value };
-      }
-      // Explicit custom but no URL => treat as none
-      return { type: 'none', value: null, hasImage: false, url: '' };
-    }
-  }
-
-  if (legacyHeroImage) {
-    return { type: 'custom', value: legacyHeroImage, hasImage: true, url: legacyHeroImage };
-  }
-
-  // Backward compatible default
-  return { type: 'preset', value: 'platform-default', hasImage: true, url: getHeroBackgroundPresetUrl('platform-default') };
-}
-
 function generateDefaultTagline(category, businessName) {
   const taglines = {
-    homestay: [
-      'Experience comfort like home',
-      'Your home away from home',
-      'Warm hospitality awaits',
-      'Where comfort meets tradition',
-      'Feel at home, away from home'
-    ],
-    resort: [
-      'Your perfect getaway',
-      'Escape to paradise',
-      'Where luxury meets nature',
-      'Unforgettable experiences await',
-      'Discover your perfect retreat'
-    ],
-    hotel: [
-      'Luxury and comfort combined',
-      'Where every stay matters',
-      'Excellence in hospitality',
-      'Your comfort is our priority',
-      'Modern elegance, timeless service'
-    ],
-    villa: [
-      'Private paradise awaits',
-      'Your exclusive sanctuary',
-      'Luxury in every detail',
-      'Where privacy meets elegance',
-      'Your personal retreat'
-    ],
-    cottage: [
-      'Cozy retreat in nature',
-      'Rustic charm, modern comfort',
-      'Escape to tranquility',
-      'Where nature meets comfort',
-      'Your peaceful hideaway'
-    ],
-    restaurant: [
-      'Delicious food, memorable moments',
-      'Where flavors come alive',
-      'Taste the difference',
-      'Culinary excellence awaits',
-      'Great food, greater memories'
-    ],
-    cafe: [
-      'Great coffee, better vibes',
-      'Your daily coffee ritual',
-      'Where coffee meets community',
-      'Brew happiness, one cup at a time',
-      'Good vibes, great coffee'
-    ],
-    shop: [
-      'Quality products, trusted service',
-      'Your trusted shopping destination',
-      'Where quality meets value',
-      'Shop smart, shop with us',
-      'Excellence in every purchase'
-    ],
-    services: [
-      'Professional service you can trust',
-      'Excellence in service delivery',
-      'Your reliable service partner',
-      'Quality service, guaranteed',
-      'Service with excellence'
-    ],
-    others: [
-      'Quality service for you',
-      'Your trusted partner',
-      'Excellence delivered',
-      'Where quality matters',
-      'Service you can count on'
-    ]
+    homestay: 'Experience comfort like home',
+    resort: 'Your perfect getaway',
+    hotel: 'Luxury and comfort combined',
+    villa: 'Private paradise awaits',
+    cottage: 'Cozy retreat in nature',
+    restaurant: 'Delicious food, memorable moments',
+    cafe: 'Great coffee, better vibes',
+    shop: 'Quality products, trusted service',
+    services: 'Professional service you can trust',
+    others: 'Quality service for you'
   };
-
-  const categoryTaglines = taglines[category] || [`Welcome to ${businessName}`];
-  // Pick a random tagline from the array
-  return categoryTaglines[Math.floor(Math.random() * categoryTaglines.length)];
+  
+  return taglines[category] || `Welcome to ${businessName}`;
 }
 
 function generateDefaultDescription(category, businessName, city) {

@@ -450,31 +450,7 @@ export default {
       const rewrittenRequest = new Request(rewrittenUrl.toString(), request);
       return handleMediaServe(rewrittenRequest, env);
     }
-
-    // =====================================================
-    // WEBZYL BRAND HOMEPAGE (www.webzyl.com and webzyl.com)
-    // =====================================================
-
-    if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
-      // Skip API paths - they're handled later
-      if (!path.startsWith('/api/')) {
-        // Serve super admin dashboard at /super-admin path
-        if (path === '/super-admin' || path === '/super-admin/') {
-          return handleSuperAdminDashboard(request, env);
-        }
-        // Serve admin dashboard (CEO dashboard) at /admin path
-        if (path === '/admin' || path === '/admin/') {
-          return handleCEOAdminDashboard(request, env);
-        }
-        // Serve operator dashboard at /operator path
-        if (path === '/operator' || path === '/operator/') {
-          return handleOperatorDashboard(request, env);
-        }
-        // Serve the Webzyl brand identity page
-        return handleBrandHomepage(request, env, ctx);
-      }
-    }
-
+    
     // =====================================================
     // IMAGE SERVING (Check FIRST - highest priority)
     // =====================================================
@@ -740,7 +716,7 @@ export default {
     
     if (path.startsWith('/api/operator/dashboard/')) {
       const operatorSlug = path.split('/')[4];
-      return handleOperatorDashboardData(operatorSlug, env);
+      return handleOperatorDashboard(operatorSlug, env);
     }
 
     // Backward/alternate operator update endpoint (no slug in path)
@@ -791,12 +767,7 @@ export default {
       const operatorSlug = path.split('/')[5];
       return handleLogoUpload(request, env, operatorSlug);
     }
-
-    if (path.startsWith('/api/operator/room/upload/') && request.method === 'POST') {
-      const operatorSlug = path.split('/')[5];
-      return handleRoomImageUpload(request, env, operatorSlug);
-    }
-
+    
     if (path.startsWith('/api/operator/gallery/update/') && request.method === 'POST') {
       const operatorSlug = path.split('/')[5];
       return handleGalleryUpdate(request, env, operatorSlug);
@@ -949,104 +920,6 @@ export default {
 
       await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
       return jsonResponse({ ok: true, slug: s, workspaceId: w }, 200);
-    }
-
-    // SUPER ADMIN: Update any config field
-    if (path === '/api/admin/config/update' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, updates } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Apply all updates from super admin
-      Object.keys(updates).forEach(key => {
-        config[key] = updates[key];
-      });
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, updated: Object.keys(updates) }, 200);
-    }
-
-    // SUPER ADMIN: Change property slug
-    if (path === '/api/admin/config/change-slug' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { oldSlug, newSlug } = await request.json().catch(() => ({}));
-      const oldS = (oldSlug || '').toString().trim();
-      const newS = (newSlug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(oldS) || !VALID_SLUG_PATTERN.test(newS)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const oldConfig = await getPropertyConfigSafeUncached(env, oldS);
-      if (!oldConfig) {
-        return jsonResponse({ ok: false, error: 'old_slug_not_found' }, 404);
-      }
-
-      const newExists = await getPropertyConfigSafeUncached(env, newS);
-      if (newExists) {
-        return jsonResponse({ ok: false, error: 'new_slug_already_exists' }, 409);
-      }
-
-      // Update slug in config
-      oldConfig.slug = newS;
-      oldConfig.subdomain = newS;
-      oldConfig.updatedAt = new Date().toISOString();
-
-      // Save to new key
-      await env.RESORT_CONFIGS.put(`config:${newS}`, JSON.stringify(oldConfig));
-
-      // Delete old key
-      await env.RESORT_CONFIGS.delete(`config:${oldS}`);
-
-      return jsonResponse({ ok: true, oldSlug: oldS, newSlug: newS }, 200);
-    }
-
-    // SUPER ADMIN: Reset WhatsApp quota
-    if (path === '/api/admin/quota/reset' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, quotaType } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Reset quota based on type
-      if (quotaType === 'whatsapp' || !quotaType) {
-        config.quota_whatsapp_used = 0;
-        const now = new Date();
-        config.quota_used_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      }
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, quotaType: quotaType || 'whatsapp', reset: true }, 200);
     }
 
     // CEO variants (same capabilities, CEO auth)
@@ -1477,129 +1350,6 @@ function extractPropertySlug(hostname) {
   return subdomain;
 }
 
-// =====================================================
-// BRAND HOMEPAGE HANDLER
-// =====================================================
-// Serves the Webzyl brand identity page for www.webzyl.com
-// Template is stored in KV as 'template:brand-homepage'
-// =====================================================
-
-async function handleBrandHomepage(request, env, ctx) {
-  try {
-    // TEMPORARY: Bypass all caching to force fresh content
-    // Fetch template from KV directly
-    const template = await env.RESORT_CONFIGS.get('template:brand-homepage', { type: 'text' });
-
-    if (!template) {
-      return new Response('Brand homepage not configured. Please upload template to KV.', { status: 500 });
-    }
-
-    // Return HTML with no-cache headers to prevent any caching
-    const response = new Response(template, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'CDN-Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'X-Webzyl-Cache': 'BYPASS'
-      }
-    });
-
-    return response;
-  } catch (error) {
-    console.error('[BRAND] Error serving homepage:', error);
-    return new Response('Internal Server Error', { status: 500 });
-  }
-}
-
-async function handleSuperAdminDashboard(request, env) {
-  try {
-    // Fetch super admin dashboard HTML from KV
-    const html = await env.RESORT_CONFIGS.get('page:super-admin-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Super Admin dashboard not found. Please upload to KV with key: page:super-admin-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[SUPER-ADMIN-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading super admin dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
-}
-
-async function handleCEOAdminDashboard(request, env) {
-  try {
-    // Fetch CEO admin dashboard HTML from KV (single source of truth)
-    const html = await env.RESORT_CONFIGS.get('page:ceo-admin-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Admin dashboard not found. Please upload to KV with key: page:ceo-admin-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[CEO-ADMIN-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading admin dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
-}
-
-async function handleOperatorDashboard(request, env) {
-  try {
-    // Fetch operator dashboard HTML from KV (single source of truth)
-    const html = await env.RESORT_CONFIGS.get('page:operator-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Operator dashboard not found. Please upload to KV with key: page:operator-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML - same domain as API, so no CORS issues
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[OPERATOR-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading operator dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
-}
-
 async function handlePropertyRequest(slug, path, request, env) {
   try {
     const configKey = `config:${slug}`;
@@ -1803,34 +1553,34 @@ async function handleOperatorLogin(request, env) {
   }
 }
 
-async function handleOperatorDashboardData(slug, env) {
+async function handleOperatorDashboard(slug, env) {
   try {
     if (!slug) {
       return jsonResponse({ error: 'Slug is required' }, 400);
     }
-
+    
     const configKey = `config:${slug}`;
     const config = await getPropertyConfigSafe(env, slug);
-
+    
     if (!config) {
       return jsonResponse({ error: 'Property not found' }, 404);
     }
-
+    
     // Handle both flat and nested config structures
     const whatsappUsed = config.quota_whatsapp_used || 0;
     const whatsappLimit = config.quota_whatsapp_monthly || 0;
     const smsUsed = config.quota_sms_used || 0;
     const smsLimit = config.quota_sms_monthly || 0;
-
+    
     const stats = {
       total_bookings: 0,
       this_month: 0,
       quota_whatsapp_percent: calculateQuotaPercent(whatsappUsed, whatsappLimit),
       quota_sms_percent: calculateQuotaPercent(smsUsed, smsLimit)
     };
-
+    
     console.log(`[OPERATOR] Dashboard data for ${slug}`);
-
+    
     return jsonResponse({
       property: config,
       stats: stats,
@@ -1843,7 +1593,7 @@ async function handleOperatorDashboardData(slug, env) {
         current_month: config.quota_used_month || new Date().toISOString().substring(0, 7)
       }
     });
-
+    
   } catch (error) {
     console.error('[OPERATOR] Dashboard error:', error);
     return jsonResponse({ error: error.message }, 500);
@@ -2024,31 +1774,10 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     // Update hero image
     if (updates.heroImage) config.heroImage = updates.heroImage;
     
-    // --- Amenities, Room Types & Reviews wiring ---
-    // Defensive: Only update if valid array, else fallback to empty array
-    // This ensures dashboard changes are always reflected and prevents undefined/null issues
-    if (Array.isArray(updates.rooms)) {
-      config.rooms = updates.rooms;
-    } else if (updates.rooms !== undefined) {
-      config.rooms = [];
-    }
-    if (Array.isArray(updates.amenities)) {
-      config.amenities = updates.amenities;
-    } else if (updates.amenities !== undefined) {
-      config.amenities = [];
-    }
-    if (Array.isArray(updates.reviews)) {
-      config.reviews = updates.reviews;
-    } else if (updates.reviews !== undefined) {
-      config.reviews = [];
-    }
-    // Menu Labels
-    if (updates.menuLabels && typeof updates.menuLabels === 'object') {
-      config.menuLabels = updates.menuLabels;
-    }
-    // Gallery update remains as-is
+    // Update arrays (rooms, gallery, amenities)
+    if (updates.rooms) config.rooms = updates.rooms;
     if (updates.gallery) config.gallery = updates.gallery;
-    // --- End amenities/room types/reviews wiring ---
+    if (updates.amenities) config.amenities = updates.amenities;
     if (Object.prototype.hasOwnProperty.call(updates, 'videos')) {
       const rawVideos = Array.isArray(updates.videos) ? updates.videos : [];
       const normalizedVideos = rawVideos
@@ -2431,72 +2160,6 @@ async function handleLogoUpload(request, env, slug) {
     });
   } catch (error) {
     console.error('[OPERATOR] Logo upload error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-async function handleRoomImageUpload(request, env, slug) {
-  try {
-    if (!slug) {
-      return jsonResponse({ error: 'Slug is required' }, 400);
-    }
-
-    const formData = await request.formData();
-    const file = formData.get('file');
-
-    if (!file) {
-      return jsonResponse({ error: 'No file provided' }, 400);
-    }
-
-    if (!ALLOWED_CONTENT_TYPES.includes(file.type)) {
-      return jsonResponse({
-        error: `Invalid file type. Allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`
-      }, 400);
-    }
-
-    // Validate file size (room image - same as hero)
-    if (file.size > MAX_SIZES.hero) {
-      return jsonResponse({
-        error: `File too large. Max ${Math.round(MAX_SIZES.hero / 1024 / 1024)}MB`
-      }, 400);
-    }
-
-    const assetId = generateRandomId(8);
-    const randomHash = generateRandomId(12);
-    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 255);
-    const objectPath = `${slug}/rooms/${randomHash}/${sanitizedFilename}`;
-
-    console.log(`[OPERATOR] Room image upload started for ${slug}: ${assetId}`);
-
-    const arrayBuffer = await file.arrayBuffer();
-
-    await env.MEDIA_R2.put(objectPath, arrayBuffer, {
-      httpMetadata: {
-        contentType: file.type
-      }
-    });
-
-    await env.MEDIA_DB.prepare(`
-      INSERT INTO assets (
-        id, tenantId, mediaType, objectPath, filename,
-        size, contentType, status, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', CURRENT_TIMESTAMP)
-    `).bind(assetId, slug, 'room', objectPath, sanitizedFilename, file.size, file.type).run();
-
-    const imageUrl = `https://img.webzyl.com/${slug}/rooms/${assetId}`;
-
-    console.log(`[OPERATOR] Room image upload successful for ${slug}: ${assetId}`);
-
-    return jsonResponse({
-      success: true,
-      message: 'Room image uploaded successfully',
-      assetId,
-      imageUrl,
-      filename: sanitizedFilename,
-      size: file.size
-    });
-  } catch (error) {
-    console.error('[OPERATOR] Room image upload error:', error);
     return jsonResponse({ error: error.message }, 500);
   }
 }
@@ -3569,7 +3232,7 @@ async function handleCEOPublish(request, env) {
       success: true,
       slug: slug,
       url: `https://${slug}.webzyl.com`,
-      operatorDashboard: `https://webzyl.com/operator?slug=${slug}`,
+      operatorDashboard: `https://webzyl-operator.pages.dev/operator-dashboard?slug=${slug}`,
       message: 'Property published successfully'
     });
     
@@ -4116,8 +3779,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const heroFitClass = heroFitMode === 'cover' ? 'hero-fit-cover' : 'hero-fit-contain';
 
   const mobileHeroBoxedRaw = config.branding?.mobileHeroBoxed ?? config.mobileHeroBoxed;
-  // Default to false (off) for a cleaner mobile hero look
-  const mobileHeroBoxed = (mobileHeroBoxedRaw === true || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'true') ? true : false;
+  const mobileHeroBoxed = (mobileHeroBoxedRaw === false || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'false') ? false : true;
   const mobileHeroBoxClass = mobileHeroBoxed ? 'mobile-hero-boxed' : '';
 
   // Back-compat: heroContentPositionDesktop/Mobile and heroTextPositionDesktop/Mobile map to headline position
@@ -4281,25 +3943,20 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     : (heroBgMode === 'none' ? 'dark' : 'light');
 
   const headerTextColorCustom = sanitizeHexColor(headerStyle?.textColor ?? '');
-  // In custom mode without explicit color, use empty string to allow CSS fallback to Auto behavior
-  const headerTextColor = (headerMode === 'custom' && !headerTextColorCustom)
-    ? ''
-    : (headerTextColorCustom || (headerModeResolved === 'dark' ? '#1a202c' : '#ffffff'));
+  const headerTextColor = headerTextColorCustom || (headerModeResolved === 'dark' ? '#1a202c' : '#ffffff');
 
   const headerBrandFontFamily = sanitizeHeroFontStyle(headerStyle?.brandFontStyle ?? '');
   const headerBrandFontWeight = sanitizeHeaderWeight(headerStyle?.brandFontWeight ?? '');
   const headerBrandFontSize = sanitizePx(headerStyle?.brandFontSizePx ?? '', 14, 40);
 
-  // Default to classic serif font for a more stylish look
-  const headerBrandFontFamilyEffective = headerBrandFontFamily || `ui-serif, Georgia, 'Times New Roman', Times, serif`;
+  const headerBrandFontFamilyEffective = headerBrandFontFamily || 'inherit';
   const headerBrandFontWeightEffective = headerBrandFontWeight || '800';
   const headerBrandFontSizeEffective = headerBrandFontSize || '24px';
 
   const bodyClasses = [];
   if (heroBgMode === 'none') bodyClasses.push('hero-bg-none');
   bodyClasses.push(`header-style-${headerModeResolved}`);
-  // Only add custom class if actually using a custom color
-  if (headerMode === 'custom' && headerTextColorCustom) bodyClasses.push('header-style-custom');
+  if (headerMode === 'custom') bodyClasses.push('header-style-custom');
   const bodyClass = bodyClasses.join(' ').trim();
 
   // If background is explicitly none and no custom hero text color was provided, default to dark for readability.
@@ -4374,18 +4031,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const has_primary_action = ['hospitality', 'retail', 'service'].includes(intent);
   const has_social = config.social && (config.social.facebook || config.social.instagram || config.social.twitter || config.social.youtube);
   const has_booking = intent === 'hospitality' && Boolean(config.booking);
-
-  // Reviews processing
-  const visibleReviews = (Array.isArray(config.reviews) ? config.reviews : [])
-    .filter(r => r && r.visible !== false && r.name && r.text)
-    .map(r => ({
-      name: String(r.name || '').trim(),
-      text: String(r.text || '').trim(),
-      rating: parseInt(r.rating) || 5,
-      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-      STARS: Array(parseInt(r.rating) || 5).fill('⭐')
-    }));
-  const has_reviews = visibleReviews.length > 0;
 
   // Hero title (separate from property name)
   const heroTitleText = String(
@@ -4483,26 +4128,11 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     .replace(/{{MAP_LINK}}/g, config.location?.mapLink || '')
     .replace(/{{SLUG}}/g, String(config.slug || ''));
   
-  // Menu Labels - custom or defaults
-  const menuLabels = config.menuLabels || {};
-  const MENU_LABEL_ABOUT = menuLabels.about || 'About';
-  const MENU_LABEL_GALLERY = menuLabels.gallery || 'Gallery';
-  const MENU_LABEL_VIDEOS = menuLabels.videos || 'Videos';
-  const MENU_LABEL_REVIEWS = menuLabels.reviews || 'Testimonials';
-  const MENU_LABEL_CONTACT = menuLabels.contact || 'Contact';
-  const MENU_LABEL_BOOKING = menuLabels.booking || 'Booking';
-
   html = html
     .replace(/{{OFFERINGS_LABEL}}/g, labels.offerings)
     .replace(/{{OFFERINGS_MENU_LABEL}}/g, labels.offeringsMenu)
     .replace(/{{HIGHLIGHTS_LABEL}}/g, labels.highlights)
     .replace(/{{HIGHLIGHTS_MENU_LABEL}}/g, labels.highlightsMenu)
-    .replace(/{{MENU_LABEL_ABOUT}}/g, MENU_LABEL_ABOUT)
-    .replace(/{{MENU_LABEL_GALLERY}}/g, MENU_LABEL_GALLERY)
-    .replace(/{{MENU_LABEL_VIDEOS}}/g, MENU_LABEL_VIDEOS)
-    .replace(/{{MENU_LABEL_REVIEWS}}/g, MENU_LABEL_REVIEWS)
-    .replace(/{{MENU_LABEL_CONTACT}}/g, MENU_LABEL_CONTACT)
-    .replace(/{{MENU_LABEL_BOOKING}}/g, MENU_LABEL_BOOKING)
     .replace(/{{PRIMARY_ACTION_LABEL}}/g, primaryActionLabel)
     .replace(/{{PRIMARY_ACTION_WHATSAPP}}/g, `${labels.primaryActionWhatsApp} ${config.name}`)
     .replace(/{{PRIMARY_ACTION_ICON}}/g, labels.primaryActionIcon);
@@ -4527,7 +4157,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   html = handleConditional(html, 'HAS_VIDEOS', has_videos);
   html = handleConditional(html, 'HAS_OFFERINGS', has_offerings);
   html = handleConditional(html, 'HAS_HIGHLIGHTS', has_highlights);
-  html = handleConditional(html, 'HAS_REVIEWS', has_reviews);
   html = handleConditional(html, 'HAS_BOOKING', has_booking);
   html = handleConditional(html, 'HAS_PRIMARY_ACTION', has_primary_action);
   html = handleConditional(html, 'HAS_SOCIAL', has_social);
@@ -4588,304 +4217,31 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     }).filter(Boolean).join('\n');
     html = html.replace(/{{#VIDEOS}}[\s\S]*?{{\/VIDEOS}}/g, videosHTML);
   }
-
-  // Reviews
-  if (has_reviews) {
-    const reviewsHTML = visibleReviews.map(review => {
-      const stars = '⭐'.repeat(review.rating);
-      const dateText = review.date ? ` • ${review.date}` : '';
+  
+  if (has_highlights) {
+    const highlightsHTML = config.amenities.map(amenity => {
+      const name = typeof amenity === 'string' ? amenity : amenity.name;
+      const icon = (typeof amenity === 'object' && amenity.icon) ? amenity.icon : '✨';
       return `
-        <div class="review-card">
-          <div class="review-rating">${stars}</div>
-          <p class="review-text">"${review.text}"</p>
-          <div class="review-author">
-            <strong>${review.name}</strong>
-            ${dateText ? `<span class="review-date">${dateText}</span>` : ''}
-          </div>
+        <div class="amenity-card">
+          <div class="amenity-icon">${icon}</div>
+          <h3>${name}</h3>
         </div>
       `;
     }).join('\n');
-    html = html.replace(/{{#REVIEWS}}[\s\S]*?{{\/REVIEWS}}/g, reviewsHTML);
-  }
-
-  if (has_highlights) {
-    // Property-level amenity icons mapping
-    const propertyAmenityIcons = {
-      'Free WiFi': '📶', 'WiFi': '📶', 'Free Parking': '🅿️', 'Parking': '🅿️',
-      'Hot Water': '♨️', 'Power Backup': '🔋', 'Room Service': '🛎️', '24/7 Room Service': '🛎️',
-      '24/7 Support': '📞', 'Air Conditioning': '❄️', 'AC': '❄️', 'Heating': '🔥', 'Heater': '🔥',
-      'Swimming Pool': '🏊', 'Pool': '🏊', 'Gym': '💪', 'Fitness Center': '💪',
-      'Restaurant': '🍽️', 'Dining': '🍽️', 'Bar': '🍸', 'Spa': '💆', 'Massage': '💆',
-      'Garden': '🌳', 'Pet Friendly': '🐕', 'Laundry': '🧺', 'Airport Shuttle': '✈️',
-      'Conference Room': '📊', 'Business Center': '💼', 'Kids Play Area': '🎮',
-      'Bonfire': '🔥', 'BBQ': '🍖', 'BBQ Facilities': '🍖', 'Barbecue': '🍖',
-      'Complimentary Breakfast': '🍳', 'Breakfast': '🍳',
-      'TV': '📺', 'Cable TV': '📺', 'Kitchen': '🍳', 'Kitchenette': '🍳',
-      'Balcony': '🏞️', 'Terrace': '🏞️', 'Safe': '🔒', 'Security': '🔒'
-    };
-
-    // Adaptive sizing based on amenity count
-    const totalAmenities = config.amenities.length;
-    const getSizeConfig = (count) => {
-      if (count <= 6) {
-        return { iconSize: '2.5rem', fontSize: '0.95rem', padding: '1.2rem 1.5rem', minWidth: '140px' };
-      } else if (count <= 12) {
-        return { iconSize: '2rem', fontSize: '0.85rem', padding: '1rem 1.3rem', minWidth: '120px' };
-      } else {
-        return { iconSize: '1.8rem', fontSize: '0.75rem', padding: '0.9rem 1.1rem', minWidth: '110px' };
-      }
-    };
-
-    const sizeConfig = getSizeConfig(totalAmenities);
-
-    const highlightsHTML = config.amenities.map((amenity, idx) => {
-      const name = (typeof amenity === 'string' ? amenity : (amenity?.name || '')).toString().trim();
-      // Check if amenity object has icon, otherwise lookup from mapping, default to ✨
-      const icon = (typeof amenity === 'object' && amenity.icon)
-        ? amenity.icon.toString()
-        : (propertyAmenityIcons[name] || '✨');
-      const safeName = name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      if (!name) return '';
-
-      // Alternating gradient colors
-      const gradients = [
-        `linear-gradient(135deg, ${colors.primary}18, ${colors.primary}28)`,
-        `linear-gradient(135deg, ${colors.secondary}18, ${colors.secondary}28)`,
-        `linear-gradient(135deg, ${colors.primary}12, ${colors.secondary}22)`
-      ];
-      const bgGradient = gradients[idx % 3];
-
-      return `
-        <div style="
-          background: ${bgGradient};
-          border: 2px solid ${idx % 2 === 0 ? colors.primary : colors.secondary}35;
-          border-radius: 16px;
-          padding: ${sizeConfig.padding};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.6rem;
-          min-width: ${sizeConfig.minWidth};
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-          cursor: default;
-        " onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)';"
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
-          <div style="font-size: ${sizeConfig.iconSize}; line-height: 1;">${icon}</div>
-          <div style="font-size: ${sizeConfig.fontSize}; font-weight: 600; text-align: center; color: #2d3748; line-height: 1.3;">${safeName}</div>
-        </div>
-      `;
-    }).filter(Boolean).join('\n');
     html = html.replace(/{{#HIGHLIGHTS}}[\s\S]*?{{\/HIGHLIGHTS}}/g, highlightsHTML);
   }
   
   if (has_offerings) {
-    // Amenity icons mapping
-    const amenityIcons = {
-      'AC': '❄️', 'Heater': '🔥', 'Single Bed': '🛏️', 'Double Bed': '🛏️', 'King Bed': '🛏️', 'Twin Beds': '🛏️',
-      'Attached Bathroom': '🚿', 'Private Bathroom': '🚿', 'TV': '📺', 'WiFi': '📶', 'Mini Fridge': '🧊',
-      'Coffee Maker': '☕', 'Balcony': '🏞️', 'Sea View': '🌊', 'Mountain View': '⛰️', 'Garden View': '🌳',
-      'Work Desk': '💼', 'Safe': '🔒', 'Wardrobe': '👔', 'Hair Dryer': '💨', 'Iron': '🔌', 'Kettle': '🫖'
-    };
-
     const offeringsHTML = config.rooms.map(room => {
       const roomData = typeof room === 'object' ? room : { name: room };
       const priceValue = roomData.price ?? config.basePrice ?? '';
       const priceUnit = roomData.priceUnit || (intent === 'hospitality' ? '/night' : '');
       const priceLabel = formatPrice(priceValue, priceUnit);
-      const image = roomData.image || null;
-
-      // Get room amenities
-      const roomAmenities = roomData.amenities || [];
-      // Adaptive display based on amenity count - show ALL amenities
-      const totalAmenities = roomAmenities.length;
-
-      // Generate amenity visual card if no image
-      let visualContent = '';
-      if (!image && totalAmenities > 0) {
-        // Adaptive sizing based on amenity count
-        const getSizeConfig = (count) => {
-          if (count <= 4) {
-            return { iconSize: '2rem', fontSize: '0.8rem', padding: '0.85rem 1.1rem', minWidth: '100px', gridMin: '95px' };
-          } else if (count <= 8) {
-            return { iconSize: '1.6rem', fontSize: '0.72rem', padding: '0.7rem 0.95rem', minWidth: '85px', gridMin: '80px' };
-          } else if (count <= 12) {
-            return { iconSize: '1.4rem', fontSize: '0.65rem', padding: '0.6rem 0.85rem', minWidth: '75px', gridMin: '70px' };
-          } else {
-            return { iconSize: '1.2rem', fontSize: '0.6rem', padding: '0.5rem 0.75rem', minWidth: '65px', gridMin: '60px' };
-          }
-        };
-
-        const sizeConfig = getSizeConfig(totalAmenities);
-
-        // Create modern, attractive amenity grid - show ALL amenities
-        const amenityGrid = roomAmenities.map((amenity, idx) => {
-          const icon = amenityIcons[amenity] || '✨';
-          // Alternating gradient colors for each badge
-          const gradients = [
-            `linear-gradient(135deg, ${colors.primary}20, ${colors.primary}30)`,
-            `linear-gradient(135deg, ${colors.secondary}20, ${colors.secondary}30)`,
-            `linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}25)`
-          ];
-          const bgGradient = gradients[idx % 3];
-
-          return `
-            <div style="
-              background: ${bgGradient};
-              border: 1.5px solid ${idx % 2 === 0 ? colors.primary : colors.secondary}40;
-              border-radius: 12px;
-              padding: ${sizeConfig.padding};
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 0.3rem;
-              min-width: ${sizeConfig.minWidth};
-              transition: transform 0.2s;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            ">
-              <div style="font-size: ${sizeConfig.iconSize}; line-height: 1;">${icon}</div>
-              <div style="font-size: ${sizeConfig.fontSize}; font-weight: 600; text-align: center; color: #2d3748; line-height: 1.2;">${amenity}</div>
-            </div>
-          `;
-        }).join('');
-
-        visualContent = `
-          <div class="card-image" style="
-            background: linear-gradient(135deg, ${colors.primary}08 0%, ${colors.secondary}12 50%, ${colors.primary}08 100%);
-            position: relative;
-            overflow: hidden;
-            padding: 1.75rem 1.25rem;
-            min-height: 220px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-          ">
-            <!-- Decorative background pattern -->
-            <div style="
-              position: absolute;
-              top: -50px;
-              right: -50px;
-              width: 200px;
-              height: 200px;
-              background: ${colors.primary}08;
-              border-radius: 50%;
-              filter: blur(40px);
-            "></div>
-            <div style="
-              position: absolute;
-              bottom: -30px;
-              left: -30px;
-              width: 150px;
-              height: 150px;
-              background: ${colors.secondary}08;
-              border-radius: 50%;
-              filter: blur(40px);
-            "></div>
-
-            <!-- Enhanced header badge with dark/light contrast -->
-            <div style="
-              background:
-                linear-gradient(135deg,
-                  rgba(0,0,0,0.85) 0%,
-                  rgba(30,30,30,0.9) 50%,
-                  rgba(0,0,0,0.85) 100%);
-              color: white;
-              padding: 0.7rem 1.5rem;
-              border-radius: 30px;
-              font-size: 0.95rem;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 1.5px;
-              margin-bottom: 1.2rem;
-              align-self: center;
-              position: relative;
-              box-shadow:
-                0 0 60px ${colors.primary}FF,
-                0 0 40px ${colors.secondary}FF,
-                0 0 30px rgba(255,255,255,0.8),
-                0 12px 35px rgba(0,0,0,0.6),
-                0 0 0 3px ${colors.primary},
-                0 0 0 6px white,
-                0 0 0 9px ${colors.secondary},
-                0 0 0 12px rgba(0,0,0,0.3),
-                inset 0 2px 0 rgba(255,255,255,0.3),
-                inset 0 -2px 0 rgba(0,0,0,0.5);
-              border: none;
-              text-shadow:
-                0 0 30px ${colors.primary}FF,
-                0 0 20px ${colors.secondary}FF,
-                0 0 10px rgba(255,255,255,0.8),
-                0 3px 8px rgba(0,0,0,0.8),
-                2px 2px 4px rgba(0,0,0,0.9);
-            ">✨ ROOM FEATURES ✨</div>
-
-            <!-- Scrollable amenity grid container -->
-            <div style="
-              position: relative;
-              max-height: ${totalAmenities > 12 ? '280px' : 'auto'};
-              overflow-y: ${totalAmenities > 12 ? 'auto' : 'visible'};
-              overflow-x: hidden;
-              padding-right: ${totalAmenities > 12 ? '8px' : '0'};
-              margin-right: ${totalAmenities > 12 ? '-8px' : '0'};
-            ">
-              <!-- Beautiful custom scrollbar styles -->
-              <style>
-                .amenity-scroll::-webkit-scrollbar {
-                  width: 8px;
-                }
-                .amenity-scroll::-webkit-scrollbar-track {
-                  background: rgba(255,255,255,0.3);
-                  border-radius: 10px;
-                  margin: 4px 0;
-                }
-                .amenity-scroll::-webkit-scrollbar-thumb {
-                  background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
-                  border-radius: 10px;
-                  border: 2px solid rgba(255,255,255,0.3);
-                }
-                .amenity-scroll::-webkit-scrollbar-thumb:hover {
-                  background: linear-gradient(135deg, ${colors.secondary}, ${colors.primary});
-                }
-              </style>
-
-              <!-- Adaptive amenity grid -->
-              <div class="amenity-scroll" style="
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(${sizeConfig.gridMin}, 1fr));
-                gap: 0.6rem;
-                justify-content: center;
-              ">
-                ${amenityGrid}
-              </div>
-            </div>
-
-            ${totalAmenities > 12 ? `
-              <div style="
-                margin-top: 0.8rem;
-                text-align: center;
-                font-size: 0.7rem;
-                font-weight: 600;
-                color: ${colors.primary};
-                background: linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}15);
-                padding: 0.4rem 0.8rem;
-                border-radius: 12px;
-                display: inline-block;
-                align-self: center;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                border: 1px solid ${colors.primary}30;
-              ">
-                ↕️ Scroll to see all ${totalAmenities} amenities
-              </div>
-            ` : ''}
-          </div>
-        `;
-      } else if (image) {
-        visualContent = `<img src="${image}" alt="${roomData.name || 'Offering'}" class="card-image">`;
-      }
-
+      const image = roomData.image || config.branding?.heroImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945';
       return `
         <div class="card">
-          ${visualContent}
+          <img src="${image}" alt="${roomData.name || 'Offering'}" class="card-image">
           <div class="card-content">
             <h3 class="card-title">${roomData.name || ''}</h3>
             <p class="card-text">${roomData.description || ''}</p>
@@ -5246,41 +4602,18 @@ function getYouTubeThumbnailUrl(url) {
   }
 }
 
-function convertYouTubeEmbedToWatchUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase();
-
-    // Convert /embed/VIDEO_ID to /watch?v=VIDEO_ID for direct viewing
-    if (host.includes('youtube.com') && u.pathname.startsWith('/embed/')) {
-      const videoId = (u.pathname.split('/embed/')[1] || '').split('/')[0];
-      if (videoId) {
-        return `https://www.youtube.com/watch?v=${videoId}`;
-      }
-    }
-
-    return url; // Return original URL if not a YouTube embed URL
-  } catch (_) {
-    return url;
-  }
-}
-
 function normalizeVideoItems(config, fallbackThumb) {
   const items = [];
   const rawList = Array.isArray(config?.videos) ? config.videos : [];
 
   for (const entry of rawList) {
     if (!entry) continue;
-    const originalUrl = normalizeHttpUrl(typeof entry === 'string' ? entry : (entry.url || entry.link || ''));
-    if (!originalUrl) continue;
-
-    // Convert YouTube embed URLs to watch URLs for clickable links
-    const url = convertYouTubeEmbedToWatchUrl(originalUrl);
+    const url = normalizeHttpUrl(typeof entry === 'string' ? entry : (entry.url || entry.link || ''));
+    if (!url) continue;
 
     let thumbnail = normalizeHttpUrl(typeof entry === 'object' ? (entry.thumbnail || entry.thumb || '') : '');
     if (!thumbnail) {
-      // Use original URL (might be embed) to get thumbnail, as getYouTubeThumbnailUrl handles both
-      const yt = getYouTubeThumbnailUrl(originalUrl);
+      const yt = getYouTubeThumbnailUrl(url);
       thumbnail = yt || normalizeHttpUrl(fallbackThumb);
     }
 
@@ -5411,7 +4744,9 @@ function generatePropertyTemplate(input, slug) {
     : [];
 
   const inputAmenities = (Array.isArray(input.amenities) ? input.amenities : []).map(a => String(a || '').trim()).filter(Boolean);
-  const amenitiesList = inputAmenities.length ? inputAmenities : [];
+  const amenitiesList = inputAmenities.length
+    ? inputAmenities
+    : (isAccommodationCategory ? ['Free WiFi', 'Parking', 'Hot Water', 'Power Backup', 'Room Service', '24/7 Support'] : []);
 
   const bookingModeRaw = String(input.bookingMode || '').trim().toLowerCase();
   const bookingMode = (bookingModeRaw === 'sheet' || bookingModeRaw === 'whatsapp' || bookingModeRaw === 'both')
@@ -5437,7 +4772,7 @@ function generatePropertyTemplate(input, slug) {
       heroImage: (heroBackground?.type === 'custom' ? (heroBackground.value || '') : ''),
       heroFitMode: (input.heroFitMode === 'contain' || input.heroFitMode === 'fit' || input.heroFitMode === 'nocrop') ? 'contain' : 'cover',
       heroObjectPosition: input.heroObjectPosition || '',
-      mobileHeroBoxed: (input.mobileHeroBoxed === true || String(input.mobileHeroBoxed).trim().toLowerCase() === 'true') ? true : false,
+      mobileHeroBoxed: (input.mobileHeroBoxed === false || String(input.mobileHeroBoxed).trim().toLowerCase() === 'false') ? false : true,
       heroContentPositionDesktop: input.heroContentPositionDesktop || '',
       heroContentPositionMobile: input.heroContentPositionMobile || ''
     },
@@ -5514,24 +4849,20 @@ function generatePropertyTemplate(input, slug) {
     // Empty arrays for operator to fill later (or filled from input)
     gallery: input.gallery || [],
     videos: Array.isArray(input.videos) ? input.videos : [],
-    rooms: (Array.isArray(input.rooms) && input.rooms.length > 0) ? input.rooms : [],
+    rooms: (Array.isArray(input.rooms) && input.rooms.length > 0) ? input.rooms : defaultRooms,
     amenities: amenitiesList.map(a => ({ name: a, icon: '✨' })),
-
-    // Reviews/Testimonials (NEW)
-    reviews: Array.isArray(input.reviews) && input.reviews.length > 0 ? input.reviews : [],
-
     social: {
       facebook: input.facebook || '',
       instagram: input.instagram || '',
       twitter: input.twitter || '',
       youtube: input.youtube || ''
     },
-
+    
     embeds: {
       youtube: input.youtubeEmbed || '',
       map: input.mapsEmbed || input.mapLink || ''
     },
-
+    
     customDomain: '',
     subdomainEnabled: true,
     createdAt: new Date().toISOString(),
@@ -5592,81 +4923,19 @@ function resolveHeroBackground(config) {
 
 function generateDefaultTagline(category, businessName) {
   const taglines = {
-    homestay: [
-      'Experience comfort like home',
-      'Your home away from home',
-      'Warm hospitality awaits',
-      'Where comfort meets tradition',
-      'Feel at home, away from home'
-    ],
-    resort: [
-      'Your perfect getaway',
-      'Escape to paradise',
-      'Where luxury meets nature',
-      'Unforgettable experiences await',
-      'Discover your perfect retreat'
-    ],
-    hotel: [
-      'Luxury and comfort combined',
-      'Where every stay matters',
-      'Excellence in hospitality',
-      'Your comfort is our priority',
-      'Modern elegance, timeless service'
-    ],
-    villa: [
-      'Private paradise awaits',
-      'Your exclusive sanctuary',
-      'Luxury in every detail',
-      'Where privacy meets elegance',
-      'Your personal retreat'
-    ],
-    cottage: [
-      'Cozy retreat in nature',
-      'Rustic charm, modern comfort',
-      'Escape to tranquility',
-      'Where nature meets comfort',
-      'Your peaceful hideaway'
-    ],
-    restaurant: [
-      'Delicious food, memorable moments',
-      'Where flavors come alive',
-      'Taste the difference',
-      'Culinary excellence awaits',
-      'Great food, greater memories'
-    ],
-    cafe: [
-      'Great coffee, better vibes',
-      'Your daily coffee ritual',
-      'Where coffee meets community',
-      'Brew happiness, one cup at a time',
-      'Good vibes, great coffee'
-    ],
-    shop: [
-      'Quality products, trusted service',
-      'Your trusted shopping destination',
-      'Where quality meets value',
-      'Shop smart, shop with us',
-      'Excellence in every purchase'
-    ],
-    services: [
-      'Professional service you can trust',
-      'Excellence in service delivery',
-      'Your reliable service partner',
-      'Quality service, guaranteed',
-      'Service with excellence'
-    ],
-    others: [
-      'Quality service for you',
-      'Your trusted partner',
-      'Excellence delivered',
-      'Where quality matters',
-      'Service you can count on'
-    ]
+    homestay: 'Experience comfort like home',
+    resort: 'Your perfect getaway',
+    hotel: 'Luxury and comfort combined',
+    villa: 'Private paradise awaits',
+    cottage: 'Cozy retreat in nature',
+    restaurant: 'Delicious food, memorable moments',
+    cafe: 'Great coffee, better vibes',
+    shop: 'Quality products, trusted service',
+    services: 'Professional service you can trust',
+    others: 'Quality service for you'
   };
-
-  const categoryTaglines = taglines[category] || [`Welcome to ${businessName}`];
-  // Pick a random tagline from the array
-  return categoryTaglines[Math.floor(Math.random() * categoryTaglines.length)];
+  
+  return taglines[category] || `Welcome to ${businessName}`;
 }
 
 function generateDefaultDescription(category, businessName, city) {

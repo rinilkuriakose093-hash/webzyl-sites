@@ -1,0 +1,111 @@
+{
+  "slug": "grand-royal",
+  "name": "Grand Royal Tharavadu",
+  "tagline": "A Premium Nature Resort",
+  "category": "resort",
+  "showInMarket": true,
+  "priorityRank": 10,
+  "status": "active",
+  "templateId": "sunset-glow",
+  "heroFitMode": "cover",
+  "branding": {
+    "heroFitMode": "cover",
+    "primaryColor": "#8b5cf6",
+    "primaryActionLabel": "Book your Stay",
+    "heroFontStyle": "elegant",
+    "logo": "",
+    "logoUrl": "",
+    "designProfileId": "",
+    "heroImage": "https://img.webzyl.com/grand-royal/gallery/pok5u7gk"
+  },
+  "about": "Grand Royal Tharavadu",
+  "notes": "Restored after KV JSON corruption (BOM/quote issue)",
+  "location": {
+    "address": "Nilgiris 5/1A, Chappanthodu, Cherambadi, Wayanad-Ooty, TamilNadu 643 205",
+    "mapLink": "https://maps.app.goo.gl/4ihz2wPa1doDDnB5A",
+    "city": "WAYANAD",
+    "state": "KL",
+    "country": "India",
+    "lat": 0,
+    "lng": 0
+  },
+  "tags": [],
+  "basePrice": 1000,
+  "rating": 4.5,
+  "contact": {
+    "name": "Owner",
+    "phone": "9447056441",
+    "email": "royaltharavadu@gmail.com",
+    "whatsapp": "+919447056441"
+  },
+  "booking": {
+    "mode": "sheet",
+    "sheetName": "Bookings_2026_01",
+    "whatsappTemplate": "Thank you for your booking request! We will contact you shortly.",
+    "payment": {
+      "enabled": false,
+      "provider": null,
+      "mode": "disabled",
+      "currency": "INR",
+      "depositPercent": 30,
+      "testMode": true
+    }
+  },
+  "notifications": {
+    "enabled": true,
+    "notifyOwner": true,
+    "notifyCustomer": true,
+    "ownerWhatsapp": "+919447056441",
+    "ownerEmail": "grandroyal@gmail.com",
+    "language": "en",
+    "maxPerHour": 10
+  },
+  "plan_tier": "enterprise",
+  "plan_price": 999,
+  "plan_expiry": "2027-01-01",
+  "quota_whatsapp_monthly": 9999,
+  "quota_sms_monthly": 0,
+  "quota_used_month": "2026-01",
+  "quota_whatsapp_used": 0,
+  "quota_sms_used": 0,
+  "gallery": [
+    {
+      "url": "https://img.webzyl.com/grand-royal/gallery/pok5u7gk?w=1024",
+      "alt": "pok5u7gk",
+      "caption": ""
+    },
+    {
+      "url": "https://img.webzyl.com/grand-royal/gallery/27n1sqt8?w=1024",
+      "alt": "27n1sqt8",
+      "caption": ""
+    },
+    {
+      "url": "https://img.webzyl.com/grand-royal/gallery/3d2axxqd?w=1024",
+      "alt": "3d2axxqd",
+      "caption": ""
+    },
+    {
+      "url": "https://img.webzyl.com/grand-royal/gallery/5lyqw95a?w=1024",
+      "alt": "5lyqw95a",
+      "caption": ""
+    }
+  ],
+  "rooms": [],
+  "amenities": [],
+  "social": {
+    "facebook": "https://www.facebook.com/p/Grand-Royal-Tharavadu-61578501941717/",
+    "instagram": "https://www.instagram.com/grandroyaltharavadu/",
+    "twitter": "",
+    "youtube": "https://www.youtube.com/watch?v=uUrUuUOzvw4&t=170s"
+  },
+  "embeds": {
+    "youtube": "https://www.youtube.com/watch?v=uUrUuUOzvw4&t=170s",
+    "map": ""
+  },
+  "customDomain": "",
+  "subdomainEnabled": true,
+  "createdAt": "2026-01-01T13:38:46.072Z",
+  "updatedAt": "2026-01-03T09:42:58.805Z",
+  "variant": "bold",
+  "heroImage": "https://img.webzyl.com/grand-royal/gallery/pok5u7gk"
+}

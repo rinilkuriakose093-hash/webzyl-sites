@@ -1,0 +1,78 @@
+{
+  "slug": "mountview",
+  "name": "Mount View Luxury Resort",
+  "tagline": "Elevate your stay — where nature meets elegance",
+
+  "about": "Mount View Luxury Resort offers lavish suites, infinity pools, curated gourmet dining, and private balconies overlooking the breathtaking valley. Our elevated hillside location ensures panoramic sunset views and unmatched luxury comfort.",
+
+  "branding": {
+    "primaryColor": "#b28700",
+    "logo": "https://images.unsplash.com/photo-1527030280862-64139fba04ca?auto=format&fit=crop&w=200&q=60",
+    "heroImage": "https://images.unsplash.com/photo-1501117716987-c8e1ecb210fa?auto=format&fit=crop&w=1600&q=80"
+  },
+
+  "amenities": [
+    "Infinity Pool",
+    "Premium Spa",
+    "Fine Dining Restaurant",
+    "Private Balconies",
+    "Sunset Lounge",
+    "Guided Trekking",
+    "High-Speed WiFi",
+    "Airport Pickup",
+    "24/7 Concierge"
+  ],
+
+  "gallery": [
+    "https://images.unsplash.com/photo-1519824145371-296894a0daa9?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1560185127-6ed19df49e0b?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1522706604294-65f81b19d07a?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?auto=format&fit=crop&w=1600&q=80"
+  ],
+
+  "rooms": [
+    {
+      "name": "Deluxe Valley Suite",
+      "price": "₹8,000 / night",
+      "image": "https://images.unsplash.com/photo-1590490359683-6632931f7f9b?auto=format&fit=crop&w=1200&q=80",
+      "description": "A spacious valley-facing suite featuring a king bed, private balcony, and ambient lighting."
+    },
+    {
+      "name": "Premium Villa",
+      "price": "₹12,000 / night",
+      "image": "https://images.unsplash.com/photo-1505692592071-2e5e9e7602ed?auto=format&fit=crop&w=1200&q=80",
+      "description": "Independent villa featuring a private plunge pool, sunset view deck, and personalized butler service."
+    },
+    {
+      "name": "Royal Terrace Suite",
+      "price": "₹18,000 / night",
+      "image": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
+      "description": "Ultra-luxury suite with jacuzzi, terrace lounge, marble interior finishes, and 180° valley view."
+    }
+  ],
+
+  "contact": {
+    "phone": "+91 9876543210",
+    "email": "reservations@mountviewresort.com"
+  },
+
+  "embeds": {
+    "map": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3912.682904445612!2d75.85772667498166!3d11.685236041068027!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba671ecfba5f0e3%3A0xb9fa4d2db569f325!2sWayanad%2C%20Kerala!5e0!3m2!1sen!2sin!4v1701012345678"
+  },
+
+  "social": {
+    "facebook": "https://facebook.com/",
+    "instagram": "https://instagram.com/"
+  },
+
+  "booking": {
+    "mode": "sheet",
+    "sheetName": "Bookings_2025_11",
+    "whatsappTemplate": "Hi, I'd like to book a stay at Mount View Resort!"
+  },
+
+  "templateId": "resort_v1",
+  "status": "active",
+  "updatedAt": "2025-12-01T10:00:00Z"
+}

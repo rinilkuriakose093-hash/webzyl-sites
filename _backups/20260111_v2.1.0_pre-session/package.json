@@ -1,0 +1,30 @@
+{
+  "name": "webzyl-worker",
+  "version": "7.3.0",
+  "description": "Webzyl Worker with Media Storage",
+  "main": "worker.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "@aws-sdk/s3-request-presigner": "^3.478.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "wrangler": "^3.78.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "media-storage",
+    "r2",
+    "d1",
+    "kv"
+  ],
+  "author": "Webzyl",
+  "license": "MIT"
+}

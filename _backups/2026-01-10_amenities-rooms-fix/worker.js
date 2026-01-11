@@ -458,10 +458,6 @@ export default {
     if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
       // Skip API paths - they're handled later
       if (!path.startsWith('/api/')) {
-        // Serve super admin dashboard at /super-admin path
-        if (path === '/super-admin' || path === '/super-admin/') {
-          return handleSuperAdminDashboard(request, env);
-        }
         // Serve admin dashboard (CEO dashboard) at /admin path
         if (path === '/admin' || path === '/admin/') {
           return handleCEOAdminDashboard(request, env);
@@ -951,104 +947,6 @@ export default {
       return jsonResponse({ ok: true, slug: s, workspaceId: w }, 200);
     }
 
-    // SUPER ADMIN: Update any config field
-    if (path === '/api/admin/config/update' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, updates } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Apply all updates from super admin
-      Object.keys(updates).forEach(key => {
-        config[key] = updates[key];
-      });
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, updated: Object.keys(updates) }, 200);
-    }
-
-    // SUPER ADMIN: Change property slug
-    if (path === '/api/admin/config/change-slug' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { oldSlug, newSlug } = await request.json().catch(() => ({}));
-      const oldS = (oldSlug || '').toString().trim();
-      const newS = (newSlug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(oldS) || !VALID_SLUG_PATTERN.test(newS)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const oldConfig = await getPropertyConfigSafeUncached(env, oldS);
-      if (!oldConfig) {
-        return jsonResponse({ ok: false, error: 'old_slug_not_found' }, 404);
-      }
-
-      const newExists = await getPropertyConfigSafeUncached(env, newS);
-      if (newExists) {
-        return jsonResponse({ ok: false, error: 'new_slug_already_exists' }, 409);
-      }
-
-      // Update slug in config
-      oldConfig.slug = newS;
-      oldConfig.subdomain = newS;
-      oldConfig.updatedAt = new Date().toISOString();
-
-      // Save to new key
-      await env.RESORT_CONFIGS.put(`config:${newS}`, JSON.stringify(oldConfig));
-
-      // Delete old key
-      await env.RESORT_CONFIGS.delete(`config:${oldS}`);
-
-      return jsonResponse({ ok: true, oldSlug: oldS, newSlug: newS }, 200);
-    }
-
-    // SUPER ADMIN: Reset WhatsApp quota
-    if (path === '/api/admin/quota/reset' && request.method === 'POST') {
-      if (!validateAdminToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-
-      const { slug, quotaType } = await request.json().catch(() => ({}));
-      const s = (slug || '').toString().trim();
-
-      if (!VALID_SLUG_PATTERN.test(s)) {
-        return jsonResponse({ ok: false, error: 'invalid_slug' }, 400);
-      }
-
-      const config = await getPropertyConfigSafeUncached(env, s);
-      if (!config) {
-        return jsonResponse({ ok: false, error: 'not_found' }, 404);
-      }
-
-      // Reset quota based on type
-      if (quotaType === 'whatsapp' || !quotaType) {
-        config.quota_whatsapp_used = 0;
-        const now = new Date();
-        config.quota_used_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      }
-
-      config.updatedAt = new Date().toISOString();
-
-      await env.RESORT_CONFIGS.put(`config:${s}`, JSON.stringify(config));
-      return jsonResponse({ ok: true, slug: s, quotaType: quotaType || 'whatsapp', reset: true }, 200);
-    }
-
     // CEO variants (same capabilities, CEO auth)
     if (path === '/api/ceo/workspaces') {
       if (request.method === 'OPTIONS') {
@@ -1510,35 +1408,6 @@ async function handleBrandHomepage(request, env, ctx) {
   } catch (error) {
     console.error('[BRAND] Error serving homepage:', error);
     return new Response('Internal Server Error', { status: 500 });
-  }
-}
-
-async function handleSuperAdminDashboard(request, env) {
-  try {
-    // Fetch super admin dashboard HTML from KV
-    const html = await env.RESORT_CONFIGS.get('page:super-admin-dashboard', { type: 'text' });
-
-    if (!html) {
-      return new Response('Super Admin dashboard not found. Please upload to KV with key: page:super-admin-dashboard', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain' }
-      });
-    }
-
-    // Serve the dashboard HTML
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache' // Don't cache to always get latest data
-      }
-    });
-  } catch (error) {
-    console.error('[SUPER-ADMIN-DASHBOARD] Error serving dashboard:', error);
-    return new Response('Error loading super admin dashboard: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    });
   }
 }
 
@@ -2024,7 +1893,7 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     // Update hero image
     if (updates.heroImage) config.heroImage = updates.heroImage;
     
-    // --- Amenities, Room Types & Reviews wiring ---
+    // --- Amenities & Room Types wiring ---
     // Defensive: Only update if valid array, else fallback to empty array
     // This ensures dashboard changes are always reflected and prevents undefined/null issues
     if (Array.isArray(updates.rooms)) {
@@ -2037,18 +1906,9 @@ async function handleOperatorUpdateWithUpdates(env, slug, updates) {
     } else if (updates.amenities !== undefined) {
       config.amenities = [];
     }
-    if (Array.isArray(updates.reviews)) {
-      config.reviews = updates.reviews;
-    } else if (updates.reviews !== undefined) {
-      config.reviews = [];
-    }
-    // Menu Labels
-    if (updates.menuLabels && typeof updates.menuLabels === 'object') {
-      config.menuLabels = updates.menuLabels;
-    }
     // Gallery update remains as-is
     if (updates.gallery) config.gallery = updates.gallery;
-    // --- End amenities/room types/reviews wiring ---
+    // --- End amenities/room types wiring ---
     if (Object.prototype.hasOwnProperty.call(updates, 'videos')) {
       const rawVideos = Array.isArray(updates.videos) ? updates.videos : [];
       const normalizedVideos = rawVideos
@@ -4116,8 +3976,7 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const heroFitClass = heroFitMode === 'cover' ? 'hero-fit-cover' : 'hero-fit-contain';
 
   const mobileHeroBoxedRaw = config.branding?.mobileHeroBoxed ?? config.mobileHeroBoxed;
-  // Default to false (off) for a cleaner mobile hero look
-  const mobileHeroBoxed = (mobileHeroBoxedRaw === true || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'true') ? true : false;
+  const mobileHeroBoxed = (mobileHeroBoxedRaw === false || String(mobileHeroBoxedRaw).trim().toLowerCase() === 'false') ? false : true;
   const mobileHeroBoxClass = mobileHeroBoxed ? 'mobile-hero-boxed' : '';
 
   // Back-compat: heroContentPositionDesktop/Mobile and heroTextPositionDesktop/Mobile map to headline position
@@ -4281,25 +4140,20 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     : (heroBgMode === 'none' ? 'dark' : 'light');
 
   const headerTextColorCustom = sanitizeHexColor(headerStyle?.textColor ?? '');
-  // In custom mode without explicit color, use empty string to allow CSS fallback to Auto behavior
-  const headerTextColor = (headerMode === 'custom' && !headerTextColorCustom)
-    ? ''
-    : (headerTextColorCustom || (headerModeResolved === 'dark' ? '#1a202c' : '#ffffff'));
+  const headerTextColor = headerTextColorCustom || (headerModeResolved === 'dark' ? '#1a202c' : '#ffffff');
 
   const headerBrandFontFamily = sanitizeHeroFontStyle(headerStyle?.brandFontStyle ?? '');
   const headerBrandFontWeight = sanitizeHeaderWeight(headerStyle?.brandFontWeight ?? '');
   const headerBrandFontSize = sanitizePx(headerStyle?.brandFontSizePx ?? '', 14, 40);
 
-  // Default to classic serif font for a more stylish look
-  const headerBrandFontFamilyEffective = headerBrandFontFamily || `ui-serif, Georgia, 'Times New Roman', Times, serif`;
+  const headerBrandFontFamilyEffective = headerBrandFontFamily || 'inherit';
   const headerBrandFontWeightEffective = headerBrandFontWeight || '800';
   const headerBrandFontSizeEffective = headerBrandFontSize || '24px';
 
   const bodyClasses = [];
   if (heroBgMode === 'none') bodyClasses.push('hero-bg-none');
   bodyClasses.push(`header-style-${headerModeResolved}`);
-  // Only add custom class if actually using a custom color
-  if (headerMode === 'custom' && headerTextColorCustom) bodyClasses.push('header-style-custom');
+  if (headerMode === 'custom') bodyClasses.push('header-style-custom');
   const bodyClass = bodyClasses.join(' ').trim();
 
   // If background is explicitly none and no custom hero text color was provided, default to dark for readability.
@@ -4374,18 +4228,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   const has_primary_action = ['hospitality', 'retail', 'service'].includes(intent);
   const has_social = config.social && (config.social.facebook || config.social.instagram || config.social.twitter || config.social.youtube);
   const has_booking = intent === 'hospitality' && Boolean(config.booking);
-
-  // Reviews processing
-  const visibleReviews = (Array.isArray(config.reviews) ? config.reviews : [])
-    .filter(r => r && r.visible !== false && r.name && r.text)
-    .map(r => ({
-      name: String(r.name || '').trim(),
-      text: String(r.text || '').trim(),
-      rating: parseInt(r.rating) || 5,
-      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-      STARS: Array(parseInt(r.rating) || 5).fill('⭐')
-    }));
-  const has_reviews = visibleReviews.length > 0;
 
   // Hero title (separate from property name)
   const heroTitleText = String(
@@ -4483,26 +4325,11 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     .replace(/{{MAP_LINK}}/g, config.location?.mapLink || '')
     .replace(/{{SLUG}}/g, String(config.slug || ''));
   
-  // Menu Labels - custom or defaults
-  const menuLabels = config.menuLabels || {};
-  const MENU_LABEL_ABOUT = menuLabels.about || 'About';
-  const MENU_LABEL_GALLERY = menuLabels.gallery || 'Gallery';
-  const MENU_LABEL_VIDEOS = menuLabels.videos || 'Videos';
-  const MENU_LABEL_REVIEWS = menuLabels.reviews || 'Testimonials';
-  const MENU_LABEL_CONTACT = menuLabels.contact || 'Contact';
-  const MENU_LABEL_BOOKING = menuLabels.booking || 'Booking';
-
   html = html
     .replace(/{{OFFERINGS_LABEL}}/g, labels.offerings)
     .replace(/{{OFFERINGS_MENU_LABEL}}/g, labels.offeringsMenu)
     .replace(/{{HIGHLIGHTS_LABEL}}/g, labels.highlights)
     .replace(/{{HIGHLIGHTS_MENU_LABEL}}/g, labels.highlightsMenu)
-    .replace(/{{MENU_LABEL_ABOUT}}/g, MENU_LABEL_ABOUT)
-    .replace(/{{MENU_LABEL_GALLERY}}/g, MENU_LABEL_GALLERY)
-    .replace(/{{MENU_LABEL_VIDEOS}}/g, MENU_LABEL_VIDEOS)
-    .replace(/{{MENU_LABEL_REVIEWS}}/g, MENU_LABEL_REVIEWS)
-    .replace(/{{MENU_LABEL_CONTACT}}/g, MENU_LABEL_CONTACT)
-    .replace(/{{MENU_LABEL_BOOKING}}/g, MENU_LABEL_BOOKING)
     .replace(/{{PRIMARY_ACTION_LABEL}}/g, primaryActionLabel)
     .replace(/{{PRIMARY_ACTION_WHATSAPP}}/g, `${labels.primaryActionWhatsApp} ${config.name}`)
     .replace(/{{PRIMARY_ACTION_ICON}}/g, labels.primaryActionIcon);
@@ -4527,7 +4354,6 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
   html = handleConditional(html, 'HAS_VIDEOS', has_videos);
   html = handleConditional(html, 'HAS_OFFERINGS', has_offerings);
   html = handleConditional(html, 'HAS_HIGHLIGHTS', has_highlights);
-  html = handleConditional(html, 'HAS_REVIEWS', has_reviews);
   html = handleConditional(html, 'HAS_BOOKING', has_booking);
   html = handleConditional(html, 'HAS_PRIMARY_ACTION', has_primary_action);
   html = handleConditional(html, 'HAS_SOCIAL', has_social);
@@ -4588,94 +4414,18 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     }).filter(Boolean).join('\n');
     html = html.replace(/{{#VIDEOS}}[\s\S]*?{{\/VIDEOS}}/g, videosHTML);
   }
-
-  // Reviews
-  if (has_reviews) {
-    const reviewsHTML = visibleReviews.map(review => {
-      const stars = '⭐'.repeat(review.rating);
-      const dateText = review.date ? ` • ${review.date}` : '';
+  
+  if (has_highlights) {
+    const highlightsHTML = config.amenities.map(amenity => {
+      const name = typeof amenity === 'string' ? amenity : amenity.name;
+      const icon = (typeof amenity === 'object' && amenity.icon) ? amenity.icon : '✨';
       return `
-        <div class="review-card">
-          <div class="review-rating">${stars}</div>
-          <p class="review-text">"${review.text}"</p>
-          <div class="review-author">
-            <strong>${review.name}</strong>
-            ${dateText ? `<span class="review-date">${dateText}</span>` : ''}
-          </div>
+        <div class="amenity-card">
+          <div class="amenity-icon">${icon}</div>
+          <h3>${name}</h3>
         </div>
       `;
     }).join('\n');
-    html = html.replace(/{{#REVIEWS}}[\s\S]*?{{\/REVIEWS}}/g, reviewsHTML);
-  }
-
-  if (has_highlights) {
-    // Property-level amenity icons mapping
-    const propertyAmenityIcons = {
-      'Free WiFi': '📶', 'WiFi': '📶', 'Free Parking': '🅿️', 'Parking': '🅿️',
-      'Hot Water': '♨️', 'Power Backup': '🔋', 'Room Service': '🛎️', '24/7 Room Service': '🛎️',
-      '24/7 Support': '📞', 'Air Conditioning': '❄️', 'AC': '❄️', 'Heating': '🔥', 'Heater': '🔥',
-      'Swimming Pool': '🏊', 'Pool': '🏊', 'Gym': '💪', 'Fitness Center': '💪',
-      'Restaurant': '🍽️', 'Dining': '🍽️', 'Bar': '🍸', 'Spa': '💆', 'Massage': '💆',
-      'Garden': '🌳', 'Pet Friendly': '🐕', 'Laundry': '🧺', 'Airport Shuttle': '✈️',
-      'Conference Room': '📊', 'Business Center': '💼', 'Kids Play Area': '🎮',
-      'Bonfire': '🔥', 'BBQ': '🍖', 'BBQ Facilities': '🍖', 'Barbecue': '🍖',
-      'Complimentary Breakfast': '🍳', 'Breakfast': '🍳',
-      'TV': '📺', 'Cable TV': '📺', 'Kitchen': '🍳', 'Kitchenette': '🍳',
-      'Balcony': '🏞️', 'Terrace': '🏞️', 'Safe': '🔒', 'Security': '🔒'
-    };
-
-    // Adaptive sizing based on amenity count
-    const totalAmenities = config.amenities.length;
-    const getSizeConfig = (count) => {
-      if (count <= 6) {
-        return { iconSize: '2.5rem', fontSize: '0.95rem', padding: '1.2rem 1.5rem', minWidth: '140px' };
-      } else if (count <= 12) {
-        return { iconSize: '2rem', fontSize: '0.85rem', padding: '1rem 1.3rem', minWidth: '120px' };
-      } else {
-        return { iconSize: '1.8rem', fontSize: '0.75rem', padding: '0.9rem 1.1rem', minWidth: '110px' };
-      }
-    };
-
-    const sizeConfig = getSizeConfig(totalAmenities);
-
-    const highlightsHTML = config.amenities.map((amenity, idx) => {
-      const name = (typeof amenity === 'string' ? amenity : (amenity?.name || '')).toString().trim();
-      // Check if amenity object has icon, otherwise lookup from mapping, default to ✨
-      const icon = (typeof amenity === 'object' && amenity.icon)
-        ? amenity.icon.toString()
-        : (propertyAmenityIcons[name] || '✨');
-      const safeName = name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      if (!name) return '';
-
-      // Alternating gradient colors
-      const gradients = [
-        `linear-gradient(135deg, ${colors.primary}18, ${colors.primary}28)`,
-        `linear-gradient(135deg, ${colors.secondary}18, ${colors.secondary}28)`,
-        `linear-gradient(135deg, ${colors.primary}12, ${colors.secondary}22)`
-      ];
-      const bgGradient = gradients[idx % 3];
-
-      return `
-        <div style="
-          background: ${bgGradient};
-          border: 2px solid ${idx % 2 === 0 ? colors.primary : colors.secondary}35;
-          border-radius: 16px;
-          padding: ${sizeConfig.padding};
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.6rem;
-          min-width: ${sizeConfig.minWidth};
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-          cursor: default;
-        " onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)';"
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
-          <div style="font-size: ${sizeConfig.iconSize}; line-height: 1;">${icon}</div>
-          <div style="font-size: ${sizeConfig.fontSize}; font-weight: 600; text-align: center; color: #2d3748; line-height: 1.3;">${safeName}</div>
-        </div>
-      `;
-    }).filter(Boolean).join('\n');
     html = html.replace(/{{#HIGHLIGHTS}}[\s\S]*?{{\/HIGHLIGHTS}}/g, highlightsHTML);
   }
   
@@ -5411,7 +5161,9 @@ function generatePropertyTemplate(input, slug) {
     : [];
 
   const inputAmenities = (Array.isArray(input.amenities) ? input.amenities : []).map(a => String(a || '').trim()).filter(Boolean);
-  const amenitiesList = inputAmenities.length ? inputAmenities : [];
+  const amenitiesList = inputAmenities.length
+    ? inputAmenities
+    : (isAccommodationCategory ? ['Free WiFi', 'Parking', 'Hot Water', 'Power Backup', 'Room Service', '24/7 Support'] : []);
 
   const bookingModeRaw = String(input.bookingMode || '').trim().toLowerCase();
   const bookingMode = (bookingModeRaw === 'sheet' || bookingModeRaw === 'whatsapp' || bookingModeRaw === 'both')
@@ -5437,7 +5189,7 @@ function generatePropertyTemplate(input, slug) {
       heroImage: (heroBackground?.type === 'custom' ? (heroBackground.value || '') : ''),
       heroFitMode: (input.heroFitMode === 'contain' || input.heroFitMode === 'fit' || input.heroFitMode === 'nocrop') ? 'contain' : 'cover',
       heroObjectPosition: input.heroObjectPosition || '',
-      mobileHeroBoxed: (input.mobileHeroBoxed === true || String(input.mobileHeroBoxed).trim().toLowerCase() === 'true') ? true : false,
+      mobileHeroBoxed: (input.mobileHeroBoxed === false || String(input.mobileHeroBoxed).trim().toLowerCase() === 'false') ? false : true,
       heroContentPositionDesktop: input.heroContentPositionDesktop || '',
       heroContentPositionMobile: input.heroContentPositionMobile || ''
     },
@@ -5516,22 +5268,18 @@ function generatePropertyTemplate(input, slug) {
     videos: Array.isArray(input.videos) ? input.videos : [],
     rooms: (Array.isArray(input.rooms) && input.rooms.length > 0) ? input.rooms : [],
     amenities: amenitiesList.map(a => ({ name: a, icon: '✨' })),
-
-    // Reviews/Testimonials (NEW)
-    reviews: Array.isArray(input.reviews) && input.reviews.length > 0 ? input.reviews : [],
-
     social: {
       facebook: input.facebook || '',
       instagram: input.instagram || '',
       twitter: input.twitter || '',
       youtube: input.youtube || ''
     },
-
+    
     embeds: {
       youtube: input.youtubeEmbed || '',
       map: input.mapsEmbed || input.mapLink || ''
     },
-
+    
     customDomain: '',
     subdomainEnabled: true,
     createdAt: new Date().toISOString(),

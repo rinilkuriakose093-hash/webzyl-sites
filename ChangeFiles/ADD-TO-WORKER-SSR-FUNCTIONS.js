@@ -1,0 +1,160 @@
+// ============================================================================
+// SSR RENDERER WITH BUSINESS INTENT (Add this to worker.js)
+// ============================================================================
+
+function deriveBusinessIntent(category) {
+  const intentMap = {
+    hospitality: ['homestay', 'resort', 'hotel', 'villa', 'cottage'],
+    retail: ['shop', 'cafe', 'restaurant'],
+    service: ['services'],
+    generic: ['others']
+  };
+  
+  for (const [intent, cats] of Object.entries(intentMap)) {
+    if (cats.includes(category)) return intent;
+  }
+  return 'generic';
+}
+
+function getIntentLabels(intent) {
+  const labels = {
+    hospitality: {
+      offerings: 'Our Rooms',
+      offeringsMenu: 'Rooms',
+      highlights: 'Amenities',
+      highlightsMenu: 'Amenities',
+      primaryAction: 'Book Your Stay',
+      primaryActionWhatsApp: "Hello! I'd like to book a stay at",
+      primaryActionIcon: '📅'
+    },
+    retail: {
+      offerings: 'Our Products',
+      offeringsMenu: 'Products',
+      highlights: 'Features',
+      highlightsMenu: 'Features',
+      primaryAction: 'Enquire on WhatsApp',
+      primaryActionWhatsApp: "Hello! I'm interested in your products at",
+      primaryActionIcon: '💬'
+    },
+    service: {
+      offerings: 'Our Services',
+      offeringsMenu: 'Services',
+      highlights: 'Why Choose Us',
+      highlightsMenu: 'Why Us',
+      primaryAction: 'Request a Quote',
+      primaryActionWhatsApp: "Hello! I'd like to request a quote from",
+      primaryActionIcon: '📋'
+    },
+    generic: {
+      offerings: 'What We Offer',
+      offeringsMenu: 'Offerings',
+      highlights: 'Highlights',
+      highlightsMenu: 'Highlights',
+      primaryAction: 'Get In Touch',
+      primaryActionWhatsApp: "Hello! I'd like to know more about",
+      primaryActionIcon: '✉️'
+    }
+  };
+  
+  return labels[intent] || labels.generic;
+}
+
+function renderSmartTemplate(config, templateHTML) {
+  const intent = deriveBusinessIntent(config.category);
+  const labels = getIntentLabels(intent);
+  
+  const has_gallery = config.gallery && config.gallery.length > 0;
+  const has_offerings = config.rooms && config.rooms.length > 0;
+  const has_highlights = config.amenities && config.amenities.length > 0;
+  const has_primary_action = ['hospitality', 'retail', 'service'].includes(intent);
+  const has_social = config.social && (config.social.facebook || config.social.instagram || config.social.twitter || config.social.youtube);
+  
+  let html = templateHTML
+    .replace(/{{BUSINESS_NAME}}/g, config.name || '')
+    .replace(/{{TAGLINE}}/g, config.tagline || '')
+    .replace(/{{DESCRIPTION}}/g, config.about || '')
+    .replace(/{{PRIMARY_COLOR}}/g, config.branding?.primaryColor || '#06b6d4')
+    .replace(/{{HERO_IMAGE}}/g, config.branding?.heroImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945')
+    .replace(/{{PHONE}}/g, config.contact?.phone || '')
+    .replace(/{{EMAIL}}/g, config.contact?.email || '')
+    .replace(/{{WHATSAPP}}/g, config.contact?.whatsapp || '')
+    .replace(/{{ADDRESS}}/g, config.location?.address || '')
+    .replace(/{{MAP_LINK}}/g, config.location?.mapLink || '');
+  
+  html = html
+    .replace(/{{OFFERINGS_LABEL}}/g, labels.offerings)
+    .replace(/{{OFFERINGS_MENU_LABEL}}/g, labels.offeringsMenu)
+    .replace(/{{HIGHLIGHTS_LABEL}}/g, labels.highlights)
+    .replace(/{{HIGHLIGHTS_MENU_LABEL}}/g, labels.highlightsMenu)
+    .replace(/{{PRIMARY_ACTION_LABEL}}/g, labels.primaryAction)
+    .replace(/{{PRIMARY_ACTION_WHATSAPP}}/g, `${labels.primaryActionWhatsApp} ${config.name}`)
+    .replace(/{{PRIMARY_ACTION_ICON}}/g, labels.primaryActionIcon);
+  
+  html = handleConditional(html, 'HAS_GALLERY', has_gallery);
+  html = handleConditional(html, 'HAS_OFFERINGS', has_offerings);
+  html = handleConditional(html, 'HAS_HIGHLIGHTS', has_highlights);
+  html = handleConditional(html, 'HAS_PRIMARY_ACTION', has_primary_action);
+  html = handleConditional(html, 'HAS_SOCIAL', has_social);
+  
+  html = handleConditional(html, 'FACEBOOK', config.social?.facebook);
+  html = handleConditional(html, 'INSTAGRAM', config.social?.instagram);
+  html = handleConditional(html, 'TWITTER', config.social?.twitter);
+  html = handleConditional(html, 'YOUTUBE_SOCIAL', config.social?.youtube);
+  html = handleConditional(html, 'MAP_LINK', config.location?.mapLink);
+  
+  if (config.social) {
+    html = html.replace(/{{FACEBOOK}}/g, config.social.facebook || '');
+    html = html.replace(/{{INSTAGRAM}}/g, config.social.instagram || '');
+    html = html.replace(/{{TWITTER}}/g, config.social.twitter || '');
+    html = html.replace(/{{YOUTUBE_SOCIAL}}/g, config.social.youtube || '');
+  }
+  
+  if (has_gallery) {
+    const galleryHTML = config.gallery.map(img => 
+      `<img src="${img}" alt="Gallery Image">`
+    ).join('\n');
+    html = html.replace(/{{#GALLERY}}[\s\S]*?{{\/GALLERY}}/g, galleryHTML);
+  }
+  
+  if (has_highlights) {
+    const highlightsHTML = config.amenities.map(amenity => {
+      const name = typeof amenity === 'string' ? amenity : amenity.name;
+      const icon = (typeof amenity === 'object' && amenity.icon) ? amenity.icon : '✨';
+      return `
+        <div class="amenity-card">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">${icon}</div>
+          <h3>${name}</h3>
+        </div>
+      `;
+    }).join('\n');
+    html = html.replace(/{{#HIGHLIGHTS}}[\s\S]*?{{\/HIGHLIGHTS}}/g, highlightsHTML);
+  }
+  
+  if (has_offerings) {
+    const offeringsHTML = config.rooms.map(room => `
+      <div class="room-card">
+        <img src="${room.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945'}" alt="${room.name}">
+        <div class="content">
+          <h3>${room.name}</h3>
+          <p>${room.description || ''}</p>
+          <p style="font-size: 1.5rem; color: ${config.branding?.primaryColor || '#06b6d4'}; font-weight: 700; margin-top: 1rem;">
+            ₹${room.price || config.basePrice || '0'}${intent === 'hospitality' ? '/night' : ''}
+          </p>
+        </div>
+      </div>
+    `).join('\n');
+    html = html.replace(/{{#OFFERINGS}}[\s\S]*?{{\/OFFERINGS}}/g, offeringsHTML);
+  }
+  
+  return html;
+}
+
+function handleConditional(html, tag, condition) {
+  const regex = new RegExp(`{{#${tag}}}([\\s\\S]*?){{\\/${tag}}}`, 'g');
+  
+  if (condition) {
+    return html.replace(regex, '$1');
+  } else {
+    return html.replace(regex, '');
+  }
+}

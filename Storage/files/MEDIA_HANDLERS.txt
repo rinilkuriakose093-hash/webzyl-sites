@@ -1,0 +1,419 @@
+// ============================================================================
+// MEDIA STORAGE HANDLERS (NEW in v7.3)
+// Copy this entire block to the END of worker.js
+// ============================================================================
+
+async function handleMediaSignUpload(request, env) {
+  try {
+    const body = await request.json();
+    const { tenantId, mediaType, filename, contentType, size } = body;
+
+    if (!tenantId || !mediaType || !filename || !contentType || !size) {
+      return jsonResponse({ error: 'Missing required fields' }, 400);
+    }
+
+    if (!['logo', 'gallery', 'product'].includes(mediaType)) {
+      return jsonResponse({ error: 'Invalid media type' }, 400);
+    }
+
+    if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
+      return jsonResponse({ error: 'Unsupported file type' }, 400);
+    }
+
+    if (size > MAX_SIZES[mediaType]) {
+      return jsonResponse({ 
+        error: `File too large. Max ${MAX_SIZES[mediaType] / 1024 / 1024}MB for ${mediaType}` 
+      }, 400);
+    }
+
+    const systemConfig = await env.RESORT_CONFIGS.get('system:uploads_enabled', 'json');
+    if (systemConfig && !systemConfig.enabled) {
+      return jsonResponse({ error: 'Uploads temporarily disabled' }, 503);
+    }
+
+    const tenantConfig = await env.RESORT_CONFIGS.get(`config:${tenantId}`, 'json');
+    if (!tenantConfig || tenantConfig.status !== 'active') {
+      return jsonResponse({ error: 'Tenant not found or inactive' }, 403);
+    }
+
+    const lockKey = `upload-lock:${tenantId}`;
+    const existing = await env.RESORT_CONFIGS.get(lockKey);
+    if (existing) {
+      return jsonResponse({ error: 'Upload already in progress' }, 429);
+    }
+
+    await env.RESORT_CONFIGS.put(lockKey, JSON.stringify({ lockedAt: new Date().toISOString() }), { expirationTtl: 60 });
+
+    try {
+      const plan = tenantConfig.plan_tier || 'trial';
+      const quotaKey = `quota:${tenantId}:${mediaType}`;
+      const quota = await env.RESORT_CONFIGS.get(quotaKey, 'json') || { used: 0 };
+      const limit = QUOTA_LIMITS[plan]?.[mediaType] || QUOTA_LIMITS.trial[mediaType];
+
+      if (quota.used >= limit) {
+        await env.RESORT_CONFIGS.delete(lockKey);
+        return jsonResponse({
+          error: 'quota_exceeded',
+          message: `${mediaType} limit reached (${quota.used}/${limit})`,
+          current: quota.used,
+          limit
+        }, 429);
+      }
+
+      const assetId = generateRandomId(8);
+      const randomHash = generateRandomId(12);
+      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 255);
+      const objectPath = `${tenantId}/${mediaType}/${randomHash}/${sanitizedFilename}`;
+
+      await env.MEDIA_DB.prepare(`
+        INSERT INTO assets (
+          id, tenantId, mediaType, objectPath, filename,
+          size, contentType, status, createdAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+      `).bind(assetId, tenantId, mediaType, objectPath, sanitizedFilename, size, contentType).run();
+
+      const uploadUrl = await generatePresignedPutUrl(
+        env.R2_ACCOUNT_ID,
+        env.R2_ACCESS_KEY_ID,
+        env.R2_SECRET_ACCESS_KEY,
+        'webzyl-media',
+        objectPath,
+        contentType,
+        14400
+      );
+
+      return jsonResponse({
+        uploadUrl,
+        assetId,
+        objectPath,
+        expiresAt: new Date(Date.now() + 14400 * 1000).toISOString(),
+        headers: { 'Content-Type': contentType, 'X-Content-Hash': 'required' }
+      }, 200);
+
+    } catch (error) {
+      await env.RESORT_CONFIGS.delete(lockKey);
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('[MEDIA] Sign upload error:', error);
+    return jsonResponse({ error: error.message || 'Internal server error' }, 500);
+  }
+}
+
+async function handleMediaConfirmUpload(request, env) {
+  let tenantId = null;
+  
+  try {
+    const body = await request.json();
+    const { assetId, contentHash } = body;
+    tenantId = body.tenantId;
+
+    if (!assetId || !tenantId) {
+      return jsonResponse({ error: 'Missing required fields' }, 400);
+    }
+
+    const asset = await env.MEDIA_DB.prepare(`
+      SELECT * FROM assets 
+      WHERE id = ? AND tenantId = ? AND status = 'pending'
+    `).bind(assetId, tenantId).first();
+
+    if (!asset) {
+      return jsonResponse({ error: 'Asset not found or already confirmed' }, 404);
+    }
+
+    const head = await env.MEDIA_R2.head(asset.objectPath);
+    
+    if (!head) {
+      return jsonResponse({ error: 'Upload not found in storage' }, 404);
+    }
+
+    if (head.size !== asset.size) {
+      return jsonResponse({ 
+        error: `Upload size mismatch: expected ${asset.size}, got ${head.size}` 
+      }, 400);
+    }
+
+    await env.MEDIA_DB.prepare(`
+      UPDATE assets
+      SET status = 'ready', contentHash = ?, updatedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(contentHash, assetId).run();
+
+    const quotaKey = `quota:${tenantId}:${asset.mediaType}`;
+    const quota = await env.RESORT_CONFIGS.get(quotaKey, 'json') || { used: 0 };
+    await env.RESORT_CONFIGS.put(quotaKey, JSON.stringify({
+      used: quota.used + 1,
+      updatedAt: new Date().toISOString()
+    }));
+
+    const baseUrl = `https://img.webzyl.com/${tenantId}/${asset.mediaType}/${assetId}`;
+
+    return jsonResponse({
+      success: true,
+      assetId,
+      assetUrl: baseUrl,
+      variants: {
+        thumbnail: `${baseUrl}?w=320`,
+        small: `${baseUrl}?w=640`,
+        medium: `${baseUrl}?w=1024`,
+        large: `${baseUrl}?w=1600`
+      }
+    }, 200);
+
+  } catch (error) {
+    console.error('[MEDIA] Confirm upload error:', error);
+    return jsonResponse({ error: error.message || 'Internal server error' }, 500);
+  } finally {
+    if (tenantId) {
+      await env.RESORT_CONFIGS.delete(`upload-lock:${tenantId}`);
+    }
+  }
+}
+
+async function handleMediaServe(request, env) {
+  try {
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/').filter(Boolean);
+
+    if (pathParts.length < 4) {
+      return new Response('Invalid image path', { status: 400 });
+    }
+
+    const [_, tenantId, mediaType, assetId] = pathParts;
+
+    const asset = await env.MEDIA_DB.prepare(`
+      SELECT * FROM assets
+      WHERE tenantId = ? AND mediaType = ? AND id = ? AND status = 'ready'
+    `).bind(tenantId, mediaType, assetId).first();
+
+    if (!asset) {
+      return new Response('Image not found', { 
+        status: 404,
+        headers: { 'Cache-Control': 'public, max-age=60' }
+      });
+    }
+
+    const requestedWidth = parseInt(url.searchParams.get('w') || '1024');
+    const width = clampToAllowedWidth(requestedWidth);
+
+    const r2PublicUrl = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/webzyl-media/${asset.objectPath}`;
+
+    const imageResponse = await fetch(r2PublicUrl, {
+      cf: {
+        image: { width, quality: 85, format: 'auto', metadata: 'none' },
+        cacheTtl: 31536000,
+        cacheEverything: true
+      }
+    });
+
+    if (!imageResponse.ok) {
+      console.error(`[MEDIA] Failed to fetch: ${asset.objectPath}`);
+      return new Response('Image file not found', { status: 404 });
+    }
+
+    const headers = new Headers(imageResponse.headers);
+    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    headers.set('CDN-Cache-Control', 'public, max-age=31536000');
+    headers.set('Access-Control-Allow-Origin', '*');
+
+    return new Response(imageResponse.body, { 
+      status: imageResponse.status,
+      headers 
+    });
+
+  } catch (error) {
+    console.error('[MEDIA] Serve error:', error);
+    return new Response('Internal server error', { status: 500 });
+  }
+}
+
+async function handleMediaDelete(request, env) {
+  try {
+    const url = new URL(request.url);
+    const assetId = url.pathname.split('/').pop();
+    const tenantId = request.headers.get('X-Tenant-ID');
+
+    if (!assetId || !tenantId) {
+      return jsonResponse({ error: 'Missing asset ID or tenant ID' }, 400);
+    }
+
+    const asset = await env.MEDIA_DB.prepare(`
+      SELECT * FROM assets WHERE id = ? AND tenantId = ?
+    `).bind(assetId, tenantId).first();
+
+    if (!asset) {
+      return jsonResponse({ error: 'Asset not found' }, 404);
+    }
+
+    await env.MEDIA_DB.prepare(`
+      UPDATE assets
+      SET status = 'deleted', deletedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(assetId).run();
+
+    const quotaKey = `quota:${tenantId}:${asset.mediaType}`;
+    const quota = await env.RESORT_CONFIGS.get(quotaKey, 'json') || { used: 0 };
+    await env.RESORT_CONFIGS.put(quotaKey, JSON.stringify({
+      used: Math.max(0, quota.used - 1),
+      updatedAt: new Date().toISOString()
+    }));
+
+    return jsonResponse({
+      success: true,
+      assetId,
+      deletedAt: new Date().toISOString(),
+      gracePeriod: '30 days'
+    }, 200);
+
+  } catch (error) {
+    console.error('[MEDIA] Delete error:', error);
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
+async function handleMediaList(request, env) {
+  try {
+    const url = new URL(request.url);
+    const tenantId = url.searchParams.get('tenantId');
+    const mediaType = url.searchParams.get('mediaType');
+    const status = url.searchParams.get('status') || 'ready';
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+
+    if (!tenantId) {
+      return jsonResponse({ error: 'Missing tenant ID' }, 400);
+    }
+
+    let query = 'SELECT * FROM assets WHERE tenantId = ? AND status = ?';
+    const params = [tenantId, status];
+
+    if (mediaType) {
+      query += ' AND mediaType = ?';
+      params.push(mediaType);
+    }
+
+    query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const { results } = await env.MEDIA_DB.prepare(query).bind(...params).all();
+
+    const quotaKey = `quota:${tenantId}:${mediaType || 'gallery'}`;
+    const quota = await env.RESORT_CONFIGS.get(quotaKey, 'json') || { used: 0, limit: 5 };
+
+    return jsonResponse({
+      assets: results,
+      total: results.length,
+      limit,
+      offset,
+      quota
+    }, 200);
+
+  } catch (error) {
+    console.error('[MEDIA] List error:', error);
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function generateRandomId(length) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < length; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+function clampToAllowedWidth(width) {
+  if (width <= ALLOWED_WIDTHS[0]) return ALLOWED_WIDTHS[0];
+  if (width >= ALLOWED_WIDTHS[ALLOWED_WIDTHS.length - 1]) {
+    return ALLOWED_WIDTHS[ALLOWED_WIDTHS.length - 1];
+  }
+
+  for (let i = 0; i < ALLOWED_WIDTHS.length - 1; i++) {
+    const lower = ALLOWED_WIDTHS[i];
+    const upper = ALLOWED_WIDTHS[i + 1];
+    if (width >= lower && width < upper) {
+      const distToLower = width - lower;
+      const distToUpper = upper - width;
+      return distToLower < distToUpper ? lower : upper;
+    }
+  }
+
+  return ALLOWED_WIDTHS[1];
+}
+
+async function generatePresignedPutUrl(accountId, accessKeyId, secretAccessKey, bucketName, objectKey, contentType, expirySeconds) {
+  const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
+  const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+
+  const s3Client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey }
+  });
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: objectKey,
+    ContentType: contentType
+  });
+
+  return await getSignedUrl(s3Client, command, { expiresIn: expirySeconds });
+}
+
+// ============================================================================
+// CRON CLEANUP FUNCTIONS
+// ============================================================================
+
+async function cleanupDeletedAssets(env) {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  
+  const { results } = await env.MEDIA_DB.prepare(`
+    SELECT id, objectPath FROM assets
+    WHERE deletedAt IS NOT NULL
+      AND deletedAt < ?
+      AND status = 'deleted'
+    LIMIT 100
+  `).bind(thirtyDaysAgo.toISOString()).all();
+
+  for (const asset of results) {
+    try {
+      await env.MEDIA_R2.delete(asset.objectPath);
+      await env.MEDIA_DB.prepare(`
+        UPDATE assets SET status = 'permanently_deleted' WHERE id = ?
+      `).bind(asset.id).run();
+      console.log(`[CRON] Deleted asset: ${asset.id}`);
+    } catch (error) {
+      console.error(`[CRON] Failed to delete ${asset.id}:`, error);
+    }
+  }
+}
+
+async function auditOrphanedAssets(env) {
+  const { results } = await env.MEDIA_DB.prepare(`
+    SELECT objectPath FROM assets WHERE status != 'permanently_deleted'
+  `).all();
+
+  const knownPaths = new Set(results.map(r => r.objectPath));
+  const listed = await env.MEDIA_R2.list({ limit: 1000 });
+  const orphans = [];
+
+  for (const object of listed.objects) {
+    if (!knownPaths.has(object.key)) {
+      orphans.push({ key: object.key, size: object.size });
+    }
+  }
+
+  if (orphans.length > 0) {
+    console.log(`[CRON] Found ${orphans.length} orphaned objects`, orphans);
+  }
+
+  if (listed.truncated) {
+    console.warn('[CRON] R2 list truncated - pagination required');
+  }
+}

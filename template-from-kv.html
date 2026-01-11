@@ -135,18 +135,6 @@
             background: var(--white);
         }
 
-        /* Custom mode: when custom color IS set, apply it when scrolled (white background) */
-        body.header-style-custom .header:not(.transparent) .logo,
-        body.header-style-custom .header:not(.transparent) .nav-link {
-            color: var(--header-text-color, var(--text-dark));
-        }
-
-        /* Custom mode: transparent header uses default Auto behavior (white text) unless custom color is set */
-        body.header-style-custom .header.transparent .logo,
-        body.header-style-custom .header.transparent .nav-link {
-            color: var(--header-text-color, var(--white));
-        }
-
         /* When hero background is blank/white, keep header readable */
         body.hero-bg-none .header.transparent {
             background: rgba(255,255,255,0.98);
@@ -1129,14 +1117,14 @@
             </button>
 
             <ul class="nav-menu" id="navMenu">
-                <li><a href="#about" class="nav-link">{{MENU_LABEL_ABOUT}}</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
                 {{#HAS_HIGHLIGHTS}}<li><a href="#highlights" class="nav-link">{{HIGHLIGHTS_MENU_LABEL}}</a></li>{{/HAS_HIGHLIGHTS}}
                 {{#HAS_OFFERINGS}}<li><a href="#offerings" class="nav-link">{{OFFERINGS_MENU_LABEL}}</a></li>{{/HAS_OFFERINGS}}
-                {{#HAS_BOOKING}}<li><a href="#booking" class="nav-link">{{MENU_LABEL_BOOKING}}</a></li>{{/HAS_BOOKING}}
-                {{#HAS_GALLERY}}<li><a href="#gallery" class="nav-link">{{MENU_LABEL_GALLERY}}</a></li>{{/HAS_GALLERY}}
-                {{#HAS_VIDEOS}}<li><a href="#videos" class="nav-link">{{MENU_LABEL_VIDEOS}}</a></li>{{/HAS_VIDEOS}}
-                {{#HAS_REVIEWS}}<li><a href="#reviews" class="nav-link">{{MENU_LABEL_REVIEWS}}</a></li>{{/HAS_REVIEWS}}
-                <li><a href="#contact" class="nav-link">{{MENU_LABEL_CONTACT}}</a></li>
+                {{#HAS_BOOKING}}<li><a href="#booking" class="nav-link">Booking</a></li>{{/HAS_BOOKING}}
+                {{#HAS_GALLERY}}<li><a href="#gallery" class="nav-link">Gallery</a></li>{{/HAS_GALLERY}}
+                {{#HAS_VIDEOS}}<li><a href="#videos" class="nav-link">Videos</a></li>{{/HAS_VIDEOS}}
+                {{#HAS_REVIEWS}}<li><a href="#reviews" class="nav-link">Reviews</a></li>{{/HAS_REVIEWS}}
+                <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </header>
@@ -1186,8 +1174,13 @@
             <div class="section-header">
                 <h2 class="section-title">{{HIGHLIGHTS_LABEL}}</h2>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.5rem; justify-items: center;">
-                {{#HIGHLIGHTS}}{{/HIGHLIGHTS}}
+            <div class="grid grid-3">
+                {{#HIGHLIGHTS}}
+                <div class="amenity-card">
+                    <div class="amenity-icon">{{icon}}</div>
+                    <h3>{{name}}</h3>
+                </div>
+                {{/HIGHLIGHTS}}
             </div>
         </div>
     </section>
@@ -1254,13 +1247,13 @@
     </section>
     {{/HAS_VIDEOS}}
 
-    <!-- Testimonials -->
+    <!-- Reviews & Testimonials -->
     {{#HAS_REVIEWS}}
     <section id="reviews" class="bg-light">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Guest Testimonials</h2>
-                <p class="section-description">Hear from our valued guests</p>
+                <h2 class="section-title">What Our Guests Say</h2>
+                <p class="section-description">Real reviews from real customers</p>
             </div>
             <div class="reviews-grid">
                 {{#REVIEWS}}

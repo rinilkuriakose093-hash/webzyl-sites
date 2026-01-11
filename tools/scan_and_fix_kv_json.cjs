@@ -1,0 +1,128 @@
+/*
+  Scans Cloudflare KV values for JSON that fails parsing due to BOM/control chars
+  and rewrites them as clean JSON.
+
+  Usage:
+    node tools/scan_and_fix_kv_json.cjs --namespace-id <id> --prefix config: [--dry-run]
+*/
+
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const WRANGLER_CMD = process.platform === 'win32' ? 'wrangler.cmd' : 'wrangler';
+
+function getArg(flag) {
+  const idx = process.argv.indexOf(flag);
+  if (idx === -1) return null;
+  return process.argv[idx + 1] ?? null;
+}
+
+const namespaceId = getArg('--namespace-id');
+const prefix = getArg('--prefix') ?? 'config:';
+const dryRun = process.argv.includes('--dry-run');
+
+if (!namespaceId) {
+  console.error('Missing --namespace-id');
+  process.exit(2);
+}
+
+function runWrangler(args) {
+  // On Windows, wrangler is typically a .cmd shim; `shell: true` avoids spawn EINVAL.
+  return execFileSync(WRANGLER_CMD, args, { encoding: 'utf8', shell: true });
+}
+
+function putValueFromFile(key, value) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'webzyl-kv-'));
+  const tmpFile = path.join(tmpDir, 'value.json');
+  fs.writeFileSync(tmpFile, value, 'utf8');
+  runWrangler(['kv', 'key', 'put', key, '--remote', '--namespace-id', namespaceId, '--path', tmpFile]);
+  try { fs.unlinkSync(tmpFile); } catch (_) {}
+  try { fs.rmdirSync(tmpDir); } catch (_) {}
+}
+
+function sanitize(text) {
+  return String(text)
+    .replace(/^\uFEFF/, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+}
+
+function main() {
+  const listRaw = runWrangler(['kv', 'key', 'list', '--remote', '--namespace-id', namespaceId, '--prefix', prefix]);
+
+  let keys;
+  try {
+    keys = JSON.parse(listRaw);
+  } catch (e) {
+    console.error('Failed to parse key list JSON from wrangler. Output was:');
+    console.error(listRaw);
+    process.exit(1);
+  }
+
+  const keyNames = keys.map((k) => k.name).filter(Boolean);
+  console.log(`Found ${keyNames.length} keys with prefix '${prefix}'.`);
+
+  let fixed = 0;
+  let invalid = 0;
+  let skipped = 0;
+
+  for (const key of keyNames) {
+    let text;
+    try {
+      text = runWrangler(['kv', 'key', 'get', key, '--remote', '--namespace-id', namespaceId, '--text']);
+    } catch (e) {
+      console.warn(`[WARN] Failed to get ${key}: ${e.message}`);
+      skipped++;
+      continue;
+    }
+
+    const original = text;
+
+    // Valid JSON already
+    try {
+      JSON.parse(original);
+      continue;
+    } catch (_) {
+      // keep going
+    }
+
+    const sanitized = sanitize(original);
+
+    if (sanitized === original) {
+      console.warn(`[INVALID] ${key} JSON parse failed (no sanitization change).`);
+      invalid++;
+      continue;
+    }
+
+    let obj;
+    try {
+      obj = JSON.parse(sanitized);
+    } catch (e) {
+      console.warn(`[INVALID] ${key} still fails after sanitization: ${e.message}`);
+      invalid++;
+      continue;
+    }
+
+    const rewritten = JSON.stringify(obj);
+    console.log(`[FIX] ${key} (len ${original.length} -> ${rewritten.length})${dryRun ? ' [dry-run]' : ''}`);
+
+    if (!dryRun) {
+      try {
+        // Use --path to avoid shell quote mangling on Windows.
+        putValueFromFile(key, rewritten);
+        fixed++;
+      } catch (e) {
+        console.warn(`[WARN] Failed to put ${key}: ${e.message}`);
+        skipped++;
+      }
+    }
+  }
+
+  console.log('---');
+  console.log(`Fixed: ${fixed}`);
+  console.log(`Invalid (needs manual fix): ${invalid}`);
+  console.log(`Skipped (get/put errors): ${skipped}`);
+}
+
+main();

@@ -22,14 +22,6 @@
             --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
             --radius: 12px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --hero-title-display-desktop: {{HERO_TITLE_DISPLAY_DESKTOP}};
-            --hero-title-display-mobile: {{HERO_TITLE_DISPLAY_MOBILE}};
-
-            /* Header Style Profile (computed by SSR) */
-            --header-text-color: {{HEADER_TEXT_COLOR}};
-            --header-brand-font-family: {{HEADER_BRAND_FONT_FAMILY}};
-            --header-brand-font-weight: {{HEADER_BRAND_FONT_WEIGHT}};
-            --header-brand-font-size: {{HEADER_BRAND_FONT_SIZE}};
         }
 
         /* Mobile: keep interactions snappy */
@@ -102,66 +94,8 @@
 
         .header.transparent .logo,
         .header.transparent .nav-link {
-            color: var(--header-text-color, var(--white));
+            color: var(--white);
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* Brand headline styling (top-left text) */
-        .logo-text {
-            font-family: var(--header-brand-font-family, inherit);
-            font-weight: var(--header-brand-font-weight, 800);
-            font-size: var(--header-brand-font-size, 24px);
-            letter-spacing: -0.01em;
-        }
-
-        /* Header Style Modes */
-        body.header-style-dark .header.transparent {
-            background: rgba(255,255,255,0.98);
-            backdrop-filter: none;
-            box-shadow: var(--shadow);
-        }
-
-        body.header-style-dark .header.transparent .logo,
-        body.header-style-dark .header.transparent .nav-link {
-            color: var(--header-text-color, var(--text-dark));
-            text-shadow: none;
-        }
-
-        body.header-style-dark .header.transparent .menu-toggle span {
-            background: var(--text-dark);
-        }
-
-        body.header-style-light .header.transparent .menu-toggle span {
-            background: var(--white);
-        }
-
-        /* Custom mode: when custom color IS set, apply it when scrolled (white background) */
-        body.header-style-custom .header:not(.transparent) .logo,
-        body.header-style-custom .header:not(.transparent) .nav-link {
-            color: var(--header-text-color, var(--text-dark));
-        }
-
-        /* Custom mode: transparent header uses default Auto behavior (white text) unless custom color is set */
-        body.header-style-custom .header.transparent .logo,
-        body.header-style-custom .header.transparent .nav-link {
-            color: var(--header-text-color, var(--white));
-        }
-
-        /* When hero background is blank/white, keep header readable */
-        body.hero-bg-none .header.transparent {
-            background: rgba(255,255,255,0.98);
-            backdrop-filter: none;
-            box-shadow: var(--shadow);
-        }
-
-        body.hero-bg-none .header.transparent .logo,
-        body.hero-bg-none .header.transparent .nav-link {
-            color: var(--text-dark);
-            text-shadow: none;
-        }
-
-        body.hero-bg-none .header.transparent .menu-toggle span {
-            background: var(--text-dark);
         }
 
         .nav-container {
@@ -354,21 +288,6 @@
             overflow: hidden;
         }
 
-        .hero.hero-bg-none {
-            background: var(--white);
-            color: var(--text-dark);
-        }
-
-        .hero.hero-bg-none::before {
-            /* Disable global overlay so white stays true white */
-            display: none;
-            background: none;
-        }
-
-        .hero.hero-bg-none h1 {
-            text-shadow: none;
-        }
-
         .hero-art {
             position: absolute;
             inset: 0;
@@ -542,10 +461,6 @@
             line-height: 1.05;
         }
 
-        .hero-title {
-            display: var(--hero-title-display-desktop, block);
-        }
-
         .hero-tagline {
             font-size: var(--hero-tagline-size-desktop, clamp(1.25rem, 2.5vw, 1.5rem));
             margin: 0;
@@ -554,10 +469,6 @@
 
         /* Mobile: optional boxed callout (controlled by MOBILE_HERO_BOX_CLASS) */
         @media (max-width: 768px) {
-            .hero-title {
-                display: var(--hero-title-display-mobile, block);
-            }
-
             .hero {
                 padding: 7rem 1rem 4rem;
             }
@@ -839,63 +750,6 @@
         }
 
         /* ========== CONTACT SECTION ========== */
-        /* ========== REVIEWS ========== */
-        .reviews-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .review-card {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-
-        .review-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-
-        .review-rating {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-            color: #fbbf24;
-        }
-
-        .review-text {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--text-light);
-            margin-bottom: 1rem;
-            font-style: italic;
-        }
-
-        .review-author {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .review-author strong {
-            color: var(--text-dark);
-        }
-
-        .review-date {
-            color: var(--text-light);
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .reviews-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ========== CONTACT ========== */
         .contact-section {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: var(--white);
@@ -941,70 +795,6 @@
             width: 100%;
             height: 400px;
             border: none;
-        }
-
-        /* ========== BOOKING ENQUIRY ========== */
-        .booking-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 1.5rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .booking-form .honeypot { display: none; }
-
-        .booking-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .booking-grid { grid-template-columns: 1fr; }
-        }
-
-        .booking-field label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.35rem;
-            color: var(--text-dark);
-            font-size: 0.95rem;
-        }
-
-        .booking-field input,
-        .booking-field select,
-        .booking-field textarea {
-            width: 100%;
-            padding: 0.85rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .booking-field input:focus,
-        .booking-field select:focus,
-        .booking-field textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
-        }
-
-        .booking-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .booking-submit { min-width: 180px; }
-
-        .booking-status {
-            margin: 0;
-            color: var(--text-medium);
-            font-size: 0.95rem;
         }
 
         /* ========== FOOTER ========== */
@@ -1113,7 +903,7 @@
         .mb-2 { margin-bottom: 2rem; }
     </style>
 </head>
-<body class="{{BODY_CLASS}}">
+<body>
     <!-- Header -->
     <header class="header transparent" id="header">
         <div class="nav-container">
@@ -1129,14 +919,11 @@
             </button>
 
             <ul class="nav-menu" id="navMenu">
-                <li><a href="#about" class="nav-link">{{MENU_LABEL_ABOUT}}</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
                 {{#HAS_HIGHLIGHTS}}<li><a href="#highlights" class="nav-link">{{HIGHLIGHTS_MENU_LABEL}}</a></li>{{/HAS_HIGHLIGHTS}}
                 {{#HAS_OFFERINGS}}<li><a href="#offerings" class="nav-link">{{OFFERINGS_MENU_LABEL}}</a></li>{{/HAS_OFFERINGS}}
-                {{#HAS_BOOKING}}<li><a href="#booking" class="nav-link">{{MENU_LABEL_BOOKING}}</a></li>{{/HAS_BOOKING}}
-                {{#HAS_GALLERY}}<li><a href="#gallery" class="nav-link">{{MENU_LABEL_GALLERY}}</a></li>{{/HAS_GALLERY}}
-                {{#HAS_VIDEOS}}<li><a href="#videos" class="nav-link">{{MENU_LABEL_VIDEOS}}</a></li>{{/HAS_VIDEOS}}
-                {{#HAS_REVIEWS}}<li><a href="#reviews" class="nav-link">{{MENU_LABEL_REVIEWS}}</a></li>{{/HAS_REVIEWS}}
-                <li><a href="#contact" class="nav-link">{{MENU_LABEL_CONTACT}}</a></li>
+                {{#HAS_GALLERY}}<li><a href="#gallery" class="nav-link">Gallery</a></li>{{/HAS_GALLERY}}
+                <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </header>
@@ -1144,24 +931,20 @@
     <div class="menu-backdrop" id="menuBackdrop"></div>
 
     <!-- Hero -->
-    <section class="hero {{HERO_FIT_CLASS}} {{MOBILE_HERO_BOX_CLASS}} {{HERO_BG_CLASS}}">
-        {{#HAS_HERO_BG_IMAGE}}
+    <section class="hero {{HERO_FIT_CLASS}} {{MOBILE_HERO_BOX_CLASS}}">
         <div class="hero-art">
             <img src="{{HERO_IMAGE}}" alt="{{BUSINESS_NAME}}" loading="eager" decoding="async">
         </div>
-        {{/HAS_HERO_BG_IMAGE}}
         <div class="hero-content" {{HERO_TEXT_STYLE_ATTR}}>
-            {{#HAS_HERO_TITLE}}
             <div class="hero-headline {{HERO_HEADLINE_POSITION_CLASS}}" {{HERO_HEADLINE_POSITION_STYLE_ATTR}}>
-                <h1 class="hero-title">{{HERO_TITLE}}</h1>
+                <h1>{{BUSINESS_NAME}}</h1>
             </div>
-            {{/HAS_HERO_TITLE}}
 
             <div class="hero-tagline-block {{HERO_TAGLINE_POSITION_CLASS}}" {{HERO_TAGLINE_POSITION_STYLE_ATTR}}>
                 <p class="hero-tagline">{{TAGLINE}}</p>
             </div>
 
-            <a href="{{PRIMARY_ACTION_LINK}}" class="btn hero-cta hero-cta-primary {{HERO_PRIMARY_CTA_POSITION_CLASS}}" data-cta="booking" {{HERO_PRIMARY_CTA_POSITION_STYLE_ATTR}}>{{PRIMARY_ACTION_ICON}} {{PRIMARY_ACTION_LABEL}}</a>
+            <a href="{{PRIMARY_ACTION_LINK}}" class="btn hero-cta hero-cta-primary {{HERO_PRIMARY_CTA_POSITION_CLASS}}" {{HERO_PRIMARY_CTA_POSITION_STYLE_ATTR}}>{{PRIMARY_ACTION_ICON}} {{PRIMARY_ACTION_LABEL}}</a>
 
             {{#HAS_SECONDARY_ACTION}}
             <a href="{{SECONDARY_ACTION_LINK}}" class="btn btn-secondary hero-cta hero-cta-secondary {{HERO_SECONDARY_CTA_POSITION_CLASS}}" {{HERO_SECONDARY_CTA_POSITION_STYLE_ATTR}}>{{SECONDARY_ACTION_ICON}} {{SECONDARY_ACTION_LABEL}}</a>
@@ -1186,8 +969,13 @@
             <div class="section-header">
                 <h2 class="section-title">{{HIGHLIGHTS_LABEL}}</h2>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.5rem; justify-items: center;">
-                {{#HIGHLIGHTS}}{{/HIGHLIGHTS}}
+            <div class="grid grid-3">
+                {{#HIGHLIGHTS}}
+                <div class="amenity-card">
+                    <div class="amenity-icon">{{icon}}</div>
+                    <h3>{{name}}</h3>
+                </div>
+                {{/HIGHLIGHTS}}
             </div>
         </div>
     </section>
@@ -1235,108 +1023,6 @@
         </div>
     </section>
     {{/HAS_GALLERY}}
-
-    <!-- Videos -->
-    {{#HAS_VIDEOS}}
-    <section id="videos" class="bg-light">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Videos</h2>
-            </div>
-            <div class="gallery-grid">
-                {{#VIDEOS}}
-                <a class="gallery-item" href="{{url}}" target="_blank" rel="noopener noreferrer" aria-label="{{title}}">
-                    <img src="{{thumbnail}}" alt="{{title}}">
-                </a>
-                {{/VIDEOS}}
-            </div>
-        </div>
-    </section>
-    {{/HAS_VIDEOS}}
-
-    <!-- Testimonials -->
-    {{#HAS_REVIEWS}}
-    <section id="reviews" class="bg-light">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Guest Testimonials</h2>
-                <p class="section-description">Hear from our valued guests</p>
-            </div>
-            <div class="reviews-grid">
-                {{#REVIEWS}}
-                <div class="review-card">
-                    <div class="review-rating">
-                        {{#STARS}}⭐{{/STARS}}
-                    </div>
-                    <p class="review-text">"{{text}}"</p>
-                    <div class="review-author">
-                        <strong>{{name}}</strong>
-                        {{#date}}<span class="review-date"> • {{date}}</span>{{/date}}
-                    </div>
-                </div>
-                {{/REVIEWS}}
-            </div>
-        </div>
-    </section>
-    {{/HAS_REVIEWS}}
-
-    <!-- Booking Enquiry (Hospitality) -->
-    {{#HAS_BOOKING}}
-    <section id="booking" class="bg-light">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Booking Enquiry</h2>
-                <p class="section-description">Share your dates and details. We will get back to you shortly.</p>
-            </div>
-
-            <div class="booking-card">
-                <form id="bookingEnquiryForm" class="booking-form" data-slug="{{SLUG}}">
-                    <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
-
-                    <div class="booking-grid">
-                        <div class="booking-field">
-                            <label for="be_name">Full Name *</label>
-                            <input id="be_name" name="name" type="text" required placeholder="John Doe">
-                        </div>
-                        <div class="booking-field">
-                            <label for="be_phone">Phone *</label>
-                            <input id="be_phone" name="phone" type="tel" required placeholder="+91 9876543210">
-                        </div>
-                        <div class="booking-field">
-                            <label for="be_guests">Guests *</label>
-                            <input id="be_guests" name="guests" type="number" min="1" max="20" value="2" required>
-                        </div>
-                        <div class="booking-field">
-                            <label for="be_room">Room Type</label>
-                            <select id="be_room" name="roomType">
-                                <option value="">Select a room type</option>
-                                {{BOOKING_ROOM_OPTIONS}}
-                            </select>
-                        </div>
-                        <div class="booking-field">
-                            <label for="be_checkin">Check-in *</label>
-                            <input id="be_checkin" name="checkIn" type="date" required>
-                        </div>
-                        <div class="booking-field">
-                            <label for="be_checkout">Check-out *</label>
-                            <input id="be_checkout" name="checkOut" type="date" required>
-                        </div>
-                    </div>
-
-                    <div class="booking-field">
-                        <label for="be_notes">Special Requests</label>
-                        <textarea id="be_notes" name="notes" rows="4" placeholder="Any special requirements or requests..."></textarea>
-                    </div>
-
-                    <div class="booking-actions">
-                        <button type="submit" class="btn booking-submit">Submit Enquiry</button>
-                        <p class="booking-status" id="bookingEnquiryStatus" aria-live="polite"></p>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
-    {{/HAS_BOOKING}}
 
     <!-- Contact -->
     <section id="contact" class="contact-section">
@@ -1527,67 +1213,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeLightbox();
         });
-
-        // Booking Enquiry (Hospitality)
-        (function initBookingEnquiry() {
-            const form = document.getElementById('bookingEnquiryForm');
-            if (!form) return;
-
-            const statusEl = document.getElementById('bookingEnquiryStatus');
-            const slug = form.getAttribute('data-slug') || '';
-
-            const checkIn = document.getElementById('be_checkin');
-            const checkOut = document.getElementById('be_checkout');
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            const todayStr = `${yyyy}-${mm}-${dd}`;
-            if (checkIn) checkIn.min = todayStr;
-            if (checkOut) checkOut.min = todayStr;
-
-            if (checkIn && checkOut) {
-                checkIn.addEventListener('change', () => {
-                    if (checkIn.value) checkOut.min = checkIn.value;
-                });
-            }
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (statusEl) statusEl.textContent = 'Sending...';
-
-                const payload = {
-                    slug,
-                    website: form.querySelector('input[name="website"]')?.value || '',
-                    name: document.getElementById('be_name')?.value?.trim() || '',
-                    phone: document.getElementById('be_phone')?.value?.trim() || '',
-                    guests: Number(document.getElementById('be_guests')?.value || 0) || 0,
-                    checkIn: document.getElementById('be_checkin')?.value || '',
-                    checkOut: document.getElementById('be_checkout')?.value || '',
-                    roomType: document.getElementById('be_room')?.value || '',
-                    notes: document.getElementById('be_notes')?.value?.trim() || ''
-                };
-
-                try {
-                    const res = await fetch('/api/booking', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json().catch(() => ({}));
-                    if (!res.ok || !json.success) {
-                        throw new Error(json.message || 'Unable to submit enquiry.');
-                    }
-                    if (statusEl) statusEl.textContent = 'Enquiry received. We will contact you shortly.';
-                    form.reset();
-                    if (checkIn) checkIn.min = todayStr;
-                    if (checkOut) checkOut.min = todayStr;
-                } catch (err) {
-                    if (statusEl) statusEl.textContent = (err && err.message) ? err.message : 'Something went wrong. Please try again.';
-                }
-            });
-        })();
     </script>
 </body>
 </html>
-

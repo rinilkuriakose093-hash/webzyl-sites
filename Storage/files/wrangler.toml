@@ -1,0 +1,52 @@
+name = "webzyl-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Your Cloudflare Account ID
+account_id = "YOUR_ACCOUNT_ID"
+
+# ================================================================
+# KV NAMESPACE (your existing one)
+# ================================================================
+[[kv_namespaces]]
+binding = "KV"
+id = "YOUR_EXISTING_KV_NAMESPACE_ID"
+
+# ================================================================
+# R2 BUCKET (new - for media storage)
+# ================================================================
+[[r2_buckets]]
+binding = "MEDIA_R2"
+bucket_name = "webzyl-media"
+
+# ================================================================
+# D1 DATABASE (new - for asset metadata)
+# ================================================================
+[[d1_databases]]
+binding = "MEDIA_DB"
+database_name = "webzyl-media"
+database_id = "YOUR_D1_DATABASE_ID"
+
+# ================================================================
+# ENVIRONMENT VARIABLES
+# ================================================================
+[vars]
+R2_ACCOUNT_ID = "your-r2-account-id"
+R2_ACCESS_KEY_ID = "your-r2-access-key-id"
+R2_SECRET_ACCESS_KEY = "your-r2-secret-access-key"
+
+# ================================================================
+# CRON TRIGGERS (for cleanup)
+# ================================================================
+[triggers]
+crons = [
+  "0 2 * * *",   # Daily cleanup at 2 AM UTC
+  "0 3 1 * *"    # Monthly audit on 1st at 3 AM UTC
+]
+
+# ================================================================
+# CUSTOM DOMAINS
+# ================================================================
+# Add these via Cloudflare Dashboard → Workers → Triggers
+# - img.webzyl.com (for image delivery)
+# - api.webzyl.com (optional, for API endpoints)

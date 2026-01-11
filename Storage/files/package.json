@@ -1,0 +1,28 @@
+{
+  "name": "webzyl-worker",
+  "version": "1.0.0",
+  "description": "Webzyl Single Worker with SSR + Media Storage",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "d1:create": "wrangler d1 create webzyl-media",
+    "d1:migrate": "wrangler d1 migrations apply webzyl-media",
+    "r2:create": "wrangler r2 bucket create webzyl-media",
+    "setup": "npm run r2:create && npm run d1:create && npm run d1:migrate"
+  },
+  "keywords": ["cloudflare", "workers", "r2", "d1", "media", "storage"],
+  "author": "Webzyl Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.2",
+    "wrangler": "^3.78.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "@aws-sdk/s3-request-presigner": "^3.478.0"
+  }
+}

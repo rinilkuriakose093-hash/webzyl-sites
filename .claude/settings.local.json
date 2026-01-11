@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx wrangler deploy:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(npx wrangler pages deploy:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(powershell -NoProfile -Command '$html = Get-Content -Raw -Encoding UTF8 \"\"_kv_template_smart-nav.html\"\"; Invoke-RestMethod -Method Put -Uri \"\"https://webzyl.com/api/admin/template/smart-nav\"\" -Headers @{\"\"X-Admin-Token\"\"=\"\"webzyl-admin-dev-2026\"\"} -ContentType \"\"text/html; charset=utf-8\"\" -Body $html | ConvertTo-Json -Depth 5')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; $checks = [ordered]@{}; $checks.hasHeroPositionVarsInRoot = \\($html -match \"\":root.*--hero-headline-x-desktop\"\"\\); $checks.noInlineHeadlineStyle = -not \\($html -match \"\"hero-title.*{{HERO_HEADLINE_POSITION_STYLE_ATTR}}\"\"\\); $checks.hasPositionClass = \\($html -match \"\"hero-headline-positioned\"\"\\); $checks | ConvertTo-Json -Depth 10')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; if \\($html -match \"\":root\\\\s*\\\\{\\([^}]{1,2000}\\)\\\\}\"\"\\) { $rootBlock = $matches[1]; Write-Host \"\"=== :root block content ===\"\" ; Write-Host $rootBlock; } else { Write-Host \"\"No :root block found\"\"; }')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; $checks = [ordered]@{}; $checks.hasHeroImgOpacity = \\($html -match \"\"\\\\.hero-art img.*opacity.*0\"\"\\); $checks.hasLoadedClass = \\($html -match \"\"\\\\.hero-art img\\\\.loaded\"\"\\); $checks.hasLoadHandler = \\($html -match \"\"Hero Image Load Handler\"\"\\); $checks | ConvertTo-Json -Depth 10')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; if \\($html -match \"\"\\\\.hero-art\\\\s+img\\\\s*\\\\{[^}]{1,500}\\\\}\"\"\\) { Write-Host \"\"Found hero-art img CSS:\"\"; Write-Host $matches[0]; } else { Write-Host \"\"CSS not found\"\"; }')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; if \\($html -match \"\":root\\\\s*\\\\{\\([^}]{1,2000}\\)\\\\}\"\"\\) { $rootBlock = $matches[1]; Write-Host \"\"=== Checking CTA variables in :root ===\"\" ; if \\($rootBlock -match \"\"hero-cta-primary\"\"\\) { Write-Host \"\"✅ Found hero-cta-primary variables\"\"; } else { Write-Host \"\"❌ Missing hero-cta-primary variables\"\"; } if \\($rootBlock -match \"\"hero-cta-secondary\"\"\\) { Write-Host \"\"✅ Found hero-cta-secondary variables\"\"; } else { Write-Host \"\"❌ Missing hero-cta-secondary variables\"\"; } }')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; $checks = [ordered]@{}; $checks.hasHeroContentOpacity = \\($html -match \"\"\\\\.hero-content.*opacity.*0\"\"\\); $checks.hasLoadedHeroContent = \\($html -match \"\"\\\\.hero\\\\.loaded.*\\\\.hero-content\"\"\\); $checks.hasShowHeroFunction = \\($html -match \"\"function showHero\"\"\\); $checks | ConvertTo-Json -Depth 10')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; $checks = [ordered]@{}; $checks.hasFadeInAnimation = \\($html -match \"\"fadeInContent\"\"\\); $checks.hasAggresiveFallback = \\($html -match \"\"600\"\"\\); $checks.hasRequestAnimFrame = \\($html -match \"\"requestAnimationFrame\"\"\\); $checks | ConvertTo-Json -Depth 10')",
+      "Bash(powershell -NoProfile -Command '$html = \\(Invoke-WebRequest -UseBasicParsing -Uri \"\"https://grand-royal.webzyl.com/\"\"\\).Content; $checks = [ordered]@{}; $checks.hasVisibilityHidden = \\($html -match \"\"\\\\.hero-content.*visibility.*hidden\"\"\\); $checks.hasFadeInWithVisibility = \\($html -match \"\"fadeInContent.*visibility\"\"\\); $checks.hasLoadedOverride = \\($html -match \"\"\\\\.hero\\\\.loaded.*\\\\.hero-content.*visibility.*visible\"\"\\); $checks | ConvertTo-Json -Depth 10')",
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash(npx wrangler kv:key put:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(findstr:*)",
+      "Bash(dir \"C:\\\\Users\\\\rinkuria\\\\OneDrive - Cisco\\\\Desktop\\\\webzyl-worker\\\\ceo-dashboard\" /b)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

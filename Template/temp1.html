@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f4c5c;
+            --primary-light: #1a7a8a;
+            --primary-dark: #083642;
+            --accent: #e4a853;
+            --accent-hover: #d4963d;
+            --accent-light: #f5d5a0;
+            --text-dark: #1a1a2e;
+            --text-medium: #2d3748;
+            --text-light: #4a5568;
+            --text-lighter: #718096;
+            --bg-cream: #faf8f5;
+            --white: #ffffff;
+            --overlay-dark: rgba(15, 76, 92, 0.85);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.2);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            line-height: 1.7;
+            color: var(--text-medium);
+            background: var(--bg-cream);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* NAVIGATION */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: transparent;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1rem 0;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-sm);
+            padding: 0.5rem 0;
+        }
+
+        .nav-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 0 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled .logo {
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar.scrolled .nav-links a {
+            color: var(--text-medium);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 0.75rem 1.75rem;
+            background: var(--accent);
+            color: var(--white);
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(228, 168, 83, 0.3);
+        }
+
+        .nav-cta::after {
+            display: none;
+        }
+
+        /* HERO */
+        .hero {
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--overlay-dark) 0%, rgba(228, 168, 83, 0.3) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            padding: 2rem;
+            animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent-light);
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 5.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 4px 30px rgba(0,0,0,0.4);
+            letter-spacing: -3px;
+            line-height: 1.05;
+        }
+
+        .hero-tagline {
+            font-size: 1.6rem;
+            font-weight: 300;
+            text-shadow: 1px 2px 15px rgba(0,0,0,0.3);
+            letter-spacing: 0.5px;
+            margin-bottom: 3rem;
+            line-height: 1.5;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 1.25rem 3rem;
+            background: var(--accent);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(228, 168, 83, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(228, 168, 83, 0.5);
+        }
+
+        .btn-secondary {
+            display: inline-block;
+            padding: 1.25rem 3rem;
+            background: transparent;
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: all 0.4s ease;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--white);
+            transform: translateY(-5px);
+        }
+
+        /* SECTIONS */
+        .section {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 120px 3rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section-subtitle {
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 3.5rem;
+            color: var(--text-dark);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.1;
+        }
+
+        .section-description {
+            font-size: 1.15rem;
+            color: var(--text-light);
+            max-width: 700px;
+            margin: 1.5rem auto 0;
+            line-height: 1.8;
+        }
+
+        /* ABOUT */
+        .about-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-text {
+            font-size: 1.35rem;
+            line-height: 2;
+            color: var(--text-light);
+            font-weight: 300;
+        }
+
+        /* AMENITIES */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .amenity-card {
+            background: var(--white);
+            padding: 3rem 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(15, 76, 92, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .amenity-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transition: transform 0.5s ease;
+        }
+
+        .amenity-card:hover {
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .amenity-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .amenity-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.75rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(15, 76, 92, 0.2);
+        }
+
+        .amenity-card h3 {
+            font-size: 1.35rem;
+            color: var(--text-dark);
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        /* ROOMS */
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 3rem;
+        }
+
+        .room-card {
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .room-card:hover {
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .room-image-wrapper {
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+        }
+
+        .room-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .room-card:hover .room-image {
+            transform: scale(1.15);
+        }
+
+        .room-badge {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: var(--accent);
+            color: var(--white);
+            padding: 0.65rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(228, 168, 83, 0.4);
+        }
+
+        .room-content {
+            padding: 2.5rem;
+        }
+
+        .room-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .room-description {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .room-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 2px solid rgba(15, 76, 92, 0.08);
+        }
+
+        .room-price-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-price-label {
+            font-size: 0.8rem;
+            color: var(--text-lighter);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+        }
+
+        .room-price {
+            font-size: 1.85rem;
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .book-button {
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        .book-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(15, 76, 92, 0.3);
+        }
+
+        /* GALLERY */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+            padding: 0;
+        }
+
+        .gallery-item {
+            position: relative;
+            height: 350px;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gallery-item:hover .gallery-image {
+            transform: scale(1.2);
+        }
+
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(15, 76, 92, 0.7));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .gallery-item:hover::after {
+            opacity: 1;
+        }
+
+        /* CONTACT */
+        .contact-wrapper {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding: 5rem 4rem;
+            border-radius: 30px;
+            text-align: center;
+            color: var(--white);
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(228, 168, 83, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .contact-wrapper .section-subtitle {
+            color: var(--accent-light);
+        }
+
+        .contact-wrapper .section-title {
+            color: var(--white);
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-info {
+            font-size: 1.25rem;
+            margin: 2.5rem 0;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .contact-phone {
+            display: inline-block;
+            font-size: 2.25rem;
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: 1.5rem;
+            padding: 1.25rem 3rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .contact-phone:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* FOOTER */
+        .footer {
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 4rem 3rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .footer-section p {
+            opacity: 0.8;
+            line-height: 1.8;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: 0.95rem;
+        }
+
+        /* LOADING */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-cream);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(15, 76, 92, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.25rem;
+            color: var(--primary);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .rooms-grid,
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .nav-container {
+                padding: 0 1.5rem;
+            }
+
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .hero-tagline {
+                font-size: 1.2rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .section {
+                padding: 80px 1.5rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .rooms-grid,
+            .gallery-grid,
+            .amenities-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-wrapper {
+                padding: 3rem 2rem;
+            }
+
+            .contact-phone {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Your Experience</div>
+    </div>
+    
+    <div id="content" class="hidden">
+        <nav id="navbar" class="navbar">
+            <div class="nav-container">
+                <a href="#hero" class="logo" id="navLogo">Resort</a>
+                <ul class="nav-links">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#amenities">Amenities</a></li>
+                    <li><a href="#rooms">Rooms</a></li>
+                    <li><a href="#gallery">Gallery</a></li>
+                    <li><a href="#contact" class="nav-cta">Contact Us</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <section id="hero" class="hero">
+            <div class="hero-content">
+                <div class="hero-subtitle">Welcome To</div>
+                <h1 id="siteName"></h1>
+                <p id="tagline" class="hero-tagline"></p>
+                <div class="hero-buttons">
+                    <a href="#rooms" class="btn-primary">Explore Rooms</a>
+                    <a href="#contact" class="btn-secondary">Get In Touch</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section hidden">
+            <div class="section-header">
+                <div class="section-subtitle">Discover</div>
+                <h2 class="section-title">About Us</h2>
+            </div>
+            <div class="about-content">
+                <p id="aboutText" class="about-text"></p>
+            </div>
+        </section>
+
+        <section id="amenities" class="section hidden">
+            <div class="section-header">
+                <div class="section-subtitle">Experience</div>
+                <h2 class="section-title">World-Class Amenities</h2>
+                <p class="section-description">Indulge in luxury with our carefully curated selection of premium facilities</p>
+            </div>
+            <div id="amenitiesGrid" class="amenities-grid"></div>
+        </section>
+
+        <section id="rooms" class="section hidden">
+            <div class="section-header">
+                <div class="section-subtitle">Stay</div>
+                <h2 class="section-title">Luxurious Accommodations</h2>
+                <p class="section-description">Choose from our exquisite collection of rooms designed for ultimate comfort</p>
+            </div>
+            <div id="roomsGrid" class="rooms-grid"></div>
+        </section>
+
+        <section id="gallery" class="section hidden">
+            <div class="section-header">
+                <div class="section-subtitle">Explore</div>
+                <h2 class="section-title">Gallery</h2>
+                <p class="section-description">Immerse yourself in the beauty and elegance of our resort</p>
+            </div>
+            <div id="galleryGrid" class="gallery-grid"></div>
+        </section>
+
+        <section id="contact" class="section hidden">
+            <div class="contact-wrapper">
+                <div class="section-subtitle">Connect</div>
+                <h2 class="section-title">Get In Touch</h2>
+                <div class="contact-info">
+                    <p>Ready to experience luxury? We're here to make your stay unforgettable.</p>
+                    <a id="contactPhone" class="contact-phone" href=""></a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 id="footerLogo">Resort</h3>
+                    <p id="footerAbout">Experience luxury and comfort in perfect harmony with nature.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <p>About • Amenities • Rooms • Gallery • Contact</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Location</h3>
+                    <p id="footerLocation">Luxury Destination Resort</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p id="footerText">© 2024 All Rights Reserved</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        async function loadSite() {
+            try {
+                const response = await fetch('/mountview.json');
+                if (!response.ok) throw new Error('Failed to load');
+                const data = await response.json();
+                renderSite(data);
+            } catch (error) {
+                console.error('Error:', error);
+                document.querySelector('.loading-text').textContent = 'Error loading site';
+            }
+        }
+
+        function renderSite(data) {
+            document.title = data.name || 'Luxury Resort';
+
+            if (data.heroImage) {
+                document.getElementById('hero').style.backgroundImage = `url('${data.heroImage}')`;
+            }
+
+            if (data.name) {
+                document.getElementById('siteName').textContent = data.name;
+                document.getElementById('navLogo').textContent = data.name;
+                document.getElementById('footerLogo').textContent = data.name;
+                document.getElementById('footerText').textContent = `© 2024 ${data.name}. All Rights Reserved`;
+            }
+
+            if (data.tagline) {
+                document.getElementById('tagline').textContent = data.tagline;
+            }
+
+            if (data.about) {
+                document.getElementById('aboutText').textContent = data.about;
+                document.getElementById('footerAbout').textContent = data.about.substring(0, 120) + '...';
+                document.getElementById('about').classList.remove('hidden');
+            }
+
+            if (data.location && data.location.address) {
+                document.getElementById('footerLocation').textContent = data.location.address;
+            }
+
+            if (data.amenities && data.amenities.length > 0) {
+                const grid = document.getElementById('amenitiesGrid');
+                data.amenities.forEach(amenity => {
+                    const card = document.createElement('div');
+                    card.className = 'amenity-card';
+                    card.innerHTML = `
+                        <div class="amenity-icon">✓</div>
+                        <h3>${amenity}</h3>
+                    `;
+                    grid.appendChild(card);
+                });
+                document.getElementById('amenities').classList.remove('hidden');
+            }
+
+            if (data.rooms && data.rooms.length > 0) {
+                const grid = document.getElementById('roomsGrid');
+                data.rooms.forEach((room, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'room-card';
+                    
+                    let html = '<div class="room-image-wrapper">';
+                    if (room.image) {
+                        html += `<img src="${room.image}" alt="${room.name || 'Room'}" class="room-image">`;
+                    }
+                    if (index === 0) {
+                        html += '<div class="room-badge">Most Popular</div>';
+                    }
+                    html += '</div>';
+                    
+                    html += '<div class="room-content">';
+                    if (room.name) {
+                        html += `<div class="room-name">${room.name}</div>`;
+                    }
+                    if (room.description) {
+                        html += `<div class="room-description">${room.description}</div>`;
+                    }
+                    html += '<div class="room-footer">';
+                    html += '<div class="room-price-wrapper">';
+                    html += '<div class="room-price-label">Starting From</div>';
+                    if (room.price) {
+                        html += `<div class="room-price">${room.price}</div>`;
+                    }
+                    html += '</div>';
+                    html += '<button class="book-button">Book Now</button>';
+                    html += '</div></div>';
+                    
+                    card.innerHTML = html;
+                    grid.appendChild(card);
+                });
+                document.getElementById('rooms').classList.remove('hidden');
+            }
+
+            if (data.gallery && data.gallery.length > 0) {
+                const grid = document.getElementById('galleryGrid');
+                data.gallery.forEach((imageUrl, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.innerHTML = `<img src="${imageUrl}" alt="Gallery Image ${index + 1}" class="gallery-image">`;
+                    grid.appendChild(item);
+});
+document.getElementById('gallery').classList.remove('hidden');
+}
+
+
+if (data.contact && data.contact.phone) {
+            const phone = document.getElementById('contactPhone');
+            phone.textContent = data.contact.phone;
+            phone.href = `tel:${data.contact.phone.replace(/\s/g, '')}`;
+            document.getElementById('contact').classList.remove('hidden');
+        }
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    }
+
+    loadSite();
+</script>
+
+</body>
+</html>
+```

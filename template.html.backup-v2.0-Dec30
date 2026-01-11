@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{BUSINESS_NAME}} | {{TAGLINE}}</title>
+    <meta name="description" content="{{DESCRIPTION}}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: {{PRIMARY_COLOR}};
+            text-decoration: none;
+        }
+        
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: {{PRIMARY_COLOR}};
+        }
+        
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                        url('{{HERO_IMAGE}}') center/cover;
+            color: white;
+            padding-top: 80px;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: {{PRIMARY_COLOR}};
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        /* Sections */
+        section {
+            padding: 5rem 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: {{PRIMARY_COLOR}};
+        }
+        
+        /* Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .gallery img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .gallery img:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Amenities */
+        .amenities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .amenity-card {
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        /* Rooms */
+        .rooms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .room-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .room-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        
+        .room-card .content {
+            padding: 1.5rem;
+        }
+        
+        /* Contact */
+        .contact-info {
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .contact-info a {
+            color: {{PRIMARY_COLOR}};
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        /* Footer */
+        footer {
+            background: #222;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .social-links a {
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+        
+        .social-links a:hover {
+            color: {{PRIMARY_COLOR}};
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">{{BUSINESS_NAME}}</a>
+            <ul id="nav-menu">
+                <li><a href="#about">About</a></li>
+                {{#HAS_HIGHLIGHTS}}<li><a href="#highlights">{{HIGHLIGHTS_MENU_LABEL}}</a></li>{{/HAS_HIGHLIGHTS}}
+                {{#HAS_OFFERINGS}}<li><a href="#offerings">{{OFFERINGS_MENU_LABEL}}</a></li>{{/HAS_OFFERINGS}}
+                {{#HAS_GALLERY}}<li><a href="#gallery">Gallery</a></li>{{/HAS_GALLERY}}
+                {{#HAS_PRIMARY_ACTION}}<li><a href="#action">{{PRIMARY_ACTION_LABEL}}</a></li>{{/HAS_PRIMARY_ACTION}}
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div>
+            <h1>{{BUSINESS_NAME}}</h1>
+            <p>{{TAGLINE}}</p>
+            <a href="#contact" class="btn">Get In Touch</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <h2>Welcome To {{BUSINESS_NAME}}</h2>
+            <p style="text-align: center; font-size: 1.2rem; max-width: 800px; margin: 0 auto;">
+                {{DESCRIPTION}}
+            </p>
+        </div>
+    </section>
+
+    <!-- Highlights Section (Amenities / Features / Why Choose Us) -->
+    {{#HAS_HIGHLIGHTS}}
+    <section id="highlights" style="background: #f8f9fa;">
+        <div class="container">
+            <h2>{{HIGHLIGHTS_LABEL}}</h2>
+            <div class="amenities">
+                {{#HIGHLIGHTS}}
+                <div class="amenity-card">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">{{icon}}</div>
+                    <h3>{{name}}</h3>
+                </div>
+                {{/HIGHLIGHTS}}
+            </div>
+        </div>
+    </section>
+    {{/HAS_HIGHLIGHTS}}
+
+    <!-- Offerings Section (Rooms / Products / Services) -->
+    {{#HAS_OFFERINGS}}
+    <section id="offerings">
+        <div class="container">
+            <h2>{{OFFERINGS_LABEL}}</h2>
+            <div class="rooms">
+                {{#OFFERINGS}}
+                <div class="room-card">
+                    <img src="{{image}}" alt="{{name}}">
+                    <div class="content">
+                        <h3>{{name}}</h3>
+                        <p>{{description}}</p>
+                        <p style="font-size: 1.5rem; color: {{PRIMARY_COLOR}}; font-weight: 700; margin-top: 1rem;">
+                            ₹{{price}}{{priceUnit}}
+                        </p>
+                    </div>
+                </div>
+                {{/OFFERINGS}}
+            </div>
+        </div>
+    </section>
+    {{/HAS_OFFERINGS}}
+
+    <!-- Gallery Section -->
+    {{#HAS_GALLERY}}
+    <section id="gallery" style="background: #f8f9fa;">
+        <div class="container">
+            <h2>Gallery</h2>
+            <div class="gallery">
+                {{#GALLERY}}
+                <img src="{{.}}" alt="Gallery Image">
+                {{/GALLERY}}
+            </div>
+        </div>
+    </section>
+    {{/HAS_GALLERY}}
+
+    <!-- Primary Action Section (Book / Enquire / Quote / Contact) -->
+    {{#HAS_PRIMARY_ACTION}}
+    <section id="action">
+        <div class="container">
+            <h2>{{PRIMARY_ACTION_LABEL}}</h2>
+            <div style="text-align: center;">
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Ready to experience {{BUSINESS_NAME}}?</p>
+                <a href="https://wa.me/{{WHATSAPP}}?text={{PRIMARY_ACTION_WHATSAPP}}" class="btn" style="margin-right: 1rem;">
+                    {{PRIMARY_ACTION_ICON}} WhatsApp Us
+                </a>
+                <a href="tel:{{PHONE}}" class="btn" style="background: #333;">
+                    📞 Call Now
+                </a>
+            </div>
+        </div>
+    </section>
+    {{/HAS_PRIMARY_ACTION}}
+
+    <!-- Contact Section -->
+    <section id="contact" style="background: linear-gradient(135deg, {{PRIMARY_COLOR}}, #667eea); color: white;">
+        <div class="container">
+            <h2 style="color: white;">Get In Touch</h2>
+            <div class="contact-info">
+                <p style="margin-bottom: 1rem;">{{ADDRESS}}</p>
+                <p>Phone: <a href="tel:{{PHONE}}" style="color: white;">{{PHONE}}</a></p>
+                <p>Email: <a href="mailto:{{EMAIL}}" style="color: white;">{{EMAIL}}</a></p>
+                {{#MAP_LINK}}
+                <p style="margin-top: 1.5rem;">
+                    <a href="{{MAP_LINK}}" target="_blank" style="color: white; text-decoration: underline;">
+                        📍 Get Directions
+                    </a>
+                </p>
+                {{/MAP_LINK}}
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        {{#HAS_SOCIAL}}
+        <div class="social-links">
+            {{#FACEBOOK}}<a href="{{FACEBOOK}}" target="_blank">📘</a>{{/FACEBOOK}}
+            {{#INSTAGRAM}}<a href="{{INSTAGRAM}}" target="_blank">📷</a>{{/INSTAGRAM}}
+            {{#TWITTER}}<a href="{{TWITTER}}" target="_blank">🐦</a>{{/TWITTER}}
+            {{#YOUTUBE_SOCIAL}}<a href="{{YOUTUBE_SOCIAL}}" target="_blank">▶️</a>{{/YOUTUBE_SOCIAL}}
+        </div>
+        {{/HAS_SOCIAL}}
+        <p>&copy; 2025 {{BUSINESS_NAME}}. All rights reserved.</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.7;">Powered by Webzyl</p>
+    </footer>
+</body>
+</html>

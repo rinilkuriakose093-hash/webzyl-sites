@@ -1,0 +1,96 @@
+﻿{
+  "slug": "mountview",
+  "status": "active",
+  "name": "Mount View Luxury Resort",
+  "tagline": "Elevate your stay  where nature meets elegance",
+  "about": "Mount View Luxury Resort offers lavish suites, infinity pools, curated gourmet dining, and private balconies overlooking the breathtaking valley. Experience world-class hospitality combined with stunning natural beauty.",
+  "branding": {
+    "logo": "https://example.com/path/to/your/hosted/logo.png",
+    "heroImage": "https://images.unsplash.com/photo-1501117716987-c8e1ecb210fa?auto=format&fit=crop&w=1600&q=80",
+    "name": "Mount View",
+    "primaryColor": "#06b6d4"
+  },
+  "amenities": [
+    { "name": "Infinity Pool", "description": "Heated infinity pool overlooking the valley with premium lounging areas" },
+    { "name": "Premium Spa", "description": "Full-service luxury spa with experienced therapists and holistic treatments" },
+    { "name": "Fine Dining", "description": "Multi-cuisine restaurant with award-winning chefs and scenic dining" },
+    { "name": "Fitness Center", "description": "State-of-the-art gym equipped with modern exercise equipment" },
+    { "name": "Conference Halls", "description": "Fully equipped meeting spaces for events and conferences" },
+    { "name": "Concierge Service", "description": "24/7 dedicated concierge for all your travel needs" }
+  ],
+  "rooms": [
+    { "name": "Deluxe Valley Suite", "price": "8,000 / night", "image": "https://images.unsplash.com/photo-1590490359683-6632931f7f9b?auto=format&fit=crop&w=1200&q=80", "description": "Spacious valley-facing suite with king bed, premium amenities, and private balcony" },
+    { "name": "Presidential Suite", "price": "15,000 / night", "image": "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80", "description": "Luxurious suite with separate living area, hot tub, and panoramic views" },
+    { "name": "Standard Room", "price": "5,000 / night", "image": "https://images.unsplash.com/photo-1566665556112-652d90051cff?auto=format&fit=crop&w=1200&q=80", "description": "Comfortable rooms with modern amenities and valley views" }
+  ],
+  "gallery": [
+    "https://images.unsplash.com/photo-1519824145371-296894a0daa9?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1571896349842-39c6c4de93d6?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1542314503-37143f4f6c2d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1543269865-cbdf26cecbf7?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1514432324607-2e467f4af445?auto=format&fit=crop&w=1200&q=80"
+  ],
+  "testimonials": [
+    {
+      "name": "Priya Sharma",
+      "location": "Mumbai, India",
+      "text": "An absolutely magical experience! The valley views from our suite were breathtaking, and the staff went above and beyond to make our anniversary special. Will definitely return!"
+    },
+    {
+      "name": "John Williams",
+      "location": "London, UK",
+      "text": "Best resort stay I've ever had. The infinity pool, the spa, the food - everything was world-class. The perfect blend of luxury and nature."
+    },
+    {
+      "name": "Anjali Patel",
+      "location": "Ahmedabad, India",
+      "text": "A perfect getaway from city life. The serene mountain views, premium amenities, and warm hospitality made our family vacation truly memorable."
+    }
+  ],
+  "contact": {
+    "phone": "+91 9876543210",
+    "email": "info@mountviewresort.com",
+    "address": "Valley Road, Mountain Hills, State 123456"
+  },
+  "social": {
+    "instagram": "https://www.instagram.com/rinil_kuriakose",
+    "facebook": "https://www.facebook.com/rinil.pulinakuzhi/",
+    "youtube": "https://www.youtube.com/watch?v=32MmEsLnOkQ"
+  },
+  "location": {
+    "address": "Valley Road, Mountain Hills, State 123456",
+    "city": "Mountain Hills",
+    "country": "India"
+  },
+  "embeds": {
+    "map": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.9320624448705!2d72.87765897516641!3d19.01530025330454!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7cee2f4a28b89%3A0x9b60c1f4b947c3d8!2sGateway%20of%20India!5e0!3m2!1sen!2sin!4v1703260800000!5m2!1sen!2sin"
+  },
+  
+  "features": {
+    "about": true,
+    "amenities": true,
+    "rooms": true,
+    "gallery": true,
+    "testimonials": true,
+    "bookingEnquiry": true,
+    "contact": true,
+    "map": true
+  },
+  "seo": {
+    "title": "Mount View Luxury Resort - Premium Accommodations",
+    "description": "Experience luxury at Mount View Resort with stunning valley views, world-class amenities, and premium hospitality",
+    "keywords": "luxury resort, vacation, mountain resort, accommodation",
+    "og": {
+      "title": "Mount View Luxury Resort",
+      "description": "Elevate your stay with luxury mountain resort experiences",
+      "image": "https://images.unsplash.com/photo-1501117716987-c8e1ecb210fa?auto=format&fit=crop&w=1600&q=80",
+      "type": "website"
+    }
+  },
+  "ui": {
+    "motion": true
+  },
+  "schemaVersion": "1.0",
+  "templateId": "resort_v1"
+}

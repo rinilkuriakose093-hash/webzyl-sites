@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESC}}">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESC}}">
+  <meta property="og:image" content="{{OG_IMAGE}}">
+  <meta property="og:url" content="{{OG_URL}}">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --accent: #b28700;
+      --muted: #6b7280;
+      --background: #f6f6f7;
+    }
+
+    .hero-overlay {
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.6) 100%
+      );
+    }
+
+    .focus-ring:focus {
+      outline: 2px solid rgba(178,135,0,0.3);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+
+    /* Mobile nav */
+    .mobile-nav { display: none; }
+    @media (max-width: 767px) {
+      .desktop-nav { display: none !important; }
+      .mobile-nav { display: block !important; }
+    }
+
+    /* Safe image fit */
+    .img-safe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  </style>
+</head>
+
+<body class="bg-[color:var(--background)] text-slate-900 antialiased">
+
+  <!-- Worker-injected data -->
+  <script>
+    {{DATA_INJECTION}}
+  </script>
+
+  <!-- HEADER -->
+  <header class="bg-white shadow sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+
+      <div class="flex items-center gap-3">
+        <img id="logo" class="h-10 w-10 rounded-md bg-gray-100 object-cover" />
+        <div class="leading-tight">
+          <div id="site-name" class="text-base font-bold"></div>
+          <div id="tagline" class="text-xs text-gray-500"></div>
+        </div>
+      </div>
+
+      <!-- Desktop Menu -->
+      <nav class="desktop-nav flex items-center gap-6 text-sm">
+        <a href="#rooms" class="hover:text-black text-gray-600">Rooms</a>
+        <a href="#gallery" class="hover:text-black text-gray-600">Gallery</a>
+        <a href="#booking"
+           class="px-4 py-2 border border-[color:var(--accent)] text-[color:var(--accent)]
+                  hover:bg-[color:var(--accent)] hover:text-white rounded transition">
+           Book Now
+        </a>
+      </nav>
+
+      <!-- Mobile Hamburger -->
+      <button id="hamburger" class="mobile-nav p-2 rounded-md focus-ring">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor"
+             viewBox="0 0 24 24">
+          <path stroke-width="2" d="M4 6h16M4 12h16M4 18h16"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Nav Panel -->
+    <div id="mobile-nav-panel"
+         class="mobile-nav hidden border-t bg-white px-4 py-4">
+      <div class="flex flex-col gap-3 text-gray-700 text-sm">
+        <a href="#rooms">Rooms</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#booking">Book Now</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section id="hero"
+           class="relative w-full min-h-[60vh] md:min-h-[85vh] flex justify-center items-center">
+    <div id="hero-img" class="absolute inset-0 bg-center bg-cover"></div>
+    <div class="absolute inset-0 hero-overlay"></div>
+
+    <div class="relative text-center px-4 max-w-2xl">
+      <h1 id="hero-title" class="text-3xl md:text-6xl font-extrabold leading-tight"></h1>
+      <p id="hero-sub" class="mt-3 text-gray-700"></p>
+
+      <div class="mt-6 flex justify-center gap-4">
+        <a href="#booking"
+           class="px-6 py-3 bg-[color:var(--accent)] text-white font-semibold rounded shadow">
+           Reserve
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+
+    <!-- ABOUT + BOOKING -->
+    <section class="bg-white rounded-xl shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <div class="md:col-span-2">
+        <h2 class="text-2xl font-semibold">About</h2>
+        <p id="about-text" class="mt-3 text-gray-700"></p>
+
+        <div id="amenities" class="mt-4 flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- BOOKING FORM -->
+      <aside id="booking" class="bg-gray-50 p-5 rounded-lg shadow-inner">
+        <h3 class="font-semibold text-lg">Book Your Stay</h3>
+
+        <form id="booking-form" class="mt-4 grid gap-3">
+          <input name="slug" type="hidden" />
+
+          <input name="name" placeholder="Your Name" required
+                 class="p-3 border border-gray-300 rounded focus-ring"/>
+
+          <input name="phone" placeholder="Phone Number" required
+                 class="p-3 border border-gray-300 rounded focus-ring"/>
+
+          <select id="room-select" name="roomType"
+                  class="p-3 border border-gray-300 rounded focus-ring"></select>
+
+          <div class="grid grid-cols-2 gap-3">
+            <input name="checkIn" type="date"
+                   class="p-3 border border-gray-300 rounded focus-ring"/>
+            <input name="checkOut" type="date"
+                   class="p-3 border border-gray-300 rounded focus-ring"/>
+          </div>
+
+          <button
+            class="mt-2 bg-[color:var(--accent)] text-white py-3 rounded font-semibold">
+            Send Request
+          </button>
+
+          <p id="booking-status" class="text-sm text-gray-600"></p>
+        </form>
+      </aside>
+    </section>
+
+    <!-- ROOMS -->
+    <section id="rooms" class="mt-10">
+      <h3 class="text-xl font-semibold">Rooms</h3>
+      <div id="rooms-grid"
+           class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="gallery" class="mt-10">
+      <h3 class="text-xl font-semibold">Gallery</h3>
+
+      <div class="relative mt-4">
+        <div id="carousel" class="overflow-hidden rounded-xl bg-white">
+          <div id="slides"
+               class="whitespace-nowrap transition-transform duration-500"></div>
+        </div>
+
+        <button id="prev"
+                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 p-2 rounded-full shadow">
+          ‹
+        </button>
+        <button id="next"
+                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 p-2 rounded-full shadow">
+          ›
+        </button>
+      </div>
+    </section>
+
+    <!-- LOCATION & CONTACT -->
+    <section class="mt-10 grid md:grid-cols-2 gap-6">
+
+      <div>
+        <h3 class="text-lg font-semibold">Location</h3>
+        <div id="map" class="mt-3 h-64 rounded-xl bg-gray-100 overflow-hidden"></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="text-lg font-semibold">Contact</h3>
+        <p id="contact" class="mt-3 text-gray-700"></p>
+      </div>
+    </section>
+
+    <footer class="text-center py-10 text-gray-500 text-sm">
+      © <span id="year"></span> <span id="fn"></span>
+    </footer>
+  </main>
+
+  <!-- SCRIPT: HYDRATION -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cfg = window.RESORT_DATA || {};
+
+      /* MOBILE NAV */
+      const ham = document.getElementById("hamburger");
+      const panel = document.getElementById("mobile-nav-panel");
+      ham?.addEventListener("click", () => panel.classList.toggle("hidden"));
+
+      /* HEADER */
+      logo.src = cfg.branding?.logo || "";
+      site-name.textContent = cfg.name || "";
+      tagline.textContent = cfg.tagline || "";
+
+      /* HERO */
+      hero-title.textContent = cfg.name || "";
+      hero-sub.textContent = cfg.tagline || "";
+
+      if (cfg.branding?.heroImage) {
+        let u = cfg.branding.heroImage;
+        if (!u.includes("?")) u += "?auto=format&fit=crop&w=1400&q=80";
+        hero-img.style.backgroundImage = `url('${u}')`;
+      }
+
+      /* ABOUT */
+      about-text.textContent = cfg.about || "";
+
+      /* AMENITIES */
+      const am = document.getElementById("amenities");
+      (cfg.amenities || []).forEach(a => {
+        const el = document.createElement("span");
+        el.className = "px-3 py-1 bg-gray-200 text-sm rounded";
+        el.textContent = a;
+        am.appendChild(el);
+      });
+
+      /* ROOMS */
+      const rg = document.getElementById("rooms-grid");
+      const roomSel = document.getElementById("room-select");
+      (cfg.rooms || []).forEach(r => {
+        const card = document.createElement("div");
+        card.className =
+          "bg-white shadow rounded-xl overflow-hidden";
+
+        // image wrapper
+        const imgWrap = document.createElement("div");
+        imgWrap.className = "w-full h-48 bg-gray-100 overflow-hidden";
+
+        const img = document.createElement("img");
+        let u = r.image;
+        if (u && !u.includes("?")) u += "?auto=format&fit=crop&w=1200&q=80";
+        img.src = u;
+        img.loading = "lazy";
+        img.className = "img-safe";
+        imgWrap.appendChild(img);
+
+        // texts
+        const box = document.createElement("div");
+        box.className = "p-4";
+
+        const title = document.createElement("h4");
+        title.className = "font-semibold";
+        title.textContent = r.name;
+
+        const price = document.createElement("div");
+        price.className = "text-[color:var(--accent)] font-semibold mt-1";
+        price.textContent = r.price;
+
+        const desc = document.createElement("p");
+        desc.className = "text-sm text-gray-600 mt-2";
+        desc.textContent = r.description;
+
+        box.append(title, price, desc);
+        card.append(imgWrap, box);
+        rg.appendChild(card);
+
+        // Add to booking dropdown
+        const opt = document.createElement("option");
+        opt.value = r.name;
+        opt.textContent = `${r.name} — ${r.price}`;
+        roomSel.appendChild(opt);
+      });
+
+      /* GALLERY */
+      const slides = document.getElementById("slides");
+      (cfg.gallery || []).forEach(url => {
+        let u = url;
+        if (!u.includes("?")) u += "?auto=format&fit=crop&w=1200&q=80";
+        const item = document.createElement("div");
+        item.className = "inline-block w-full align-top";
+        item.innerHTML =
+          `<img src="${u}" class="w-full h-64 object-cover rounded-xl" loading="lazy" />`;
+        slides.appendChild(item);
+      });
+
+      let i = 0;
+      function upd() {
+        slides.style.transform = `translateX(-${i * 100}%)`;
+      }
+      next.onclick = () => { i = (i + 1) % slides.children.length; upd(); };
+      prev.onclick = () => { i = (i - 1 + slides.children.length) % slides.children.length; upd(); };
+
+      /* MAP */
+      if (cfg.embeds?.map) {
+        map.innerHTML =
+          `<iframe src="${cfg.embeds.map}" class="w-full h-full border-0" loading="lazy"></iframe>`;
+      }
+
+      /* CONTACT */
+      contact.textContent = cfg.contact?.phone ? `Phone: ${cfg.contact.phone}` : "";
+
+      /* BOOKING */
+      const form = document.getElementById("booking-form");
+      form.slug.value = cfg.slug;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        booking-status.textContent = "Sending...";
+        const raw = Object.fromEntries(new FormData(form));
+        try {
+          const r = await fetch("/api/booking", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(raw),
+          });
+          const out = await r.json();
+          booking-status.textContent = out.success ? "Request sent" : "Failed";
+        } catch (err) {
+          booking-status.textContent = "Network error";
+        }
+      });
+
+      /* FOOTER */
+      year.textContent = new Date().getFullYear();
+      fn.textContent = cfg.name || "";
+    });
+  </script>
+
+</body>
+</html>

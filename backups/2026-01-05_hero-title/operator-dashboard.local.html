@@ -688,28 +688,6 @@
       margin-bottom: 1rem;
     }
 
-    /* Theme Cards */
-    .theme-card {
-      padding: 0.75rem;
-      border: 2px solid var(--color-border);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all 0.3s;
-      background: var(--color-bg-card);
-    }
-
-    .theme-card:hover {
-      border-color: var(--color-primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .theme-card.selected {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2);
-      background: rgba(8, 145, 178, 0.1);
-    }
-
     /* Settings Form */
     .settings-form {
       display: flex;
@@ -798,7 +776,6 @@
     </div>
     <div class="header-right">
       <div class="last-sync">Last sync: <span id="lastSync">--</span></div>
-      <button class="btn btn-success" onclick="scrollToSaveAndPublish()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-weight: 600;">💾 Save & Publish Changes</button>
       <button class="btn btn-primary" onclick="refreshDashboard()">🔄 Refresh</button>
       <button class="btn btn-secondary" onclick="logout()">Logout</button>
     </div>
@@ -927,34 +904,10 @@
     <div class="section">
       <div class="section-header">
         <h2 class="section-title"> Hero Image</h2>
-        <button class="btn btn-primary" id="heroUploadBtn" onclick="document.getElementById('heroUpload').click()">
+        <button class="btn btn-primary" onclick="document.getElementById('heroUpload').click()">
            Upload Hero Image
         </button>
         <input type="file" id="heroUpload" accept="image/*" onchange="handleHeroUpload(event)" style="display: none;">
-      </div>
-
-      <div class="form-group" style="margin-top: 1rem;">
-        <label class="form-label">Hero Background</label>
-        <div style="display:flex; gap: 14px; flex-wrap: wrap; align-items: center;">
-          <label style="display:flex; align-items:center; gap: 8px; cursor: pointer;">
-            <input type="radio" name="heroBgType" id="settingHeroBgTypeNone" value="none" onchange="updateHeroBackgroundUI()">
-            <span>Blank / White</span>
-          </label>
-          <label style="display:flex; align-items:center; gap: 8px; cursor: pointer;">
-            <input type="radio" name="heroBgType" id="settingHeroBgTypePreset" value="preset" onchange="updateHeroBackgroundUI()">
-            <span>Preset Image</span>
-          </label>
-          <label style="display:flex; align-items:center; gap: 8px; cursor: pointer;">
-            <input type="radio" name="heroBgType" id="settingHeroBgTypeCustom" value="custom" onchange="updateHeroBackgroundUI()">
-            <span>Custom Image</span>
-          </label>
-        </div>
-
-        <div id="heroBgPresetWrap" style="margin-top: 10px; display:none;">
-          <div id="heroBgPresetGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 820px;"></div>
-          <input type="hidden" id="settingHeroBgPreset" value="platform-default">
-          <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">Choose one preset background (3–6 options).</p>
-        </div>
       </div>
       
       <div id="heroPreview" style="margin-top: 1rem;">
@@ -967,69 +920,6 @@
         <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
           Primary banner image displayed at the top of your website
         </p>
-      </div>
-
-      <div class="form-group" style="margin-top: 1rem;">
-        <label class="form-label">Header Style</label>
-        <select class="form-input" id="settingHeaderStyleMode" onchange="updateHeaderStyleUI()">
-          <option value="auto">Auto (Recommended)</option>
-          <option value="light">Light (for dark images)</option>
-          <option value="dark">Dark (for white/light hero)</option>
-          <option value="custom">Custom</option>
-        </select>
-        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
-          Controls the top header (logo + menu) contrast over the hero.
-        </p>
-
-        <div id="headerStyleCustomWrap" style="margin-top: 10px; display:none;">
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label class="form-label">Header Text Color</label>
-            <div style="display:flex; gap: 10px; align-items: center; margin-bottom: 0.5rem;">
-              <input type="color" id="settingHeaderTextColorPicker" value="#ffffff" oninput="syncHeaderColorFromPicker()" style="width: 54px; height: 42px; padding: 0; border: 1px solid var(--color-border); border-radius: 10px; background: transparent;">
-              <input type="text" class="form-input" id="settingHeaderTextColor" placeholder="Leave empty for auto" oninput="syncHeaderColorFromText()" style="flex:1;">
-            </div>
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;">
-              <input type="checkbox" id="settingUseThemeColor" onchange="handleUseThemeColorChange()" style="width: 18px; height: 18px; cursor: pointer;">
-              <span>Use theme primary color</span>
-            </label>
-            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
-              This color applies to navigation menu items throughout the page, even when scrolled.
-            </p>
-          </div>
-
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label class="form-label">Brand Font Style</label>
-            <select class="form-input" id="settingHeaderBrandFontStyle">
-              <option value="">Default</option>
-              <option value="modern">Modern</option>
-              <option value="classic">Classic</option>
-              <option value="elegant">Elegant</option>
-              <option value="mono">Mono</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label class="form-label">Brand Font Weight</label>
-            <select class="form-input" id="settingHeaderBrandFontWeight">
-              <option value="">Default</option>
-              <option value="500">500</option>
-              <option value="600">600</option>
-              <option value="700">700</option>
-              <option value="800">800</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label class="form-label">Brand Font Size</label>
-            <select class="form-input" id="settingHeaderBrandFontSizePx">
-              <option value="">Default</option>
-              <option value="20">Small</option>
-              <option value="24">Medium</option>
-              <option value="28">Large</option>
-              <option value="32">XL</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       <div class="form-group" style="margin-top: 1rem;">
@@ -1091,24 +981,8 @@
         </p>
 
         <div style="display:flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; max-width: 900px;">
-          <label class="form-label" style="margin:0; min-width: 180px;">Hero Title Mode (Default)</label>
+          <label class="form-label" style="margin:0; min-width: 140px;">Hero Title Mode</label>
           <select class="form-input" id="settingHeroTitleMode" style="max-width: 220px;" onchange="updateHeroContentPositionUI()">
-            <option value="auto">Auto</option>
-            <option value="show">Show</option>
-            <option value="hide">Hide</option>
-          </select>
-
-          <label class="form-label" style="margin:0; min-width: 190px;">Desktop Override</label>
-          <select class="form-input" id="settingHeroTitleModeDesktop" style="max-width: 220px;" onchange="updateHeroContentPositionUI()">
-            <option value="">Inherit Default</option>
-            <option value="auto">Auto</option>
-            <option value="show">Show</option>
-            <option value="hide">Hide</option>
-          </select>
-
-          <label class="form-label" style="margin:0; min-width: 180px;">Mobile Override</label>
-          <select class="form-input" id="settingHeroTitleModeMobile" style="max-width: 220px;" onchange="updateHeroContentPositionUI()">
-            <option value="">Inherit Default</option>
             <option value="auto">Auto</option>
             <option value="show">Show</option>
             <option value="hide">Hide</option>
@@ -1321,124 +1195,6 @@
           <label class="form-label">WhatsApp Number</label>
           <input type="tel" class="form-input" id="settingWhatsapp" placeholder="+91 98765 43210">
         </div>
-
-        <!-- SUPER ADMIN SECTION -->
-        <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-danger);">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700; color: var(--color-danger);">
-            🔐 Super Admin Controls
-            <span style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 400; margin-left: 0.5rem;">(Full system access)</span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Property Slug (URL)</label>
-          <div style="display: flex; gap: 0.75rem; align-items: center;">
-            <input type="text" class="form-input" id="settingSlug" readonly style="flex: 1; background: rgba(255,255,255,0.05);">
-            <button type="button" class="btn btn-secondary" onclick="changeSlug()" style="white-space: nowrap;">Change Slug</button>
-          </div>
-          <small style="color: var(--color-text-muted); margin-top: 0.25rem; display: block;">Current URL: https://<span id="currentSlugDisplay"></span>.webzyl.com</small>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Plan Tier</label>
-            <select class="form-input" id="settingPlanTier">
-              <option value="trial">Trial (Free)</option>
-              <option value="basic">Basic</option>
-              <option value="standard">Standard</option>
-              <option value="premium">Premium</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Property Status</label>
-            <select class="form-input" id="settingStatus">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">WhatsApp Quota Used</label>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
-              <input type="number" class="form-input" id="settingQuotaWhatsappUsed" style="flex: 1;">
-              <button type="button" class="btn btn-secondary" onclick="resetWhatsAppQuota()" style="white-space: nowrap;">🔄 Reset</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">WhatsApp Monthly Limit</label>
-            <input type="number" class="form-input" id="settingQuotaWhatsappMonthly">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Plan Expiry Date</label>
-            <input type="date" class="form-input" id="settingPlanExpiry">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select class="form-input" id="settingCategory">
-              <option value="hotel">Hotel</option>
-              <option value="resort">Resort</option>
-              <option value="homestay">Homestay</option>
-              <option value="villa">Villa</option>
-              <option value="apartment">Apartment</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Base Price (per night)</label>
-          <input type="number" class="form-input" id="settingBasePrice" placeholder="5000">
-        </div>
-
-        <!-- Menu Customization Section -->
-        <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border);">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700;">
-            📝 Menu Labels Customization
-            <span style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 400; margin-left: 0.5rem;">(Rename navigation menu items)</span>
-          </label>
-          <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Leave blank to use default labels</p>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">About Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelAbout" placeholder="About (default)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Gallery Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelGallery" placeholder="Gallery (default)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Videos Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelVideos" placeholder="Videos (default)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Testimonials Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelReviews" placeholder="Testimonials (default)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Contact Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelContact" placeholder="Contact (default)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Booking Menu Label</label>
-            <input type="text" class="form-input" id="settingMenuLabelBooking" placeholder="Booking (default)">
-          </div>
-        </div>
-
         <!-- Design Profile Section -->
         <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border);">
           <label class="form-label" style="font-size: 1.1rem; font-weight: 700;">
@@ -1491,6 +1247,16 @@
           <input type="text" class="form-input" id="settingState" placeholder="State Name">
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Google Maps Link</label>
+          <input type="url" class="form-input" id="settingMapLink" placeholder="https://goo.gl/maps/...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Map Embed Code (iframe)</label>
+          <textarea class="form-input" id="settingMapEmbed" placeholder="<iframe src=...></iframe>" rows="3"></textarea>
+        </div>
+
         <!-- Category & Theme -->
         <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border);">
           <label class="form-label" style="font-size: 1.1rem; font-weight: 700;"> Category & Theme</label>
@@ -1514,41 +1280,13 @@
 
         <div class="form-group">
           <label class="form-label">Theme Color</label>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-top: 1rem;">
-            <div class="theme-card" data-theme="ocean-breeze" onclick="selectTheme('ocean-breeze')">
-              <div style="height: 60px; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Ocean Breeze</div>
-            </div>
-            <div class="theme-card" data-theme="royal-purple" onclick="selectTheme('royal-purple')">
-              <div style="height: 60px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Royal Purple</div>
-            </div>
-            <div class="theme-card" data-theme="sky-blue" onclick="selectTheme('sky-blue')">
-              <div style="height: 60px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Sky Blue</div>
-            </div>
-            <div class="theme-card" data-theme="fresh-mint" onclick="selectTheme('fresh-mint')">
-              <div style="height: 60px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Fresh Mint</div>
-            </div>
-            <div class="theme-card" data-theme="sunset-orange" onclick="selectTheme('sunset-orange')">
-              <div style="height: 60px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Sunset Orange</div>
-            </div>
-            <div class="theme-card" data-theme="fiery-red" onclick="selectTheme('fiery-red')">
-              <div style="height: 60px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Fiery Red</div>
-            </div>
-            <div class="theme-card" data-theme="modern-gray" onclick="selectTheme('modern-gray')">
-              <div style="height: 60px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Modern Gray</div>
-            </div>
-            <div class="theme-card" data-theme="cherry-blossom" onclick="selectTheme('cherry-blossom')">
-              <div style="height: 60px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border-radius: 8px; margin-bottom: 0.5rem;"></div>
-              <div style="font-size: 0.875rem; font-weight: 600; text-align: center;">Cherry Blossom</div>
-            </div>
-          </div>
-          <input type="hidden" id="settingTheme" value="ocean-breeze">
+          <select class="form-input" id="settingTheme">
+            <option value="ocean-breeze"> Ocean Breeze (Blue)</option>
+            <option value="forest-mist"> Forest Mist (Green)</option>
+            <option value="sunset-glow"> Sunset Glow (Orange)</option>
+            <option value="royal-purple"> Royal Purple</option>
+            <option value="elegant-grey"> Elegant Grey</option>
+          </select>
         </div>
 
         <!-- Pricing -->
@@ -1559,127 +1297,6 @@
         <div class="form-group">
           <label class="form-label">Base Price (Starting from)</label>
           <input type="number" class="form-input" id="settingBasePrice" placeholder="2000">
-        </div>
-
-        <!-- Amenities Section (for hospitality) -->
-        <div id="amenitiesSection" class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border); display: none;">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700;">✨ Amenities & Facilities</label>
-          <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-            Select common amenities and add custom ones for your property
-          </p>
-
-          <!-- Common Amenities Checkboxes -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Free WiFi" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Free WiFi</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Free Parking" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Free Parking</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Swimming Pool" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Swimming Pool</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Restaurant" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Restaurant</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Gym/Fitness Center" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Gym/Fitness Center</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Spa Services" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Spa Services</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="24/7 Room Service" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>24/7 Room Service</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Air Conditioning" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Air Conditioning</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Pet Friendly" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Pet Friendly</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Laundry Service" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Laundry Service</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Airport Transfer" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Airport Transfer</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Garden/Terrace" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Garden/Terrace</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Conference Room" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Conference Room</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Kids Play Area" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Kids Play Area</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="BBQ Facilities" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>BBQ Facilities</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="TV/Entertainment" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>TV/Entertainment</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Coffee/Tea Maker" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Coffee/Tea Maker</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" value="Safe Deposit Box" class="amenity-checkbox" style="width: 18px; height: 18px;">
-              <span>Safe Deposit Box</span>
-            </label>
-          </div>
-
-          <!-- Custom Amenities -->
-          <div>
-            <label class="form-label">Custom Amenities</label>
-            <div id="amenities-inputs" style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <input type="text" class="form-input" id="customAmenity1" placeholder="e.g., Mountain View Rooms">
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="addAmenityInput()" style="margin-top: 0.5rem;">+ Add Another Amenity</button>
-          </div>
-        </div>
-
-        <!-- Rooms Section (for hospitality) -->
-        <div id="roomsSection" class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border); display: none;">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700;">🛏️ Rooms & Accommodation</label>
-          <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-            Add different room types available at your property
-          </p>
-
-          <div id="rooms-inputs" style="display: flex; flex-direction: column; gap: 1rem;">
-            <!-- Rooms will be loaded here dynamically -->
-          </div>
-
-          <button type="button" onclick="addRoomInput()" class="btn btn-secondary" style="margin-top: 0.75rem;">+ Add Another Room Type</button>
-        </div>
-
-        <!-- Testimonials Section -->
-        <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border);">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700;">💬 Guest Testimonials</label>
-          <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-            Add and manage customer testimonials to build trust
-          </p>
-
-          <div id="reviews-inputs" style="display: flex; flex-direction: column; gap: 1rem;">
-            <!-- Reviews will be loaded here dynamically -->
-          </div>
-
-          <button type="button" onclick="addReviewInput()" class="btn btn-secondary" style="margin-top: 0.75rem;">+ Add Testimonial</button>
         </div>
 
         <!-- Social Media -->
@@ -1707,33 +1324,10 @@
           <input type="url" class="form-input" id="settingYoutube" placeholder="https://youtube.com/...">
         </div>
 
-        <!-- Media Integration -->
-        <div class="form-group" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--color-border);">
-          <label class="form-label" style="font-size: 1.1rem; font-weight: 700;"> Media Integration</label>
-        </div>
-
+        <!-- YouTube Embed -->
         <div class="form-group">
-          <label class="form-label">Google Maps Link</label>
-          <input type="url" class="form-input" id="settingMapLink" placeholder="https://goo.gl/maps/...">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Map Embed Code (iframe)</label>
-          <textarea class="form-input" id="settingMapEmbed" placeholder="<iframe src=...></iframe>" rows="3"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Video Embed Code (Legacy - optional)</label>
-          <textarea class="form-input" id="settingYoutubeEmbed" placeholder="Paste old YouTube/Instagram embed code here (optional)" rows="3"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Videos (Any Platform)</label>
-          <div id="video-inputs" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
-          <button type="button" class="btn btn-secondary" onclick="addVideoInput()" style="margin-top: 0.75rem;">+ Add Another Video</button>
-          <div style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
-            Add/remove videos here. For Instagram/Facebook, include a thumbnail URL.
-          </div>
+          <label class="form-label">YouTube Video Embed</label>
+          <input type="url" class="form-input" id="settingYoutubeEmbed" placeholder="https://www.youtube.com/watch?v=...">
         </div>
 
       </form>
@@ -1755,485 +1349,6 @@
     let config = null;
     let slug = null;
     let bookings = [];
-    let videoCount = 0;
-
-    function extractFirstHttpUrl(raw) {
-      const s = (raw || '').toString().trim();
-      if (!s) return '';
-      if (s.includes('<') || s.includes('>')) {
-        const m = s.match(/https?:\/\/[^\s"'<>]+/i);
-        if (m && m[0]) return m[0].replace(/&amp;/g, '&').trim();
-      }
-      return s.replace(/&amp;/g, '&').trim();
-    }
-
-    function isYouTubeUrl(url) {
-      try {
-        const u = new URL(url);
-        const h = (u.hostname || '').toLowerCase();
-        return h.includes('youtube.com') || h.includes('youtu.be');
-      } catch (_) {
-        return false;
-      }
-    }
-
-    function addVideoInput(initialUrl = '', initialThumb = '') {
-      videoCount++;
-      const container = document.getElementById('video-inputs');
-      if (!container) return;
-
-      const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.gap = '0.75rem';
-      row.style.alignItems = 'center';
-
-      row.innerHTML = `
-        <input type="text" class="form-input" id="videoUrl${videoCount}" placeholder="Video URL or embed code" value="${String(initialUrl || '').replace(/"/g, '&quot;')}">
-        <input type="url" class="form-input" id="videoThumb${videoCount}" placeholder="Thumbnail Image URL (optional)" value="${String(initialThumb || '').replace(/"/g, '&quot;')}">
-        <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()" style="padding: 0.6rem 0.9rem;" title="Delete" aria-label="Delete video">×</button>
-      `;
-
-      container.appendChild(row);
-    }
-
-    function collectVideos() {
-      const videos = [];
-      const container = document.getElementById('video-inputs');
-      if (!container) return videos;
-
-      const urlInputs = container.querySelectorAll('input[id^="videoUrl"]');
-      urlInputs.forEach(urlEl => {
-        const idSuffix = (urlEl.id || '').replace('videoUrl', '');
-        const thumbEl = document.getElementById(`videoThumb${idSuffix}`);
-        const url = extractFirstHttpUrl(urlEl.value);
-        const thumbnail = thumbEl ? extractFirstHttpUrl(thumbEl.value) : '';
-        if (!url) return;
-        videos.push({ url, thumbnail, title: '' });
-      });
-      return videos;
-    }
-
-    // Amenities functions
-    let amenityCount = 1;
-
-    function addAmenityInput(initialValue = '') {
-      amenityCount++;
-      const container = document.getElementById('amenities-inputs');
-      if (!container) return;
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'form-input';
-      input.id = `customAmenity${amenityCount}`;
-      input.placeholder = 'e.g., Mountain View Rooms';
-      input.value = initialValue;
-
-      container.appendChild(input);
-    }
-
-    function collectAmenities() {
-      const amenities = [];
-
-      // Collect checked common amenities
-      const checkboxes = document.querySelectorAll('.amenity-checkbox:checked');
-      checkboxes.forEach(checkbox => {
-        if (checkbox.value) {
-          amenities.push(checkbox.value);
-        }
-      });
-
-      // Collect custom amenities from inputs
-      const container = document.getElementById('amenities-inputs');
-      if (container) {
-        const inputs = container.querySelectorAll('input[type="text"]');
-        inputs.forEach(input => {
-          const value = input.value.trim();
-          if (value) {
-            amenities.push(value);
-          }
-        });
-      }
-
-      return amenities;
-    }
-
-    // Review functions
-    let reviewCount = 0;
-
-    function addReviewInput(reviewData = {}) {
-      reviewCount++;
-      const container = document.getElementById('reviews-inputs');
-      if (!container) return;
-
-      const reviewDiv = document.createElement('div');
-      reviewDiv.className = 'review-item';
-      reviewDiv.style.cssText = 'padding: 1rem; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-card);';
-      reviewDiv.innerHTML = `
-        <div style="display: flex; justify-between; align-items: center; margin-bottom: 0.75rem;">
-          <strong style="color: var(--color-text);">Review #${reviewCount}</strong>
-          <button type="button" onclick="removeReview(this)" style="padding: 0.25rem 0.75rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Remove</button>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-          <div>
-            <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--color-text-muted);">Customer Name</label>
-            <input type="text" class="form-input review-name" value="${reviewData.name || ''}" placeholder="John Doe" style="width: 100%;">
-          </div>
-          <div>
-            <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--color-text-muted);">Rating</label>
-            <select class="form-input review-rating" style="width: 100%;">
-              <option value="5" ${reviewData.rating === 5 ? 'selected' : ''}>⭐⭐⭐⭐⭐ (5 stars)</option>
-              <option value="4" ${reviewData.rating === 4 ? 'selected' : ''}>⭐⭐⭐⭐ (4 stars)</option>
-              <option value="3" ${reviewData.rating === 3 ? 'selected' : ''}>⭐⭐⭐ (3 stars)</option>
-              <option value="2" ${reviewData.rating === 2 ? 'selected' : ''}>⭐⭐ (2 stars)</option>
-              <option value="1" ${reviewData.rating === 1 ? 'selected' : ''}>⭐ (1 star)</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom: 0.75rem;">
-          <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--color-text-muted);">Review Text</label>
-          <textarea class="form-input review-text" rows="3" placeholder="Amazing place! Great hospitality..." style="width: 100%;">${reviewData.text || ''}</textarea>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div>
-            <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--color-text-muted);">Date (Optional)</label>
-            <input type="date" class="form-input review-date" value="${reviewData.date || ''}" style="width: 100%;">
-          </div>
-          <div style="display: flex; align-items: center; padding-top: 1.5rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" class="review-visible" ${reviewData.visible !== false ? 'checked' : ''} style="width: 16px; height: 16px;">
-              <span style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-muted);">Show on website</span>
-            </label>
-          </div>
-        </div>
-      `;
-      container.appendChild(reviewDiv);
-    }
-
-    function removeReview(button) {
-      const reviewItem = button.closest('.review-item');
-      if (reviewItem) {
-        reviewItem.remove();
-      }
-    }
-
-    function collectReviews() {
-      const reviews = [];
-      const reviewItems = document.querySelectorAll('.review-item');
-      console.log('[REVIEWS] Found', reviewItems.length, 'review items');
-
-      reviewItems.forEach(item => {
-        const name = item.querySelector('.review-name')?.value.trim();
-        const rating = parseInt(item.querySelector('.review-rating')?.value || '5');
-        const text = item.querySelector('.review-text')?.value.trim();
-        const date = item.querySelector('.review-date')?.value || '';
-        const visible = item.querySelector('.review-visible')?.checked !== false;
-
-        console.log('[REVIEWS] Collecting:', { name, rating, text, date, visible });
-
-        if (name && text) {
-          reviews.push({
-            name: name,
-            rating: rating,
-            text: text,
-            date: date || new Date().toISOString().split('T')[0],
-            visible: visible,
-            source: 'manual'
-          });
-        }
-      });
-
-      console.log('[REVIEWS] Total collected:', reviews.length, reviews);
-      return reviews;
-    }
-
-    // Rooms functions
-    let roomCount = 0;
-
-    // Common room amenities for checkboxes
-    const COMMON_ROOM_AMENITIES = [
-      'AC', 'Heater', 'Single Bed', 'Double Bed', 'King Bed', 'Twin Beds',
-      'Private Bathroom', 'Attached Bathroom', 'TV', 'WiFi', 'Mini Fridge',
-      'Coffee Maker', 'Balcony', 'Sea View', 'Mountain View', 'Garden View',
-      'Work Desk', 'Safe', 'Wardrobe', 'Hair Dryer', 'Iron', 'Kettle'
-    ];
-
-    function createRoomHTML(roomData = {}, index = null) {
-      const roomIndex = index !== null ? index : roomCount++;
-      const roomNum = roomIndex + 1;
-      const imageUrl = roomData.image || roomData.imageUrl || '';
-      const imageId = `roomImage${roomNum}`;
-      const uploadId = `roomUpload${roomNum}`;
-
-      return `
-        <div class="room-card" data-room-index="${roomIndex}" style="border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1rem; background: var(--color-bg-light);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h4 style="font-weight: 600; color: var(--color-text);">🛏️ Room Type ${roomNum}</h4>
-            <button type="button" onclick="removeRoom(this)" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; background: var(--color-danger);" title="Remove Room">× Remove</button>
-          </div>
-
-          <!-- Room Image Upload -->
-          <div style="margin-bottom: 1rem;">
-            <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Room Image (Optional)</label>
-            <div style="display: flex; gap: 1rem; align-items: start;">
-              <div id="${imageId}-preview" style="flex-shrink: 0;">
-                ${imageUrl ? `<img src="${imageUrl}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border);" alt="Room">` : '<div style="width: 120px; height: 80px; background: var(--color-bg); border: 2px dashed var(--color-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: 0.75rem; text-align: center;">No Image</div>'}
-              </div>
-              <div style="flex: 1;">
-                <input type="hidden" class="room-image" value="${imageUrl}" id="${imageId}">
-                <input type="file" id="${uploadId}" accept="image/*" style="display: none;" onchange="handleRoomImageUpload(event, '${imageId}')">
-                <button type="button" onclick="document.getElementById('${uploadId}').click()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">📷 ${imageUrl ? 'Change' : 'Upload'} Image</button>
-                ${imageUrl ? `<button type="button" onclick="clearRoomImage('${imageId}')" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem; margin-left: 0.5rem; background: var(--color-danger);">× Clear</button>` : ''}
-                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">Max 5MB. If no image, room amenities will be listed as text.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Basic Info -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
-            <div>
-              <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Room Name *</label>
-              <input type="text" class="form-input room-name" value="${roomData.name || ''}" placeholder="e.g., Deluxe Room" style="padding: 0.6rem;">
-            </div>
-            <div>
-              <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Price per Night</label>
-              <input type="number" class="form-input room-price" value="${roomData.price || ''}" placeholder="2000" style="padding: 0.6rem;">
-            </div>
-            <div>
-              <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Capacity (guests)</label>
-              <input type="number" class="form-input room-capacity" value="${roomData.capacity || ''}" placeholder="2" style="padding: 0.6rem;">
-            </div>
-            <div>
-              <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Size (sq ft)</label>
-              <input type="number" class="form-input room-size" value="${roomData.size || ''}" placeholder="300" style="padding: 0.6rem;">
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div style="margin-bottom: 1rem;">
-            <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Description</label>
-            <textarea class="form-input room-description" rows="2" placeholder="Describe the room features..." style="padding: 0.6rem;">${roomData.description || ''}</textarea>
-          </div>
-
-          <!-- Room Amenities Checkboxes -->
-          <div style="margin-bottom: 1rem;">
-            <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Room Features & Amenities</label>
-            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">Select all that apply:</p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; margin-bottom: 1rem;">
-              ${COMMON_ROOM_AMENITIES.map(amenity => {
-                const checked = (roomData.amenities || []).includes(amenity) ? 'checked' : '';
-                return `
-                  <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem;">
-                    <input type="checkbox" value="${amenity}" class="room-amenity-checkbox" ${checked} style="width: 16px; height: 16px;">
-                    <span>${amenity}</span>
-                  </label>
-                `;
-              }).join('')}
-            </div>
-
-            <!-- Custom Amenities -->
-            <div>
-              <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Custom Features</label>
-              <div class="room-custom-amenities" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                ${(roomData.amenities || [])
-                  .filter(a => !COMMON_ROOM_AMENITIES.includes(a))
-                  .map(amenity => `
-                    <div style="display: flex; gap: 0.5rem;">
-                      <input type="text" class="form-input room-custom-amenity" value="${amenity}" placeholder="e.g., Jacuzzi, Smart TV" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;">
-                      <button type="button" onclick="this.parentElement.remove()" class="btn btn-secondary" style="padding: 0.5rem 0.75rem; background: var(--color-danger);">×</button>
-                    </div>
-                  `).join('')}
-              </div>
-              <button type="button" onclick="addCustomRoomAmenity(this)" class="btn btn-secondary" style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">+ Add Custom Feature</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function addRoomInput(roomData = {}) {
-      const container = document.getElementById('rooms-inputs');
-      if (!container) return;
-
-      const roomDiv = document.createElement('div');
-      roomDiv.innerHTML = createRoomHTML(roomData);
-      container.appendChild(roomDiv.firstElementChild);
-    }
-
-    function removeRoom(button) {
-      if (!confirm('Remove this room?')) return;
-      button.closest('.room-card').remove();
-    }
-
-    function addCustomRoomAmenity(button) {
-      const container = button.previousElementSibling;
-      const input = document.createElement('div');
-      input.style.cssText = 'display: flex; gap: 0.5rem;';
-      input.innerHTML = `
-        <input type="text" class="form-input room-custom-amenity" placeholder="e.g., Jacuzzi, Smart TV" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;">
-        <button type="button" onclick="this.parentElement.remove()" class="btn btn-secondary" style="padding: 0.5rem 0.75rem; background: var(--color-danger);">×</button>
-      `;
-      container.appendChild(input);
-    }
-
-    function clearRoomImage(imageId) {
-      document.getElementById(imageId).value = '';
-      const previewDiv = document.getElementById(`${imageId}-preview`);
-      previewDiv.innerHTML = '<div style="width: 120px; height: 80px; background: var(--color-bg); border: 2px dashed var(--color-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: 0.75rem; text-align: center;">No Image</div>';
-
-      // Update upload button
-      const card = document.getElementById(imageId).closest('.room-card');
-      const uploadBtn = card.querySelector('button[onclick*="click"]');
-      if (uploadBtn) uploadBtn.textContent = '📷 Upload Image';
-    }
-
-    async function handleRoomImageUpload(event, imageId) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
-        return;
-      }
-
-      // Show preview immediately
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const previewDiv = document.getElementById(`${imageId}-preview`);
-        previewDiv.innerHTML = `<img src="${e.target.result}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border);" alt="Room">`;
-      };
-      reader.readAsDataURL(file);
-
-      // Upload to R2
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`https://webzyl.com/api/operator/room/upload/${slug}`, {
-          method: 'POST',
-          body: formData
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          document.getElementById(imageId).value = result.imageUrl;
-          alert('✅ Room image uploaded successfully!');
-        } else {
-          alert('❌ Upload failed: ' + (result.error || 'Unknown error'));
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('❌ Upload error: ' + error.message);
-      }
-    }
-
-    function collectRooms() {
-      const rooms = [];
-      const roomCards = document.querySelectorAll('.room-card');
-
-      roomCards.forEach(card => {
-        const name = card.querySelector('.room-name')?.value.trim();
-        if (!name) return; // Skip rooms without a name
-
-        const price = card.querySelector('.room-price')?.value;
-        const capacity = card.querySelector('.room-capacity')?.value;
-        const size = card.querySelector('.room-size')?.value;
-        const description = card.querySelector('.room-description')?.value.trim();
-        const image = card.querySelector('.room-image')?.value.trim();
-
-        // Collect checked amenities
-        const amenities = [];
-        card.querySelectorAll('.room-amenity-checkbox:checked').forEach(cb => {
-          amenities.push(cb.value);
-        });
-
-        // Collect custom amenities
-        card.querySelectorAll('.room-custom-amenity').forEach(input => {
-          const val = input.value.trim();
-          if (val) amenities.push(val);
-        });
-
-        const room = {
-          name: name,
-          price: price ? parseFloat(price) : null,
-          capacity: capacity ? parseInt(capacity) : null,
-          size: size ? parseFloat(size) : null,
-          description: description || '',
-          image: image || null,
-          amenities: amenities
-        };
-
-        rooms.push(room);
-      });
-
-      return rooms;
-    }
-
-    function loadRoomsFromConfig() {
-      const container = document.getElementById('rooms-inputs');
-      if (!container) return;
-
-      container.innerHTML = ''; // Clear existing
-      roomCount = 0;
-
-      const rooms = config.rooms || [];
-      if (rooms.length === 0) {
-        // Add one empty room by default
-        addRoomInput();
-      } else {
-        rooms.forEach((room, index) => {
-          addRoomInput(room);
-        });
-      }
-    }
-
-    function renderReviewsFromConfig() {
-      const container = document.getElementById('reviews-inputs');
-      if (!container) return;
-
-      container.innerHTML = ''; // Clear existing
-      reviewCount = 0;
-
-      const reviews = config.reviews || [];
-      if (reviews.length > 0) {
-        reviews.forEach((review) => {
-          addReviewInput(review);
-        });
-      }
-    }
-
-    function renderVideosFromConfig() {
-      const container = document.getElementById('video-inputs');
-      if (!container) return;
-
-      container.innerHTML = '';
-      videoCount = 0;
-
-      const list = Array.isArray(config?.videos) ? config.videos : [];
-      if (list.length > 0) {
-        for (const entry of list) {
-          if (typeof entry === 'string') {
-            addVideoInput(entry, '');
-          } else if (entry && typeof entry === 'object') {
-            addVideoInput(entry.url || entry.link || '', entry.thumbnail || entry.thumb || '');
-          }
-        }
-        return;
-      }
-
-      const legacyRaw = (config?.embeds?.youtube || '').toString().trim();
-      const legacyUrl = extractFirstHttpUrl(legacyRaw);
-      if (legacyUrl && isYouTubeUrl(legacyUrl)) {
-        addVideoInput(legacyUrl, '');
-      } else {
-        addVideoInput('', '');
-      }
-    }
 
     // Initialize dashboard
     async function initDashboard() {
@@ -2262,16 +1377,12 @@
 
       } catch (error) {
         console.error('Dashboard init error:', error);
-        const errorDetails = error.message || error.toString();
-        alert('Failed to load dashboard: ' + errorDetails + '\n\nPlease check:\n1. Property slug is correct\n2. Property exists in system\n3. Browser console for details');
-        document.getElementById('loadingScreen').classList.add('hidden');
-        document.body.innerHTML += '<div style="padding: 20px; text-align: center;"><h2>Error Loading Dashboard</h2><p>Slug: ' + slug + '</p><p>Error: ' + errorDetails + '</p><p><a href="?slug=grand-royal">Try grand-royal</a></p></div>';
+        alert('Failed to load dashboard: ' + error.message);
       }
     }
 
     async function fetchConfig() {
-      // Always load from production origin so the dashboard reflects what the live site uses.
-      const response = await fetch(`https://webzyl.com/api/config/${slug}`);
+      const response = await fetch(`https://webzyl-worker.rinil-kuriakose093.workers.dev/api/config/${slug}`);
       
       if (!response.ok) {
         throw new Error('Property not found');
@@ -2349,16 +1460,6 @@
         const m = String(config.heroTitleMode || '').trim().toLowerCase();
         heroTitleModeSel.value = (m === 'show' || m === 'hide' || m === 'auto') ? m : 'auto';
       }
-      const heroTitleModeDesktopSel = document.getElementById('settingHeroTitleModeDesktop');
-      if (heroTitleModeDesktopSel) {
-        const m = String(config.heroTitleModeDesktop || '').trim().toLowerCase();
-        heroTitleModeDesktopSel.value = (m === 'show' || m === 'hide' || m === 'auto') ? m : '';
-      }
-      const heroTitleModeMobileSel = document.getElementById('settingHeroTitleModeMobile');
-      if (heroTitleModeMobileSel) {
-        const m = String(config.heroTitleModeMobile || '').trim().toLowerCase();
-        heroTitleModeMobileSel.value = (m === 'show' || m === 'hide' || m === 'auto') ? m : '';
-      }
       const heroImageContainsBrandSel = document.getElementById('settingHeroImageContainsBrand');
       if (heroImageContainsBrandSel) {
         const raw = config.heroImageContainsBrand;
@@ -2369,25 +1470,6 @@
       document.getElementById('settingPhone').value = config.contact?.phone || '';
       document.getElementById('settingEmail').value = config.contact?.email || '';
       document.getElementById('settingWhatsapp').value = config.contact?.whatsapp || '';
-
-      // Load Super Admin fields
-      document.getElementById('settingSlug').value = config.slug || '';
-      document.getElementById('currentSlugDisplay').textContent = config.slug || '';
-      document.getElementById('settingPlanTier').value = config.plan_tier || 'trial';
-      document.getElementById('settingStatus').value = config.status || 'active';
-      document.getElementById('settingQuotaWhatsappUsed').value = config.quota_whatsapp_used || 0;
-      document.getElementById('settingQuotaWhatsappMonthly').value = config.quota_whatsapp_monthly || 0;
-      document.getElementById('settingPlanExpiry').value = config.plan_expiry || '';
-      document.getElementById('settingBasePrice').value = config.basePrice || 0;
-
-      // Load Menu Labels
-      document.getElementById('settingMenuLabelAbout').value = config.menuLabels?.about || '';
-      document.getElementById('settingMenuLabelGallery').value = config.menuLabels?.gallery || '';
-      document.getElementById('settingMenuLabelVideos').value = config.menuLabels?.videos || '';
-      document.getElementById('settingMenuLabelReviews').value = config.menuLabels?.reviews || '';
-      document.getElementById('settingMenuLabelContact').value = config.menuLabels?.contact || '';
-      document.getElementById('settingMenuLabelBooking').value = config.menuLabels?.booking || '';
-
       // Load Design Profile settings
       document.getElementById('settingDesignProfile').value = config.branding?.designProfileId || '';
       document.getElementById('settingVariant').value = config.variant || '';
@@ -2400,36 +1482,6 @@
       // Load Category & Theme
       document.getElementById('settingCategory').value = config.category || '';
       document.getElementById('settingTheme').value = config.templateId || 'ocean-breeze';
-
-      // Initialize theme card selection
-      initThemeSelection();
-
-      // Show/hide amenities and rooms based on category
-      const category = config.category || '';
-      const accommodationTypes = ['homestay', 'resort', 'hotel', 'villa', 'cottage'];
-      if (accommodationTypes.includes(category.toLowerCase())) {
-        document.getElementById('amenitiesSection').style.display = 'block';
-        document.getElementById('roomsSection').style.display = 'block';
-      } else {
-        document.getElementById('amenitiesSection').style.display = 'none';
-        document.getElementById('roomsSection').style.display = 'none';
-      }
-
-      // Load amenities
-      const amenities = config.amenities || [];
-      amenities.forEach(amenity => {
-        // Check if it's a common amenity checkbox
-        const checkbox = Array.from(document.querySelectorAll('.amenity-checkbox')).find(
-          cb => cb.value === amenity
-        );
-        if (checkbox) {
-          checkbox.checked = true;
-        } else {
-          // It's a custom amenity, add it to custom inputs
-          addAmenityInput(amenity);
-        }
-      });
-
       // Load Pricing
       document.getElementById('settingBasePrice').value = config.basePrice || '';
       // Load Social Media
@@ -2438,40 +1490,7 @@
       document.getElementById('settingTwitter').value = config.social?.twitter || '';
       document.getElementById('settingYoutube').value = config.social?.youtube || '';
       document.getElementById('settingYoutubeEmbed').value = config.embeds?.youtube || '';
-
-      renderVideosFromConfig();
-      loadRoomsFromConfig();
-      renderReviewsFromConfig();
-
-        // Hero background (explicit) + legacy hero image
-        const hb = (config.heroBackground || config.branding?.heroBackground || null);
-        const legacyHeroUrl = (config.heroImage || config.branding?.heroImage || '').toString().trim();
-        const hbType = hb && typeof hb === 'object' ? String(hb.type || '').trim().toLowerCase() : '';
-        const hbValue = hb && typeof hb === 'object' ? (hb.value == null ? '' : String(hb.value)).trim() : '';
-
-        if (hbType === 'none') {
-          setHeroBgTypeInUI('none');
-          document.getElementById('settingHeroImage').value = '';
-        } else if (hbType === 'preset') {
-          setHeroBgTypeInUI('preset');
-          const presetInput = document.getElementById('settingHeroBgPreset');
-          if (presetInput) presetInput.value = hbValue || 'platform-default';
-          document.getElementById('settingHeroImage').value = '';
-        } else if (hbType === 'custom') {
-          setHeroBgTypeInUI('custom');
-          document.getElementById('settingHeroImage').value = hbValue || legacyHeroUrl || '';
-        } else {
-          // Backward compatible: if site has heroImage -> custom; else -> preset default
-          if (legacyHeroUrl) {
-            setHeroBgTypeInUI('custom');
-            document.getElementById('settingHeroImage').value = legacyHeroUrl;
-          } else {
-            setHeroBgTypeInUI('preset');
-            const presetInput = document.getElementById('settingHeroBgPreset');
-            if (presetInput) presetInput.value = 'platform-default';
-            document.getElementById('settingHeroImage').value = '';
-          }
-        }
+        document.getElementById('settingHeroImage').value = config.heroImage || '';
 
         // Desktop hero mode (optional; defaults to cover)
         const fitModeRaw = String(config.heroFitMode || config.branding?.heroFitMode || '').trim().toLowerCase();
@@ -2531,26 +1550,11 @@
         document.getElementById('settingHeroTaglineSizeMobilePx').value = (config.branding?.heroTaglineFontSizeMobilePx || config.heroTaglineFontSizeMobilePx || '').toString().trim();
 
         updateHeroContentPositionUI();
-
-        // Ensure hero background UI + previews are consistent
-        updateHeroBackgroundUI();
-
-        // Header style profile
-        const hs = (config.headerStyle || config.branding?.headerStyle || null);
-        const hsMode = (hs?.mode || 'auto').toString().trim().toLowerCase();
-        const modeEl = document.getElementById('settingHeaderStyleMode');
-        if (modeEl) modeEl.value = (hsMode === 'light' || hsMode === 'dark' || hsMode === 'custom') ? hsMode : 'auto';
-        const colorEl = document.getElementById('settingHeaderTextColor');
-        if (colorEl) colorEl.value = (hs?.textColor || '').toString();
-        syncHeaderColorFromText();
-        const fontEl = document.getElementById('settingHeaderBrandFontStyle');
-        if (fontEl) fontEl.value = (hs?.brandFontStyle || '').toString();
-        const weightEl = document.getElementById('settingHeaderBrandFontWeight');
-        if (weightEl) weightEl.value = (hs?.brandFontWeight ?? '').toString();
-        const sizeEl = document.getElementById('settingHeaderBrandFontSizePx');
-        if (sizeEl) sizeEl.value = (hs?.brandFontSizePx ?? '').toString();
-        normalizeHeaderDropdowns();
-        updateHeaderStyleUI();
+        
+        // Show hero preview if exists
+        if (config.heroImage) {
+          document.getElementById('heroPreview').innerHTML = `<img src="${config.heroImage}" style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover;" alt="Hero Image">`;
+        }
 
         // Logo
         const logoUrl = (config.branding && (config.branding.logoUrl || config.branding.logo)) ? (config.branding.logoUrl || config.branding.logo) : (config.logoUrl || config.logo || '');
@@ -2593,7 +1597,7 @@
 
     function renderGallery() {
       const galleryGrid = document.getElementById('galleryGrid');
-      const gallery = Array.isArray(config.gallery) ? config.gallery : [];
+      const gallery = JSON.parse(config.gallery_json || '[]');
 
       if (gallery.length === 0) {
         galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--color-text-muted);">No images yet. Upload your first image!</div>';
@@ -2602,10 +1606,10 @@
 
       galleryGrid.innerHTML = gallery.map((img, index) => `
         <div class="gallery-item">
-          <img src="${img.url || img}" alt="${img.alt || 'Gallery image'}">
+          <img src="${img.url}" alt="${img.alt || 'Gallery image'}">
           <div class="gallery-item-actions">
             <button class="gallery-action-btn" onclick="deleteGalleryImage(${index})" title="Delete">
-              🗑️
+              ×
             </button>
           </div>
         </div>
@@ -2736,145 +1740,29 @@
 
       // Validate file
       if (!file.type.startsWith('image/')) {
-        alert('❌ Please upload an image file');
+        alert('Please upload an image file');
         return;
       }
 
-      if (file.size > 10 * 1024 * 1024) {
-        alert('❌ Image size must be less than 10MB');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
         return;
       }
 
-      try {
-        // Show upload progress
-        const uploadBtn = document.querySelector('.btn-primary');
-        const originalText = uploadBtn.textContent;
-        uploadBtn.textContent = 'Uploading...';
-        uploadBtn.disabled = true;
-
-        // Step 1: Get signed upload URL
-        const signResponse = await fetch('https://webzyl.com/api/media/sign-upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tenantId: slug,
-            mediaType: 'gallery',
-            filename: file.name,
-            contentType: file.type,
-            size: file.size
-          })
-        });
-
-        if (!signResponse.ok) {
-          const error = await signResponse.json();
-          throw new Error(error.error || 'Failed to get upload URL');
-        }
-
-        const { uploadUrl, assetId } = await signResponse.json();
-
-        // Step 2: Upload file to R2
-        const uploadResponse = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload file to storage');
-        }
-
-        // Step 3: Confirm upload
-        const confirmResponse = await fetch('https://webzyl.com/api/media/confirm-upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tenantId: slug,
-            assetId: assetId,
-            contentHash: 'uploaded'
-          })
-        });
-
-        if (!confirmResponse.ok) {
-          const error = await confirmResponse.json();
-          throw new Error(error.error || 'Failed to confirm upload');
-        }
-
-        const { assetUrl } = await confirmResponse.json();
-
-        // Step 4: Add to gallery array and save
-        const gallery = Array.isArray(config.gallery) ? config.gallery : [];
-        gallery.push({
-          url: assetUrl,
-          alt: file.name.replace(/\.[^/.]+$/, ''),
-          caption: ''
-        });
-        config.gallery = gallery;
-
-        // Save to backend
-        const saveResponse = await fetch('https://webzyl.com/api/operator/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            slug: slug,
-            gallery: gallery
-          })
-        });
-
-        const saveResult = await saveResponse.json();
-
-        if (!saveResponse.ok) {
-          throw new Error(saveResult.error || 'Failed to save gallery');
-        }
-
-        // Success - refresh gallery
-        renderGallery();
-        alert('✅ Image uploaded successfully!');
-
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('❌ Upload failed: ' + error.message);
-      } finally {
-        // Reset upload button
-        const uploadBtn = document.querySelector('.btn-primary');
-        uploadBtn.textContent = '📤 Upload Images';
-        uploadBtn.disabled = false;
-        // Clear file input
-        event.target.value = '';
-      }
+      // TODO: Implement ImageKit upload
+      alert('ImageKit integration coming soon! For now, paste image URLs in the gallery JSON field.');
     }
 
     async function deleteGalleryImage(index) {
-      if (!confirm('Are you sure you want to delete this image?')) return;
+      if (!confirm('Delete this image?')) return;
 
-      const gallery = Array.isArray(config.gallery) ? config.gallery : [];
+      const gallery = JSON.parse(config.gallery_json || '[]');
       gallery.splice(index, 1);
-      config.gallery = gallery;
+      config.gallery_json = JSON.stringify(gallery);
 
-      // Save to backend immediately
-      try {
-        const response = await fetch(`https://webzyl.com/api/operator/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            slug: slug,
-            gallery: gallery
-          })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          renderGallery();
-          alert('✅ Image deleted successfully!');
-        } else {
-          throw new Error(result.error || 'Failed to delete image');
-        }
-      } catch (error) {
-        console.error('Delete error:', error);
-        alert('❌ Failed to delete image: ' + error.message);
-        // Reload config to revert changes
-        location.reload();
-      }
+      // TODO: Save to backend
+      renderGallery();
+      alert('Image deleted (not yet saved to server)');
     }
 
     async function saveSettings() {
@@ -2882,8 +1770,6 @@
         name: document.getElementById('settingName').value,
         heroTitle: (document.getElementById('settingHeroTitle')?.value || '').toString(),
         heroTitleMode: (document.getElementById('settingHeroTitleMode')?.value || 'auto').toString(),
-        heroTitleModeDesktop: (document.getElementById('settingHeroTitleModeDesktop')?.value || '').toString(),
-        heroTitleModeMobile: (document.getElementById('settingHeroTitleModeMobile')?.value || '').toString(),
         heroImageContainsBrand: (document.getElementById('settingHeroImageContainsBrand')?.value || 'false').toString().trim().toLowerCase() === 'true',
         tagline: document.getElementById('settingTagline').value,
         about: document.getElementById('settingAbout').value,
@@ -2932,50 +1818,10 @@
           map: document.getElementById('settingMapEmbed').value,
           youtube: document.getElementById('settingYoutubeEmbed').value
         },
-        videos: collectVideos(),
         category: document.getElementById('settingCategory').value,
-        amenities: collectAmenities(),
-        rooms: collectRooms(),
-        reviews: collectReviews(),
         templateId: document.getElementById('settingTheme').value,
-        basePrice: parseInt(document.getElementById('settingBasePrice').value) || 0,
-
-        // Super Admin fields
-        plan_tier: document.getElementById('settingPlanTier').value,
-        status: document.getElementById('settingStatus').value,
-        quota_whatsapp_used: parseInt(document.getElementById('settingQuotaWhatsappUsed').value) || 0,
-        quota_whatsapp_monthly: parseInt(document.getElementById('settingQuotaWhatsappMonthly').value) || 0,
-        plan_expiry: document.getElementById('settingPlanExpiry').value,
-
-        // Menu Labels
-        menuLabels: {
-          about: document.getElementById('settingMenuLabelAbout').value.trim(),
-          gallery: document.getElementById('settingMenuLabelGallery').value.trim(),
-          videos: document.getElementById('settingMenuLabelVideos').value.trim(),
-          reviews: document.getElementById('settingMenuLabelReviews').value.trim(),
-          contact: document.getElementById('settingMenuLabelContact').value.trim(),
-          booking: document.getElementById('settingMenuLabelBooking').value.trim()
-        },
-        headerStyle: (() => {
-          const mode = (document.getElementById('settingHeaderStyleMode')?.value || 'auto').toString().trim().toLowerCase();
-          const okMode = (mode === 'auto' || mode === 'light' || mode === 'dark' || mode === 'custom') ? mode : 'auto';
-          const hs = { mode: okMode };
-          if (okMode === 'custom') {
-            const textColor = (document.getElementById('settingHeaderTextColor')?.value || '').toString().trim();
-            // Only include textColor if it's not empty and not the default white placeholder
-            if (textColor && textColor.toLowerCase() !== '#ffffff' && textColor.toLowerCase() !== '#fff') {
-              hs.textColor = textColor;
-            }
-            hs.brandFontStyle = (document.getElementById('settingHeaderBrandFontStyle')?.value || '').toString().trim();
-            hs.brandFontWeight = (document.getElementById('settingHeaderBrandFontWeight')?.value || '').toString().trim();
-            hs.brandFontSizePx = (document.getElementById('settingHeaderBrandFontSizePx')?.value || '').toString().trim();
-          }
-          return hs;
-        })(),
-        heroBackground: (() => {
-          const hb = getHeroBackgroundFromUI();
-          return { type: hb.type, value: hb.value };
-        })(),
+        basePrice: document.getElementById('settingBasePrice').value,
+        heroImage: document.getElementById('settingHeroImage').value,
         social: {
           facebook: document.getElementById('settingFacebook').value,
           instagram: document.getElementById('settingInstagram').value,
@@ -2983,17 +1829,6 @@
           youtube: document.getElementById('settingYoutube').value
         }
       };
-
-      // Backward-compat: older worker versions only understand `heroImage`.
-      // Only send it when operator explicitly uses a custom image.
-      try {
-        const hb = getHeroBackgroundFromUI();
-        if (hb && hb.type === 'custom' && hb.value) {
-          updatedConfig.heroImage = String(hb.value);
-        }
-      } catch (e) {
-        // Ignore UI parsing issues; do not block save.
-      }
 
       // Call the update API
       try {
@@ -3028,11 +1863,6 @@
 
     function logout() {
       window.location.href = '/operator/login.html';
-    }
-
-    function scrollToSaveAndPublish() {
-      // Trigger save immediately
-      saveSettings();
     }
 
     function openWebsite() {
@@ -3150,210 +1980,9 @@
       cropper.style.backgroundImage = `url('${src}')`;
     }
 
-    const HERO_BG_PRESETS = [
-      { id: 'platform-default', label: 'Default', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945' },
-      { id: 'minimal-light-01', label: 'Minimal', url: 'https://images.unsplash.com/photo-1526498460520-4c246339dccb' },
-      { id: 'nature-01', label: 'Nature', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470' },
-      { id: 'luxury-01', label: 'Luxury', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb' },
-      { id: 'beach-01', label: 'Beach', url: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21' }
-    ];
-
-    function getHeroBgPresetUrl(presetId) {
-      const id = (presetId || '').toString().trim();
-      const found = HERO_BG_PRESETS.find(p => p.id === id);
-      return (found ? found.url : HERO_BG_PRESETS[0].url);
-    }
-
-    function getHeroBgTypeFromUI() {
-      const n = document.querySelector('input[name="heroBgType"]:checked');
-      const v = (n?.value || '').toString().trim().toLowerCase();
-      return (v === 'none' || v === 'preset' || v === 'custom') ? v : 'preset';
-    }
-
-    function setHeroBgTypeInUI(type) {
-      const t = (type || '').toString().trim().toLowerCase();
-      const v = (t === 'none' || t === 'preset' || t === 'custom') ? t : 'preset';
-      const el = document.getElementById(v === 'none' ? 'settingHeroBgTypeNone' : v === 'custom' ? 'settingHeroBgTypeCustom' : 'settingHeroBgTypePreset');
-      if (el) el.checked = true;
-    }
-
-    function getHeroBackgroundFromUI() {
-      const type = getHeroBgTypeFromUI();
-      if (type === 'none') return { type: 'none', value: null, hasImage: false, url: '' };
-      if (type === 'preset') {
-        const id = (document.getElementById('settingHeroBgPreset')?.value || 'platform-default').toString().trim();
-        return { type: 'preset', value: id || 'platform-default', hasImage: true, url: getHeroBgPresetUrl(id || 'platform-default') };
-      }
-      const url = (document.getElementById('settingHeroImage')?.value || '').toString().trim();
-      return url
-        ? { type: 'custom', value: url, hasImage: true, url }
-        : { type: 'none', value: null, hasImage: false, url: '' };
-    }
-
-    function renderHeroBgPresetGrid() {
-      const grid = document.getElementById('heroBgPresetGrid');
-      if (!grid) return;
-      const selected = (document.getElementById('settingHeroBgPreset')?.value || 'platform-default').toString().trim();
-      grid.innerHTML = HERO_BG_PRESETS.map(p => {
-        const active = p.id === selected;
-        const border = active ? '2px solid var(--color-primary)' : '1px solid var(--color-border)';
-        return `
-          <button type="button" onclick="selectHeroBgPreset('${p.id}')" style="text-align:left; background: transparent; border: ${border}; border-radius: 12px; overflow:hidden; cursor:pointer; padding:0;">
-            <div style="height: 64px; background-image:url('${p.url}?w=420&q=85'); background-size: cover; background-position: center;"></div>
-            <div style="padding: 8px 10px; font-size: 0.9rem; color: var(--color-text);">${p.label}</div>
-          </button>
-        `;
-      }).join('');
-    }
-
-    function selectHeroBgPreset(id) {
-      const input = document.getElementById('settingHeroBgPreset');
-      if (input) input.value = (id || 'platform-default').toString();
-      renderHeroBgPresetGrid();
-      updateHeroBackgroundUI();
-    }
-
-    function updateHeroBackgroundUI() {
-      const type = getHeroBgTypeFromUI();
-      const presetWrap = document.getElementById('heroBgPresetWrap');
-      const heroUrlGroup = document.getElementById('settingHeroImage')?.closest('.form-group');
-      const uploadBtn = document.getElementById('heroUploadBtn');
-      if (presetWrap) presetWrap.style.display = (type === 'preset') ? 'block' : 'none';
-      if (heroUrlGroup) heroUrlGroup.style.display = (type === 'custom') ? '' : 'none';
-      if (uploadBtn) {
-        uploadBtn.style.display = (type === 'custom') ? '' : 'none';
-      }
-
-      if (type === 'preset') {
-        renderHeroBgPresetGrid();
-      }
-
-      // Update preview
-      const preview = document.getElementById('heroPreview');
-      const hb = getHeroBackgroundFromUI();
-      if (preview) {
-        if (hb.hasImage && hb.url) {
-          preview.innerHTML = `<img src="${hb.url}" style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover;" alt="Hero Background">`;
-        } else {
-          preview.innerHTML = `<div style="width: 100%; max-width: 900px; height: 180px; border-radius: 12px; background: #ffffff; border: 1px solid var(--color-border);"></div>`;
-        }
-      }
-
-      // Keep tools in sync
-      setHeroCropperImage(hb.hasImage ? hb.url : '');
-      syncHeroTextPosImage();
-      updateHeroCropperVisibility();
-    }
-
-    function updateHeaderStyleUI() {
-      const mode = (document.getElementById('settingHeaderStyleMode')?.value || 'auto').toString().trim().toLowerCase();
-      const wrap = document.getElementById('headerStyleCustomWrap');
-      if (wrap) wrap.style.display = (mode === 'custom') ? 'block' : 'none';
-    }
-
-    function normalizeHeaderDropdowns() {
-      const weightEl = document.getElementById('settingHeaderBrandFontWeight');
-      if (weightEl) {
-        const raw = (weightEl.value || '').toString().trim();
-        if (raw && !Array.from(weightEl.options).some(o => o.value === raw)) {
-          // Map to nearest common value
-          const n = Number(raw);
-          if (Number.isFinite(n)) {
-            const options = [500, 600, 700, 800];
-            let best = options[0];
-            let bestDist = Math.abs(n - best);
-            for (const opt of options) {
-              const d = Math.abs(n - opt);
-              if (d < bestDist) { best = opt; bestDist = d; }
-            }
-            weightEl.value = String(best);
-          } else {
-            weightEl.value = '';
-          }
-        }
-      }
-
-      const sizeEl = document.getElementById('settingHeaderBrandFontSizePx');
-      if (sizeEl) {
-        const raw = (sizeEl.value || '').toString().trim();
-        if (raw && !Array.from(sizeEl.options).some(o => o.value === raw)) {
-          const n = Number(raw);
-          if (Number.isFinite(n)) {
-            const options = [20, 24, 28, 32];
-            let best = options[0];
-            let bestDist = Math.abs(n - best);
-            for (const opt of options) {
-              const d = Math.abs(n - opt);
-              if (d < bestDist) { best = opt; bestDist = d; }
-            }
-            sizeEl.value = String(best);
-          } else {
-            sizeEl.value = '';
-          }
-        }
-      }
-    }
-
-    function syncHeaderColorFromPicker() {
-      const picker = document.getElementById('settingHeaderTextColorPicker');
-      const text = document.getElementById('settingHeaderTextColor');
-      if (!picker || !text) return;
-      const v = (picker.value || '').toString().trim();
-      if (v) text.value = v;
-    }
-
-    function syncHeaderColorFromText() {
-      const picker = document.getElementById('settingHeaderTextColorPicker');
-      const text = document.getElementById('settingHeaderTextColor');
-      if (!picker || !text) return;
-      const raw = (text.value || '').toString().trim();
-      const v = raw.startsWith('#') ? raw : (raw ? `#${raw}` : '');
-      if (/^#([0-9a-fA-F]{6})$/.test(v)) {
-        picker.value = v;
-      }
-    }
-
-    function handleUseThemeColorChange() {
-      const checkbox = document.getElementById('settingUseThemeColor');
-      const picker = document.getElementById('settingHeaderTextColorPicker');
-      const text = document.getElementById('settingHeaderTextColor');
-
-      if (!checkbox || !picker || !text) return;
-
-      if (checkbox.checked) {
-        // Get the primary color from the selected theme
-        const themeSelect = document.getElementById('settingTheme');
-        const themeName = themeSelect ? themeSelect.value : 'ocean-breeze';
-
-        // Theme color mapping (matches worker.js THEME_COLORS)
-        const themeColors = {
-          'ocean-breeze': '#14b8a6',
-          'sunset-orange': '#f97316',
-          'forest-green': '#10b981',
-          'royal-purple': '#8b5cf6',
-          'fresh-mint': '#34d399',
-          'romantic-pink': '#ec4899',
-          'electric-blue': '#3b82f6',
-          'modern-gray': '#64748b'
-        };
-
-        const primaryColor = themeColors[themeName] || '#14b8a6';
-        picker.value = primaryColor;
-        text.value = primaryColor;
-
-        // Disable manual editing when using theme color
-        picker.disabled = true;
-        text.disabled = true;
-      } else {
-        // Re-enable manual editing
-        picker.disabled = false;
-        text.disabled = false;
-      }
-    }
-
     function syncHeroCropperImage() {
-      const hb = getHeroBackgroundFromUI();
-      setHeroCropperImage(hb.hasImage ? hb.url : '');
+      const url = document.getElementById('settingHeroImage')?.value || '';
+      if (url) setHeroCropperImage(url);
     }
 
     // =====================================================
@@ -3363,8 +1992,8 @@
     function syncHeroTextPosImage() {
       const bg = document.getElementById('heroTextPosBg');
       if (!bg) return;
-      const hb = getHeroBackgroundFromUI();
-      bg.style.backgroundImage = (hb.hasImage && hb.url) ? `url('${hb.url}')` : '';
+      const heroUrl = (document.getElementById('settingHeroImage')?.value || config.heroImage || '').toString().trim();
+      bg.style.backgroundImage = heroUrl ? `url('${heroUrl}')` : '';
     }
 
     function parsePercentPair(value) {
@@ -3448,16 +2077,7 @@
       primary.textContent = primaryLabelText;
 
       // Visual show/hide of hero headline (mirrors SSR behavior)
-      const modeDefault = (document.getElementById('settingHeroTitleMode')?.value || 'auto').toString().trim().toLowerCase();
-      const modeOverride = (target === 'mobile'
-        ? (document.getElementById('settingHeroTitleModeMobile')?.value || '')
-        : (document.getElementById('settingHeroTitleModeDesktop')?.value || '')
-      ).toString().trim().toLowerCase();
-      const mode = (modeOverride === 'show' || modeOverride === 'hide' || modeOverride === 'auto')
-        ? modeOverride
-        : (modeDefault === 'show' || modeDefault === 'hide' || modeDefault === 'auto')
-          ? modeDefault
-          : 'auto';
+      const mode = (document.getElementById('settingHeroTitleMode')?.value || 'auto').toString().trim().toLowerCase();
       const containsBrand = (document.getElementById('settingHeroImageContainsBrand')?.value || 'false').toString().trim().toLowerCase() === 'true';
       const hasLogo = Boolean((document.getElementById('settingLogoUrl')?.value || config.branding?.logoUrl || config.logoUrl || config.branding?.logo || config.logo || '').toString().trim());
       const showHeadline = mode === 'hide'
@@ -3809,13 +2429,6 @@
       const wrapper = document.getElementById('heroCropperWrapper');
       const mode = document.getElementById('settingHeroFitMode')?.value || 'cover';
       if (!wrapper) return;
-      const hb = (typeof getHeroBackgroundFromUI === 'function') ? getHeroBackgroundFromUI() : { hasImage: true };
-      if (!hb.hasImage) {
-        wrapper.hidden = true;
-        const hidden = document.getElementById('settingHeroObjectPosition');
-        if (hidden) hidden.value = '';
-        return;
-      }
       if (mode === 'contain') {
         wrapper.hidden = true;
         // Crop focus isn't meaningful in contain mode; keep default.
@@ -3823,131 +2436,6 @@
         if (hidden) hidden.value = '';
       } else {
         wrapper.hidden = false;
-      }
-    }
-
-    // ============================================================================
-    // THEME SELECTION
-    // ============================================================================
-
-    function selectTheme(themeName) {
-      // Remove selected class from all theme cards
-      document.querySelectorAll('.theme-card').forEach(card => {
-        card.classList.remove('selected');
-      });
-
-      // Add selected class to clicked theme
-      const selectedCard = document.querySelector(`.theme-card[data-theme="${themeName}"]`);
-      if (selectedCard) {
-        selectedCard.classList.add('selected');
-      }
-
-      // Update hidden input
-      document.getElementById('settingTheme').value = themeName;
-
-      // If "Use theme color" is checked, update header color to match new theme
-      const useThemeCheckbox = document.getElementById('settingUseThemeColor');
-      if (useThemeCheckbox && useThemeCheckbox.checked) {
-        handleUseThemeColorChange();
-      }
-    }
-
-    // Initialize theme selection on load
-    function initThemeSelection() {
-      const currentTheme = document.getElementById('settingTheme').value || 'ocean-breeze';
-      const themeCard = document.querySelector(`.theme-card[data-theme="${currentTheme}"]`);
-      if (themeCard) {
-        themeCard.classList.add('selected');
-      }
-    }
-
-    // ============================================================================
-    // SUPER ADMIN FUNCTIONS
-    // ============================================================================
-
-    const ADMIN_TOKEN = 'webzyl-admin-dev-2026';
-
-    async function resetWhatsAppQuota() {
-      if (!confirm('Reset WhatsApp quota to 0 for this property?')) return;
-
-      try {
-        const response = await fetch('https://webzyl.com/api/admin/quota/reset', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': ADMIN_TOKEN
-          },
-          body: JSON.stringify({
-            slug: slug,
-            quotaType: 'whatsapp'
-          })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to reset quota');
-        }
-
-        alert('✅ WhatsApp quota reset successfully!');
-
-        // Reload config to show updated quota
-        await loadPropertyConfig();
-      } catch (error) {
-        console.error('Reset quota error:', error);
-        alert('❌ Failed to reset quota: ' + error.message);
-      }
-    }
-
-    async function changeSlug() {
-      const currentSlug = document.getElementById('settingSlug').value;
-      const newSlug = prompt('Enter new slug (lowercase letters, numbers, hyphens only):', currentSlug);
-
-      if (!newSlug || newSlug === currentSlug) return;
-
-      if (!/^[a-z0-9-]+$/.test(newSlug)) {
-        alert('❌ Invalid slug format. Use only lowercase letters, numbers, and hyphens.');
-        return;
-      }
-
-      if (!confirm(`Change slug from "${currentSlug}" to "${newSlug}"?\n\n⚠️ This will change the property URL!\nOld: https://${currentSlug}.webzyl.com\nNew: https://${newSlug}.webzyl.com`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch('https://webzyl.com/api/admin/config/change-slug', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': ADMIN_TOKEN
-          },
-          body: JSON.stringify({
-            oldSlug: currentSlug,
-            newSlug: newSlug
-          })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to change slug');
-        }
-
-        alert(`✅ Slug changed successfully!\n\nOld: ${result.oldSlug}\nNew: ${result.newSlug}\n\nRedirecting to new URL...`);
-
-        // Redirect to new slug
-        window.location.href = `https://webzyl.com/operator?slug=${newSlug}`;
-      } catch (error) {
-        console.error('Change slug error:', error);
-
-        let errorMsg = error.message;
-        if (errorMsg === 'new_slug_already_exists') {
-          errorMsg = 'This slug is already in use by another property';
-        } else if (errorMsg === 'old_slug_not_found') {
-          errorMsg = 'Current slug not found in database';
-        }
-
-        alert('❌ Failed to change slug: ' + errorMsg);
       }
     }
 

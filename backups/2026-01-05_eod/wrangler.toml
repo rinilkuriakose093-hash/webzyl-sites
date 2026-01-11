@@ -1,0 +1,70 @@
+name = "webzyl-worker"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "7b3b529f5441edf25f03e227349ca21a"
+
+# Enable workers.dev for dashboard API access
+workers_dev = true
+
+# Routes - handle all webzyl.com traffic
+routes = [
+  { pattern = "webzyl.com/*", zone_name = "webzyl.com" },
+  { pattern = "*.webzyl.com/*", zone_name = "webzyl.com" }
+]
+
+[[kv_namespaces]]
+binding = "RESORT_CONFIGS"
+id = "ddeba62c54d046d69320dcc2ae68a269"
+
+# =====================================================
+# EVENT TRACKING STORAGE - PHASE 5
+# =====================================================
+# Privacy-first event storage for metrics/analytics.
+# Governance: See METRICS_GOVERNANCE_v1.md
+# 90-day retention via TTL (auto-cleanup).
+# =====================================================
+
+[[kv_namespaces]]
+binding = "EVENTS_KV"
+id = "69ca9f544dc84a8d92f64230a74ae3e5"
+
+# =====================================================
+# MEDIA STORAGE BINDINGS (NEW in v7.3)
+# =====================================================
+
+[[r2_buckets]]
+binding = "MEDIA_R2"
+bucket_name = "webzyl-media"
+
+[[d1_databases]]
+binding = "MEDIA_DB"
+database_name = "webzyl-media"
+database_id = "6ca4a54d-b35e-4218-9068-54423913053f"
+
+[vars]
+BOOKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzN733ocn7WYu11hIrvcVVKIX2EXCdPFtokXvlPBp5PtqcgXc1j8N8VxyUV716OAA/exec"
+#BOOKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyKYcMc81LGlrXql3Kxz97Ox32USFLIOSp6iKp2I0bad25FEaew_HL8u1m3ULKyjls/exec"
+#BOOKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzNmoNwz4s1qwJ3B-e2F712sFPMYq0H-nEtH2z88_otj2ffkQuKhVhW7Am95jL5sxw/exec"
+#BOOKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz0kaAj9KE7WxvShDAQOaCy54h4fGFv53ziwnFyz62XpitCmzUx1xfYTsyzPBtKBQ/exec"
+
+# =====================================================
+# ADMIN DASHBOARD AUTHENTICATION - PHASE 6
+# =====================================================
+# WARNING: Use wrangler secret for production
+# For development only - DO NOT COMMIT REAL TOKEN
+# Production: npx wrangler secret put ADMIN_TOKEN
+# =====================================================
+ADMIN_TOKEN = "webzyl-admin-dev-2026"  # Development token - change for production!
+
+# Media Storage Configuration (NEW in v7.3)
+R2_ACCOUNT_ID = "7b3b529f5441edf25f03e227349ca21a"
+R2_ACCESS_KEY_ID = "e66481b9cbe8bc94ae8a3f1e8efc594e"
+R2_SECRET_ACCESS_KEY = "a0bd42ba6655313854b5bcd4509d94ea23dc62a2c3f26bbf825fc442af7c0ab5"
+DASHBOARD_ORIGIN = "https://operator.webzyl.com"
+
+# =====================================================
+# CRON TRIGGERS
+# =====================================================
+
+[triggers]
+crons = ["0 2 * * *", "0 3 1 * *"]

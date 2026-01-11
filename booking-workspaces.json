@@ -1,0 +1,15 @@
+﻿{
+    "version":  1,
+    "defaultCapacitySites":  50000,
+    "workspaces":  [
+                       {
+                           "id":  "ws1",
+                           "label":  "Workspace 1",
+                           "bookingWebhookUrl":  "https://script.google.com/macros/s/AKfycbyTJft1PaaUouvb7gBsDIlhToUS-fvEr0RlJmpgXnue4FWgccJ1C2hAY-sWtnwlNEk/exec",
+                           "capacitySites":  50000,
+                           "siteCount":  0,
+                           "enabled":  true
+                       }
+                   ],
+    "updatedAt":  "2026-01-06T14:36:57.0573115Z"
+}

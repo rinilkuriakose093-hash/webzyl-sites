@@ -268,6 +268,13 @@
             border-color: #d1d5db;
         }
 
+        .plan-card.selected-plan {
+            border-color: #3b82f6;
+            border-width: 3px;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            transform: scale(1.02);
+        }
+
         .status-badge {
             display: inline-block;
             padding: 6px 14px;
@@ -1596,7 +1603,184 @@
 
         <!-- Overlay for Properties Panel -->
         <div id="propertiesOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" onclick="closePropertiesPanel()"></div>
-        
+
+        <!-- Plan Management Modal -->
+        <div id="planModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" onclick="closePlanModal(event)">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+                <div class="p-8">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
+                                💳 Plan Management
+                            </h2>
+                            <p id="planModalPropertyName" class="text-gray-500 mt-1"></p>
+                        </div>
+                        <button onclick="closePlanModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Current Plan Display -->
+                    <div id="currentPlanBanner" class="mb-8 p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-blue-600 uppercase tracking-wide">Current Plan</p>
+                                <h3 id="currentPlanName" class="text-2xl font-bold text-gray-900 mt-1"></h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Booking Mode</p>
+                                <p id="currentBookingMode" class="text-lg font-bold text-gray-900"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan Selection Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <!-- Basic Plan -->
+                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg"
+                             data-plan="basic" onclick="selectPlan('basic')">
+                            <div class="text-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-900">Basic</h3>
+                                <p class="text-sm text-gray-500">Inquiry Mode</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-2">FREE</p>
+                            </div>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Inquiry Form</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Google Sheets Logging</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Email Alerts</span>
+                                </li>
+                                <li class="flex items-start text-gray-400">
+                                    <span class="mr-2">✗</span>
+                                    <span>Booking Calendar</span>
+                                </li>
+                                <li class="flex items-start text-gray-400">
+                                    <span class="mr-2">✗</span>
+                                    <span>WhatsApp Integration</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Tier 1 Plan -->
+                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg border-blue-500"
+                             data-plan="tier-1" onclick="selectPlan('tier-1')">
+                            <div class="text-center mb-4">
+                                <h3 class="text-xl font-bold text-blue-600">Tier 1 (Pro 1)</h3>
+                                <p class="text-sm text-gray-500">Booking Mode</p>
+                                <p class="text-3xl font-bold text-blue-600 mt-2">$29<span class="text-sm text-gray-500">/mo</span></p>
+                            </div>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Full Booking System</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Calendar & Availability</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Email Confirmations</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>WhatsApp CTA Button</span>
+                                </li>
+                                <li class="flex items-start text-gray-400">
+                                    <span class="mr-2">✗</span>
+                                    <span>WhatsApp Automation</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Tier 2 Plan -->
+                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg border-purple-500"
+                             data-plan="tier-2" onclick="selectPlan('tier-2')">
+                            <div class="text-center mb-4">
+                                <h3 class="text-xl font-bold text-purple-600">Tier 2 (Pro 2)</h3>
+                                <p class="text-sm text-gray-500">Booking + WhatsApp Auto</p>
+                                <p class="text-3xl font-bold text-purple-600 mt-2">$49<span class="text-sm text-gray-500">/mo</span></p>
+                            </div>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Everything in Tier 1</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>WhatsApp API Automation</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>100-1000 msgs/month</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Premium Themes</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Priority Support</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Configuration (Tier-specific) -->
+                    <div id="advancedConfig" class="mb-8 p-6 rounded-xl bg-gray-50 border-2 border-gray-200" style="display: none;">
+                        <h4 class="text-lg font-bold text-gray-900 mb-4">📊 Plan Configuration</h4>
+
+                        <!-- Tier 2 WhatsApp Quota -->
+                        <div id="tier2Config" style="display: none;">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Monthly Quota</label>
+                                    <select id="whatsappQuota" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="100">100 messages/month</option>
+                                        <option value="250">250 messages/month</option>
+                                        <option value="500">500 messages/month</option>
+                                        <option value="1000">1000 messages/month</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Plan Expiry Date</label>
+                                    <input type="date" id="planExpiry" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- All Plans - Additional Settings -->
+                        <div class="mt-4">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" id="enableCustomBranding" class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                <span class="text-sm font-medium text-gray-700">Enable Custom Branding & Themes</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button onclick="closePlanModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all">
+                            Cancel
+                        </button>
+                        <button id="savePlanBtn" onclick="savePlanChanges()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                            💾 Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -2608,12 +2792,18 @@
                                     🎛️ Dashboard
                                 </a>
                             </div>
+                            <div class="flex gap-2 mb-2">
+                                <button onclick="managePlan('${prop.slug}', '${prop.name}', '${prop.planTier || 'basic'}')"
+                                    class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-all">
+                                    💳 Manage Plan
+                                </button>
+                            </div>
                             <div class="flex gap-2">
-                                <button onclick="deactivateProperty('${prop.slug}')" 
+                                <button onclick="deactivateProperty('${prop.slug}')"
                                     class="flex-1 px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-200 transition-all">
                                     ⏸️ Deactivate
                                 </button>
-                                <button onclick="disableProperty('${prop.slug}')" 
+                                <button onclick="disableProperty('${prop.slug}')"
                                     class="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition-all">
                                     🚫 Disable
                                 </button>
@@ -2677,7 +2867,7 @@
                 const response = await fetch(`${API_BASE}/api/ceo/property/${slug}/disable`, {
                     method: 'POST',
                     headers: {
-                        'X-CEO-Token': CEO_TOKEN
+                        'X-CEO-TOKEN': CEO_TOKEN
                     }
                 });
 
@@ -2692,6 +2882,159 @@
             } catch (error) {
                 console.error('Disable error:', error);
                 showNotification('❌ Failed to disable: ' + error.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // PLAN MANAGEMENT FUNCTIONS
+        // ==========================================
+
+        let currentPlanSlug = null;
+        let selectedNewPlan = null;
+
+        async function managePlan(slug, propertyName, currentPlan) {
+            currentPlanSlug = slug;
+            selectedNewPlan = currentPlan || 'basic';
+
+            // Update modal header
+            document.getElementById('planModalPropertyName').textContent = propertyName;
+
+            // Update current plan display
+            const planNames = {
+                'basic': 'Basic (FREE)',
+                'tier-1': 'Tier 1 - Booking Mode ($29/mo)',
+                'tier-2': 'Tier 2 - Booking + WhatsApp Auto ($49/mo)'
+            };
+            const bookingModes = {
+                'basic': 'Inquiry Mode',
+                'tier-1': 'Booking Mode',
+                'tier-2': 'Booking + Automation'
+            };
+
+            document.getElementById('currentPlanName').textContent = planNames[currentPlan] || 'Unknown';
+            document.getElementById('currentBookingMode').textContent = bookingModes[currentPlan] || 'Unknown';
+
+            // Select current plan card
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected-plan');
+                if (card.dataset.plan === currentPlan) {
+                    card.classList.add('selected-plan');
+                }
+            });
+
+            // Load property config to get current quota settings
+            try {
+                const response = await fetch(`${API_BASE}/api/config/${slug}`);
+                const config = await response.json();
+
+                if (config && currentPlan === 'tier-2') {
+                    document.getElementById('whatsappQuota').value = config.quota?.whatsapp_limit || 100;
+                    document.getElementById('planExpiry').value = config.plan_expiry || '';
+                }
+
+                if (config && config.branding?.customEnabled) {
+                    document.getElementById('enableCustomBranding').checked = true;
+                }
+            } catch (error) {
+                console.error('Failed to load property config:', error);
+            }
+
+            // Show modal
+            document.getElementById('planModal').classList.remove('hidden');
+
+            // Show tier-specific config if tier-2
+            if (currentPlan === 'tier-2') {
+                document.getElementById('advancedConfig').style.display = 'block';
+                document.getElementById('tier2Config').style.display = 'block';
+            }
+        }
+
+        function selectPlan(plan) {
+            selectedNewPlan = plan;
+
+            // Update visual selection
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected-plan');
+                if (card.dataset.plan === plan) {
+                    card.classList.add('selected-plan');
+                }
+            });
+
+            // Show/hide tier-specific configuration
+            if (plan === 'tier-2') {
+                document.getElementById('advancedConfig').style.display = 'block';
+                document.getElementById('tier2Config').style.display = 'block';
+            } else if (plan === 'tier-1') {
+                document.getElementById('advancedConfig').style.display = 'block';
+                document.getElementById('tier2Config').style.display = 'none';
+            } else {
+                document.getElementById('advancedConfig').style.display = 'none';
+            }
+        }
+
+        function closePlanModal(event) {
+            if (event && event.target !== event.currentTarget) {
+                return; // Clicked inside modal, don't close
+            }
+            document.getElementById('planModal').classList.add('hidden');
+            document.getElementById('advancedConfig').style.display = 'none';
+            document.getElementById('tier2Config').style.display = 'none';
+        }
+
+        async function savePlanChanges() {
+            if (!currentPlanSlug || !selectedNewPlan) {
+                showNotification('❌ Missing plan information', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('savePlanBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
+            try {
+                // Prepare plan update payload
+                const payload = {
+                    slug: currentPlanSlug,
+                    plan: selectedNewPlan,
+                    bookingMode: selectedNewPlan === 'basic' ? 'inquiry' : 'full',
+                };
+
+                // Add tier-specific settings
+                if (selectedNewPlan === 'tier-2') {
+                    payload.quota = {
+                        whatsapp_limit: parseInt(document.getElementById('whatsappQuota').value) || 100,
+                    };
+                    payload.plan_expiry = document.getElementById('planExpiry').value;
+                }
+
+                // Add branding settings
+                payload.customBranding = document.getElementById('enableCustomBranding').checked;
+
+                // Send to backend
+                const response = await fetch(`${API_BASE}/api/ceo/property/${currentPlanSlug}/plan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CEO-Token': CEO_TOKEN
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('✅ Plan updated successfully!', 'success');
+                    closePlanModal();
+                    loadProperties(); // Refresh properties list
+                } else {
+                    throw new Error(result.error || 'Plan update failed');
+                }
+            } catch (error) {
+                console.error('Plan update error:', error);
+                showNotification('❌ Failed to update plan: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Changes';
             }
         }
 

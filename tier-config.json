@@ -1,0 +1,178 @@
+{
+  "version": "1.0",
+  "tiers": {
+    "basic": {
+      "id": "basic",
+      "name": "Basic",
+      "displayName": "Basic (FREE)",
+      "marketingName": "Inquiry Mode",
+      "price": 0,
+      "currency": "USD",
+      "billingPeriod": "month",
+      "features": {
+        "booking": {
+          "mode": "inquiry",
+          "enabled": true,
+          "inquiryForm": true,
+          "fullBookingSystem": false,
+          "calendar": false,
+          "dateRangePicker": false,
+          "roomTypeSelection": false,
+          "availabilityManagement": false
+        },
+        "notifications": {
+          "googleSheets": true,
+          "emailToOwner": true,
+          "emailToCustomer": false,
+          "whatsappCTA": false,
+          "whatsappAutomation": false,
+          "sms": false,
+          "telegram": false
+        },
+        "quota": {
+          "whatsapp_monthly": 0,
+          "sms_monthly": 0,
+          "email_monthly": 100,
+          "bookings_monthly": 0
+        },
+        "branding": {
+          "customThemes": false,
+          "removeBranding": false,
+          "customDomain": false
+        },
+        "support": {
+          "level": "community",
+          "responseTime": "72h"
+        }
+      },
+      "limits": {
+        "maxBookingsPerMonth": 0,
+        "maxInquiriesPerMonth": -1,
+        "maxGalleryImages": 10,
+        "maxRoomTypes": 1
+      },
+      "upsell": {
+        "upgradeTo": "tier-1",
+        "highlightFeatures": ["Full Booking System", "Calendar & Availability", "WhatsApp CTA Button"]
+      }
+    },
+    "tier-1": {
+      "id": "tier-1",
+      "name": "Tier 1",
+      "displayName": "Tier 1 - Booking Mode",
+      "marketingName": "Booking Mode",
+      "subtitle": "Pro 1",
+      "price": 29,
+      "currency": "USD",
+      "billingPeriod": "month",
+      "features": {
+        "booking": {
+          "mode": "full",
+          "enabled": true,
+          "inquiryForm": true,
+          "fullBookingSystem": true,
+          "calendar": true,
+          "dateRangePicker": true,
+          "roomTypeSelection": true,
+          "availabilityManagement": true
+        },
+        "notifications": {
+          "googleSheets": true,
+          "emailToOwner": true,
+          "emailToCustomer": true,
+          "whatsappCTA": true,
+          "whatsappAutomation": false,
+          "sms": false,
+          "telegram": false
+        },
+        "quota": {
+          "whatsapp_monthly": 0,
+          "sms_monthly": 0,
+          "email_monthly": 500,
+          "bookings_monthly": -1
+        },
+        "branding": {
+          "customThemes": false,
+          "removeBranding": false,
+          "customDomain": false
+        },
+        "support": {
+          "level": "email",
+          "responseTime": "48h"
+        }
+      },
+      "limits": {
+        "maxBookingsPerMonth": -1,
+        "maxInquiriesPerMonth": -1,
+        "maxGalleryImages": 50,
+        "maxRoomTypes": 10
+      },
+      "upsell": {
+        "upgradeTo": "tier-2",
+        "highlightFeatures": ["WhatsApp Automation", "100-1000 msgs/month", "Premium Themes", "Priority Support"]
+      }
+    },
+    "tier-2": {
+      "id": "tier-2",
+      "name": "Tier 2",
+      "displayName": "Tier 2 - Booking + WhatsApp Auto",
+      "marketingName": "Booking + WhatsApp Automation",
+      "subtitle": "Pro 2",
+      "price": 49,
+      "currency": "USD",
+      "billingPeriod": "month",
+      "features": {
+        "booking": {
+          "mode": "full",
+          "enabled": true,
+          "inquiryForm": true,
+          "fullBookingSystem": true,
+          "calendar": true,
+          "dateRangePicker": true,
+          "roomTypeSelection": true,
+          "availabilityManagement": true
+        },
+        "notifications": {
+          "googleSheets": true,
+          "emailToOwner": true,
+          "emailToCustomer": true,
+          "whatsappCTA": true,
+          "whatsappAutomation": true,
+          "sms": true,
+          "telegram": true
+        },
+        "quota": {
+          "whatsapp_monthly": 100,
+          "sms_monthly": 50,
+          "email_monthly": 1000,
+          "bookings_monthly": -1
+        },
+        "branding": {
+          "customThemes": true,
+          "removeBranding": true,
+          "customDomain": true
+        },
+        "support": {
+          "level": "priority",
+          "responseTime": "24h"
+        }
+      },
+      "limits": {
+        "maxBookingsPerMonth": -1,
+        "maxInquiriesPerMonth": -1,
+        "maxGalleryImages": 200,
+        "maxRoomTypes": -1
+      },
+      "quotaOptions": [100, 250, 500, 1000],
+      "upsell": null
+    }
+  },
+  "defaultTier": "basic",
+  "allowDowngrade": true,
+  "prorationEnabled": true,
+  "metadata": {
+    "lastUpdated": "2026-01-12T09:00:00Z",
+    "updatedBy": "ceo",
+    "version": "1.0"
+  }
+}

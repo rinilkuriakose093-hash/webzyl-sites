@@ -33,7 +33,12 @@
       "Bash(git pull:*)",
       "Bash(git checkout:*)",
       "Bash(python3:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(New-Item -ItemType Directory -Force -Path $backupDir)",
+      "Bash(Out-Null)",
+      "Bash(Copy-Item \"_kv_template_smart-nav.html\", \"operator-dashboard.html\", \"worker.js\" -Destination $backupDir)",
+      "Bash(Write-Host \"Backup created at: $backupDir\")",
+      "Bash(Get-ChildItem $backupDir)"
     ]
   }
 }

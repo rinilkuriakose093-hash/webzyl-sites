@@ -1271,33 +1271,7 @@ export default {
       const slug = path.split('/')[4];
       return handleCEODeleteProperty(slug, env);
     }
-
-    // =====================================================
-    // CEO TIER MANAGEMENT ENDPOINTS
-    // =====================================================
-
-    if (path === '/api/ceo/tiers' && request.method === 'GET') {
-      if (!validateCEOToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-      return handleCEOGetTiers(env);
-    }
-
-    if (path === '/api/ceo/tiers' && request.method === 'PUT') {
-      if (!validateCEOToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-      return handleCEOUpdateTiers(request, env);
-    }
-
-    if (path.match(/^\/api\/ceo\/property\/[^\/]+\/plan$/) && request.method === 'POST') {
-      if (!validateCEOToken(request, env)) {
-        return jsonResponse({ error: 'Unauthorized' }, 401);
-      }
-      const slug = path.split('/')[4];
-      return handleCEOUpdatePropertyPlan(slug, request, env);
-    }
-
+    
     if (path.startsWith('/s/')) {
       const pathname = path;
       const slug = pathname.split('/s/')[1].replace('/', '');
@@ -3728,258 +3702,23 @@ async function handleCEODeleteProperty(slug, env) {
   try {
     await env.RESORT_CONFIGS.delete(`config:${slug}`);
     await env.RESORT_CONFIGS.delete(`market:summary:${slug}`);
-
+    
     const indexData = await env.RESORT_CONFIGS.get('ceo:properties:index', { type: 'json' }) || { slugs: [] };
     const newSlugs = indexData.slugs.filter(s => s !== slug);
     await env.RESORT_CONFIGS.put('ceo:properties:index', JSON.stringify({
       slugs: newSlugs,
       updatedAt: new Date().toISOString()
     }));
-
+    
     return jsonResponse({
       success: true,
       message: 'Property deleted successfully'
     });
-
+    
   } catch (error) {
     console.error('[CEO] Delete error:', error);
     return jsonResponse({ error: error.message }, 500);
   }
-}
-
-// ============================================================================
-// CEO TIER MANAGEMENT HANDLERS (v2.2.0 - FLEXIBLE TIER SYSTEM)
-// ============================================================================
-
-/**
- * GET /api/ceo/tiers
- * Returns the current tier configuration (editable from CEO dashboard)
- */
-async function handleCEOGetTiers(env) {
-  try {
-    // Try to get custom tier config from KV
-    let tierConfig = await env.RESORT_CONFIGS.get('system:tier-config', { type: 'json' });
-
-    // If no custom config, return default tier config
-    if (!tierConfig) {
-      tierConfig = getDefaultTierConfig();
-      // Save default config to KV for future edits
-      await env.RESORT_CONFIGS.put('system:tier-config', JSON.stringify(tierConfig));
-    }
-
-    return jsonResponse({
-      success: true,
-      tiers: tierConfig
-    });
-
-  } catch (error) {
-    console.error('[CEO] Get tiers error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-/**
- * PUT /api/ceo/tiers
- * Updates the tier configuration (only accessible from CEO dashboard)
- */
-async function handleCEOUpdateTiers(request, env) {
-  try {
-    const tierConfig = await request.json();
-
-    // Validate tier config structure
-    if (!tierConfig.tiers || !tierConfig.defaultTier) {
-      return jsonResponse({ error: 'Invalid tier configuration' }, 400);
-    }
-
-    // Add metadata
-    tierConfig.metadata = {
-      lastUpdated: new Date().toISOString(),
-      updatedBy: 'ceo',
-      version: tierConfig.version || '1.0'
-    };
-
-    // Save to KV
-    await env.RESORT_CONFIGS.put('system:tier-config', JSON.stringify(tierConfig));
-
-    console.log('[CEO] Tier config updated successfully');
-
-    return jsonResponse({
-      success: true,
-      message: 'Tier configuration updated successfully',
-      tiers: tierConfig
-    });
-
-  } catch (error) {
-    console.error('[CEO] Update tiers error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-/**
- * POST /api/ceo/property/:slug/plan
- * Updates a property's plan tier and associated settings
- */
-async function handleCEOUpdatePropertyPlan(slug, request, env) {
-  try {
-    const { plan, bookingMode, quota, plan_expiry, customBranding } = await request.json();
-
-    if (!plan) {
-      return jsonResponse({ error: 'Plan tier is required' }, 400);
-    }
-
-    // Get tier config to validate plan exists
-    let tierConfig = await env.RESORT_CONFIGS.get('system:tier-config', { type: 'json' });
-    if (!tierConfig) {
-      tierConfig = getDefaultTierConfig();
-    }
-
-    if (!tierConfig.tiers[plan]) {
-      return jsonResponse({ error: `Invalid plan tier: ${plan}` }, 400);
-    }
-
-    // Get current property config
-    const config = await getPropertyConfigSafeUncached(env, slug);
-    if (!config) {
-      return jsonResponse({ error: 'Property not found' }, 404);
-    }
-
-    // Update plan-related fields
-    config.plan = plan;
-    config.planTier = plan; // Keep for backwards compatibility
-
-    // Update booking mode
-    if (bookingMode) {
-      if (!config.booking) config.booking = {};
-      config.booking.mode = bookingMode;
-      config.booking.enabled = true;
-    }
-
-    // Update quota (for tier-2)
-    if (quota) {
-      if (!config.quota) config.quota = {};
-      config.quota.whatsapp_limit = quota.whatsapp_limit || 100;
-      config.quota.whatsapp_monthly = config.quota.whatsapp_monthly || 0;
-    }
-
-    // Update plan expiry
-    if (plan_expiry) {
-      config.plan_expiry = plan_expiry;
-    }
-
-    // Update custom branding
-    if (customBranding !== undefined) {
-      if (!config.branding) config.branding = {};
-      config.branding.customEnabled = customBranding;
-    }
-
-    // Apply tier-specific features from tier config
-    const tierFeatures = tierConfig.tiers[plan].features;
-
-    // Update notification channels based on tier
-    if (!config.notifications) config.notifications = {};
-    if (!config.notifications.channels) config.notifications.channels = {};
-
-    config.notifications.channels = {
-      googleSheets: { enabled: tierFeatures.notifications.googleSheets },
-      email: {
-        enabled: tierFeatures.notifications.emailToOwner,
-        ownerEmail: config.contact?.email || '',
-        customerConfirmation: tierFeatures.notifications.emailToCustomer
-      },
-      whatsapp: {
-        automated: tierFeatures.notifications.whatsappAutomation,
-        ctaButton: tierFeatures.notifications.whatsappCTA,
-        phone: config.contact?.whatsapp || config.contact?.phone || ''
-      },
-      sms: { enabled: tierFeatures.notifications.sms },
-      telegram: { enabled: tierFeatures.notifications.telegram }
-    };
-
-    // Update quota from tier config
-    if (!config.quota) config.quota = {};
-    config.quota.whatsapp_limit = quota?.whatsapp_limit || tierFeatures.quota.whatsapp_monthly;
-    config.quota.sms_limit = tierFeatures.quota.sms_monthly;
-    config.quota.email_limit = tierFeatures.quota.email_monthly;
-
-    // Save updated config
-    await env.RESORT_CONFIGS.put(`config:${slug}`, JSON.stringify(config));
-
-    console.log(`[CEO] Updated plan for ${slug} to ${plan}`);
-
-    return jsonResponse({
-      success: true,
-      message: `Property plan updated to ${plan}`,
-      config: {
-        slug,
-        plan,
-        bookingMode: config.booking?.mode,
-        quota: config.quota,
-        notifications: config.notifications.channels
-      }
-    });
-
-  } catch (error) {
-    console.error('[CEO] Update property plan error:', error);
-    return jsonResponse({ error: error.message }, 500);
-  }
-}
-
-/**
- * Returns default tier configuration
- */
-function getDefaultTierConfig() {
-  return {
-    "version": "1.0",
-    "tiers": {
-      "basic": {
-        "id": "basic",
-        "name": "Basic",
-        "displayName": "Basic (FREE)",
-        "marketingName": "Inquiry Mode",
-        "price": 0,
-        "currency": "USD",
-        "billingPeriod": "month",
-        "features": {
-          "booking": { "mode": "inquiry", "enabled": true, "fullBookingSystem": false, "calendar": false },
-          "notifications": { "googleSheets": true, "emailToOwner": true, "emailToCustomer": false, "whatsappCTA": false, "whatsappAutomation": false },
-          "quota": { "whatsapp_monthly": 0, "email_monthly": 100 }
-        }
-      },
-      "tier-1": {
-        "id": "tier-1",
-        "name": "Tier 1",
-        "displayName": "Tier 1 - Booking Mode",
-        "marketingName": "Booking Mode",
-        "subtitle": "Pro 1",
-        "price": 29,
-        "currency": "USD",
-        "billingPeriod": "month",
-        "features": {
-          "booking": { "mode": "full", "enabled": true, "fullBookingSystem": true, "calendar": true },
-          "notifications": { "googleSheets": true, "emailToOwner": true, "emailToCustomer": true, "whatsappCTA": true, "whatsappAutomation": false },
-          "quota": { "whatsapp_monthly": 0, "email_monthly": 500 }
-        }
-      },
-      "tier-2": {
-        "id": "tier-2",
-        "name": "Tier 2",
-        "displayName": "Tier 2 - Booking + WhatsApp Auto",
-        "marketingName": "Booking + WhatsApp Automation",
-        "subtitle": "Pro 2",
-        "price": 49,
-        "currency": "USD",
-        "billingPeriod": "month",
-        "features": {
-          "booking": { "mode": "full", "enabled": true, "fullBookingSystem": true, "calendar": true },
-          "notifications": { "googleSheets": true, "emailToOwner": true, "emailToCustomer": true, "whatsappCTA": true, "whatsappAutomation": true, "sms": true },
-          "quota": { "whatsapp_monthly": 100, "sms_monthly": 50, "email_monthly": 1000 }
-        },
-        "quotaOptions": [100, 250, 500, 1000]
-      }
-    },
-    "defaultTier": "basic",
-    "allowDowngrade": true
-  };
 }
 
 // ============================================================================

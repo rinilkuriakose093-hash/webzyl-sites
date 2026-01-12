@@ -1580,9 +1580,14 @@
                     </button>
                 </div>
 
-                <button onclick="refreshProperties()" class="w-full mb-6 px-6 py-3 bg-gradient-to-r from-slate-800 to-blue-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all">
-                    🔄 Refresh Properties
-                </button>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <button onclick="refreshProperties()" class="px-6 py-3 bg-gradient-to-r from-slate-800 to-blue-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all">
+                        🔄 Refresh
+                    </button>
+                    <button onclick="openGlobalTierEditor()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all">
+                        ⚙️ Manage Tiers
+                    </button>
+                </div>
 
                 <div id="properties-loading" class="text-center py-12">
                     <div class="loading mx-auto mb-3"></div>
@@ -1775,6 +1780,48 @@
                         </button>
                         <button id="savePlanBtn" onclick="savePlanChanges()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
                             💾 Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Tier Editor Modal -->
+        <div id="tierEditorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center overflow-y-auto" onclick="closeGlobalTierEditor(event)">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+                <div class="p-8">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6 sticky top-0 bg-white z-10 pb-4 border-b">
+                        <div>
+                            <h2 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                                ⚙️ Global Tier Management
+                            </h2>
+                            <p class="text-gray-500 mt-1">Manage all plan tiers across the platform</p>
+                        </div>
+                        <button onclick="closeGlobalTierEditor()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Tiers List -->
+                    <div id="tiersContainer" class="space-y-6">
+                        <!-- Tiers will be dynamically loaded here -->
+                    </div>
+
+                    <!-- Add New Tier Button -->
+                    <button onclick="addNewTier()" class="w-full mt-6 px-6 py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-semibold hover:border-purple-500 hover:text-purple-600 transition-all">
+                        ➕ Add New Tier
+                    </button>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 mt-8 sticky bottom-0 bg-white pt-4 border-t">
+                        <button onclick="closeGlobalTierEditor()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all">
+                            Cancel
+                        </button>
+                        <button id="saveGlobalTiersBtn" onclick="saveGlobalTiers()" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                            💾 Save All Tiers
                         </button>
                     </div>
                 </div>
@@ -3035,6 +3082,233 @@
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '💾 Save Changes';
+            }
+        }
+
+        // ==========================================
+        // GLOBAL TIER EDITOR FUNCTIONS
+        // ==========================================
+
+        let globalTiers = null;
+
+        async function openGlobalTierEditor() {
+            try {
+                // Fetch current tier configuration
+                const response = await fetch(`${API_BASE}/api/ceo/tiers`, {
+                    headers: {
+                        'X-CEO-Token': CEO_TOKEN
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.tiers) {
+                    globalTiers = result.tiers;
+                    renderTierEditor();
+                    document.getElementById('tierEditorModal').classList.remove('hidden');
+                } else {
+                    showNotification('Failed to load tiers', 'error');
+                }
+            } catch (error) {
+                console.error('Load tiers error:', error);
+                showNotification('Failed to load tier configuration', 'error');
+            }
+        }
+
+        function closeGlobalTierEditor(event) {
+            if (event && event.target !== event.currentTarget) {
+                return; // Clicked inside modal, don't close
+            }
+            document.getElementById('tierEditorModal').classList.add('hidden');
+        }
+
+        function renderTierEditor() {
+            const container = document.getElementById('tiersContainer');
+            if (!globalTiers || !globalTiers.tiers) return;
+
+            container.innerHTML = Object.entries(globalTiers.tiers).map(([tierId, tier], index) => `
+                <div class="tier-editor-card border-2 border-gray-200 rounded-xl p-6" data-tier-id="${tierId}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <input type="text"
+                                   class="text-2xl font-bold text-gray-900 border-0 border-b-2 border-transparent hover:border-gray-300 focus:border-purple-500 focus:outline-none w-full mb-2"
+                                   value="${tier.displayName}"
+                                   onchange="updateTierField('${tierId}', 'displayName', this.value)">
+                            <input type="text"
+                                   class="text-sm text-gray-500 border-0 border-b border-transparent hover:border-gray-300 focus:border-purple-500 focus:outline-none w-full"
+                                   value="${tier.marketingName}"
+                                   onchange="updateTierField('${tierId}', 'marketingName', this.value)"
+                                   placeholder="Marketing name">
+                        </div>
+                        <button onclick="deleteTier('${tierId}')" class="ml-4 text-red-500 hover:text-red-700 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Price</label>
+                            <div class="flex items-center">
+                                <span class="text-gray-500 mr-2">$</span>
+                                <input type="number"
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                       value="${tier.price}"
+                                       onchange="updateTierField('${tierId}', 'price', parseFloat(this.value))">
+                                <span class="text-gray-500 ml-2">/${tier.billingPeriod}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Booking Mode</label>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    onchange="updateTierField('${tierId}', 'features.booking.mode', this.value)">
+                                <option value="inquiry" ${tier.features.booking.mode === 'inquiry' ? 'selected' : ''}>Inquiry Mode</option>
+                                <option value="full" ${tier.features.booking.mode === 'full' ? 'selected' : ''}>Full Booking</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Quota/Month</label>
+                            <input type="number"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   value="${tier.features.quota.whatsapp_monthly}"
+                                   onchange="updateTierField('${tierId}', 'features.quota.whatsapp_monthly', parseInt(this.value))">
+                        </div>
+                    </div>
+
+                    <!-- Feature Toggles -->
+                    <div class="border-t pt-4">
+                        <h4 class="font-semibold text-gray-700 mb-3">Features</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.fullBookingSystem ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.fullBookingSystem', this.checked)">
+                                <span class="text-sm text-gray-700">Full Booking</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.calendar ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.calendar', this.checked)">
+                                <span class="text-sm text-gray-700">Calendar</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.notifications.emailToCustomer ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.emailToCustomer', this.checked)">
+                                <span class="text-sm text-gray-700">Email to Customer</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.notifications.whatsappCTA ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.whatsappCTA', this.checked)">
+                                <span class="text-sm text-gray-700">WhatsApp CTA</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.notifications.whatsappAutomation ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.whatsappAutomation', this.checked)">
+                                <span class="text-sm text-gray-700">WhatsApp Auto</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.notifications.sms ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.sms', this.checked)">
+                                <span class="text-sm text-gray-700">SMS</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateTierField(tierId, fieldPath, value) {
+            if (!globalTiers || !globalTiers.tiers[tierId]) return;
+
+            const keys = fieldPath.split('.');
+            let obj = globalTiers.tiers[tierId];
+
+            for (let i = 0; i < keys.length - 1; i++) {
+                obj = obj[keys[i]];
+            }
+
+            obj[keys[keys.length - 1]] = value;
+            console.log(`Updated ${tierId}.${fieldPath} to:`, value);
+        }
+
+        function deleteTier(tierId) {
+            if (!confirm(`Are you sure you want to delete the "${globalTiers.tiers[tierId].displayName}" tier?`)) {
+                return;
+            }
+
+            if (Object.keys(globalTiers.tiers).length <= 1) {
+                showNotification('Cannot delete the last tier', 'error');
+                return;
+            }
+
+            delete globalTiers.tiers[tierId];
+            renderTierEditor();
+            showNotification('Tier deleted (not saved yet)', 'info');
+        }
+
+        function addNewTier() {
+            const newId = `tier-${Date.now()}`;
+            globalTiers.tiers[newId] = {
+                "id": newId,
+                "name": "New Tier",
+                "displayName": "New Tier",
+                "marketingName": "Custom Plan",
+                "price": 0,
+                "currency": "USD",
+                "billingPeriod": "month",
+                "features": {
+                    "booking": { "mode": "inquiry", "enabled": true, "fullBookingSystem": false, "calendar": false },
+                    "notifications": { "googleSheets": true, "emailToOwner": true, "emailToCustomer": false, "whatsappCTA": false, "whatsappAutomation": false, "sms": false },
+                    "quota": { "whatsapp_monthly": 0, "email_monthly": 100 }
+                }
+            };
+            renderTierEditor();
+            showNotification('New tier added (not saved yet)', 'info');
+        }
+
+        async function saveGlobalTiers() {
+            const saveBtn = document.getElementById('saveGlobalTiersBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/ceo/tiers`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CEO-Token': CEO_TOKEN
+                    },
+                    body: JSON.stringify(globalTiers)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('✅ Global tiers updated successfully!', 'success');
+                    closeGlobalTierEditor();
+
+                    // Reload properties to reflect tier changes
+                    loadProperties();
+                } else {
+                    throw new Error(result.error || 'Save failed');
+                }
+            } catch (error) {
+                console.error('Save global tiers error:', error);
+                showNotification('❌ Failed to save: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save All Tiers';
             }
         }
 

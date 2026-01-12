@@ -1261,6 +1261,103 @@
           Optional. If set, the website header will show this logo.
         </p>
       </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">👁️ Logo Visibility</label>
+        <select class="form-input" id="settingLogoVisible">
+          <option value="true">Show Logo</option>
+          <option value="false">Hide Logo (Show Business Name Only)</option>
+        </select>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Hide the logo and show business name as text instead. Logo settings remain saved.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">✨ Logo Placement Style</label>
+        <select class="form-input" id="settingLogoPlacement">
+          <option value="header-left">Large Left - Bold Statement (70-90px)</option>
+          <option value="header-center">Center Header - Premium Balance (50-70px)</option>
+          <option value="hero-center">Hero Center - Large & Elegant (80-120px)</option>
+          <option value="hero-overlay">Hero Overlay - Floating Luxury (100-140px)</option>
+        </select>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Choose where and how to display your logo for maximum impact.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">📏 Logo Size Adjustment</label>
+        <select class="form-input" id="settingLogoSizeMultiplier">
+          <option value="0.7">Extra Small (70%)</option>
+          <option value="0.85">Small (85%)</option>
+          <option value="1" selected>Standard (100%)</option>
+          <option value="1.15">Large (115%)</option>
+          <option value="1.3">Extra Large (130%)</option>
+          <option value="1.5">Maximum (150%)</option>
+        </select>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Fine-tune logo size. Standard (100%) is recommended for most logos.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">🎨 Logo Border Style</label>
+        <select class="form-input" id="settingLogoBorderStyle">
+          <option value="none">None - Clean & Minimal</option>
+          <option value="badge-light" selected>Badge Light - White Background</option>
+          <option value="badge-dark">Badge Dark - Dark Background</option>
+          <option value="border-minimal">Border Only - Transparent</option>
+          <option value="shadow-only">Shadow Only - Floating</option>
+          <option value="glass">Glassmorphism - Ultra Premium</option>
+        </select>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Choose how your logo container looks. Try "None" for transparent logos, "Glassmorphism" for luxury feel.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">🔲 Logo Shape</label>
+        <select class="form-input" id="settingLogoShape">
+          <option value="auto">Auto - Natural Shape</option>
+          <option value="rounded" selected>Rounded - Modern (12px)</option>
+          <option value="rounded-heavy">Rounded Heavy - Soft (24px)</option>
+          <option value="circular">Circular - Perfect Circle</option>
+        </select>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Control corner rounding. "Circular" works best with square logos.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+        <label class="form-label">↔️ Horizontal Position Offset</label>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <input type="range" id="settingLogoOffsetX" min="-100" max="100" value="0" step="5"
+                 style="flex: 1;" oninput="document.getElementById('logoOffsetXValue').textContent = this.value + 'px'">
+          <span id="logoOffsetXValue" style="min-width: 50px; font-weight: 600; color: var(--color-primary);">0px</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Move logo left (-) or right (+). Range: -100px to +100px
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label class="form-label">↕️ Vertical Position Offset</label>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <input type="range" id="settingLogoOffsetY" min="-50" max="50" value="0" step="5"
+                 style="flex: 1;" oninput="document.getElementById('logoOffsetYValue').textContent = this.value + 'px'">
+          <span id="logoOffsetYValue" style="min-width: 50px; font-weight: 600; color: var(--color-primary);">0px</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+          Move logo up (-) or down (+). Range: -50px to +50px
+        </p>
+      </div>
+
+      <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid var(--color-primary);">
+        <p style="font-size: 0.85rem; color: var(--color-text); margin: 0;">
+          💡 <strong>Tip:</strong> Use offsets to fine-tune logo position after choosing a placement style. Set both to 0 to reset.
+        </p>
+      </div>
     </div>
 
     <!-- Gallery Manager -->
@@ -2513,7 +2610,9 @@
         const primaryActionLabelInput = document.getElementById('settingPrimaryActionLabel');
         if (primaryActionLabelInput) primaryActionLabelInput.value = primaryActionLabel;
 
-        document.getElementById('settingHeroTextColor').value = (config.branding?.heroTextColor || config.heroTextColor || '#ffffff').toString().trim() || '#ffffff';
+        // Load hero text color - if empty/not set, load as empty to enable auto-detection
+        const heroTextColorValue = (config.branding?.heroTextColor || config.heroTextColor || '').toString().trim();
+        document.getElementById('settingHeroTextColor').value = heroTextColorValue || '#ffffff';
         const heroFontStyle = (config.branding?.heroFontStyle || config.heroFontStyle || '').toString().trim().toLowerCase();
         const heroFontStyleSel = document.getElementById('settingHeroFontStyle');
         if (heroFontStyleSel) heroFontStyleSel.value = heroFontStyle;
@@ -2555,6 +2654,35 @@
         // Logo
         const logoUrl = (config.branding && (config.branding.logoUrl || config.branding.logo)) ? (config.branding.logoUrl || config.branding.logo) : (config.logoUrl || config.logo || '');
         document.getElementById('settingLogoUrl').value = logoUrl || '';
+
+        // Logo Visibility
+        const logoVisible = config.branding?.logoVisible !== false; // Default to true
+        document.getElementById('settingLogoVisible').value = logoVisible ? 'true' : 'false';
+
+        // Logo Placement
+        const logoPlacement = config.branding?.logoPlacement || 'header-left';
+        document.getElementById('settingLogoPlacement').value = logoPlacement;
+
+        // Logo Size Multiplier
+        const logoSizeMultiplier = config.branding?.logoSizeMultiplier || 1.0;
+        document.getElementById('settingLogoSizeMultiplier').value = logoSizeMultiplier;
+
+        // Logo Border Style
+        const logoBorderStyle = config.branding?.logoBorderStyle || 'badge-light';
+        document.getElementById('settingLogoBorderStyle').value = logoBorderStyle;
+
+        // Logo Shape
+        const logoShape = config.branding?.logoShape || 'rounded';
+        document.getElementById('settingLogoShape').value = logoShape;
+
+        // Logo Position Offsets
+        const logoOffsetX = parseInt(config.branding?.logoOffsetX || 0);
+        const logoOffsetY = parseInt(config.branding?.logoOffsetY || 0);
+        document.getElementById('settingLogoOffsetX').value = logoOffsetX;
+        document.getElementById('settingLogoOffsetY').value = logoOffsetY;
+        document.getElementById('logoOffsetXValue').textContent = logoOffsetX + 'px';
+        document.getElementById('logoOffsetYValue').textContent = logoOffsetY + 'px';
+
         if (logoUrl) {
           document.getElementById('logoPreview').innerHTML = `
             <div style="display:inline-flex; align-items:center; justify-content:center; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid var(--color-border);">
@@ -2896,6 +3024,13 @@
           ...config.branding,
           designProfileId: document.getElementById('settingDesignProfile').value,
           logoUrl: document.getElementById('settingLogoUrl').value,
+          logoVisible: document.getElementById('settingLogoVisible').value === 'true',
+          logoPlacement: document.getElementById('settingLogoPlacement').value,
+          logoSizeMultiplier: parseFloat(document.getElementById('settingLogoSizeMultiplier').value),
+          logoBorderStyle: document.getElementById('settingLogoBorderStyle').value,
+          logoShape: document.getElementById('settingLogoShape').value,
+          logoOffsetX: parseInt(document.getElementById('settingLogoOffsetX').value),
+          logoOffsetY: parseInt(document.getElementById('settingLogoOffsetY').value),
           heroFitMode: document.getElementById('settingHeroFitMode').value,
           mobileHeroBoxed: (document.getElementById('settingMobileHeroBoxed')?.value === 'true'),
           heroTextPositionDesktop: (document.getElementById('settingHeroTextPositionDesktop')?.value || '').toString().trim(),
@@ -2911,7 +3046,11 @@
           whatsappFloatPositionDesktop: (document.getElementById('settingWhatsappFloatPositionDesktop')?.value || '').toString().trim(),
           whatsappFloatPositionMobile: (document.getElementById('settingWhatsappFloatPositionMobile')?.value || '').toString().trim(),
           primaryActionLabel: (document.getElementById('settingPrimaryActionLabel')?.value || '').toString().trim(),
-          heroTextColor: (document.getElementById('settingHeroTextColor')?.value || '').toString().trim(),
+          // Only save heroTextColor if it's NOT the default white - empty string enables auto dark/light detection
+          heroTextColor: (() => {
+            const val = (document.getElementById('settingHeroTextColor')?.value || '').toString().trim();
+            return (val === '#ffffff' || val === '#fff') ? '' : val;
+          })(),
           heroFontStyle: (document.getElementById('settingHeroFontStyle')?.value || '').toString().trim(),
           heroPrimaryCtaFontStyle: (document.getElementById('settingHeroPrimaryCtaFontStyle')?.value || '').toString().trim(),
           heroSecondaryCtaFontStyle: (document.getElementById('settingHeroSecondaryCtaFontStyle')?.value || '').toString().trim(),

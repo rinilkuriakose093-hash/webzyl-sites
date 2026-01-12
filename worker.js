@@ -4336,6 +4336,45 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     ? rawLogoUrl + (rawLogoUrl.includes('img.webzyl.com') ? '?w=320&q=90' : '')
     : '';
   const has_logo = Boolean(rawLogoUrl);
+
+  // Logo Placement Options: header-left (default), header-center, hero-center, hero-overlay
+  const logoPlacement = config.branding?.logoPlacement || 'header-left';
+  const logoPlacementClass = `logo-placement-${logoPlacement}`;
+
+  // Logo size variants for different placements
+  const logoSizeMap = {
+    'header-left': 'large',     // 70-90px - Bold statement
+    'header-center': 'medium',  // 50-70px - Premium balance
+    'hero-center': 'xlarge',    // 80-120px - Large & elegant
+    'hero-overlay': 'xxlarge'   // 100-140px - Floating overlay
+  };
+  const logoSize = logoSizeMap[logoPlacement] || 'medium';
+
+  // Logo Size Multiplier (0.7x to 1.5x)
+  const logoSizeMultiplier = config.branding?.logoSizeMultiplier || 1.0;
+  const logoSizeMultiplierClass = `logo-size-multiplier-${String(logoSizeMultiplier).replace('.', '-')}`;
+
+  // Logo Border Style (none, badge-light, badge-dark, border-minimal, shadow-only, glass)
+  const logoBorderStyle = config.branding?.logoBorderStyle || 'badge-light';
+  const logoBorderClass = `logo-border-${logoBorderStyle}`;
+
+  // Logo Shape (auto, rounded, rounded-heavy, circular)
+  const logoShape = config.branding?.logoShape || 'rounded';
+  const logoShapeClass = `logo-shape-${logoShape}`;
+
+  // Logo Position Offsets (fine-tuning)
+  const logoOffsetX = parseInt(config.branding?.logoOffsetX || 0);
+  const logoOffsetY = parseInt(config.branding?.logoOffsetY || 0);
+  const logoOffsetStyle = (logoOffsetX !== 0 || logoOffsetY !== 0)
+    ? `--logo-offset-x: ${logoOffsetX}px; --logo-offset-y: ${logoOffsetY}px;`
+    : '';
+
+  // Logo Visibility Toggle
+  const logoVisible = config.branding?.logoVisible !== false; // Default to true
+  const logoVisibilityClass = logoVisible ? '' : 'logo-hidden';
+
+  // Combined logo style classes
+  const logoStyleClasses = `${logoPlacementClass} logo-size-${logoSize} ${logoSizeMultiplierClass} ${logoBorderClass} ${logoShapeClass} ${logoVisibilityClass}`.trim();
   
   const has_gallery = Array.isArray(config.gallery) && config.gallery.length > 0;
   const fallbackVideoThumb = (() => {
@@ -4476,6 +4515,8 @@ function renderSmartTemplate(config, templateHTML, designProfile, env, ctx) {
     .replace(/{{HERO_OBJECT_POSITION}}/g, heroObjectPosition)
     .replace(/{{LOGO_URL}}/g, logoUrl)
     .replace(/{{LOGO_CLASS}}/g, has_logo ? 'has-image' : '')
+    .replace(/{{LOGO_STYLE_CLASSES}}/g, logoStyleClasses)
+    .replace(/{{LOGO_OFFSET_STYLE}}/g, logoOffsetStyle)
     .replace(/{{PHONE}}/g, config.contact?.phone || '')
     .replace(/{{EMAIL}}/g, config.contact?.email || '')
     .replace(/{{WHATSAPP}}/g, config.contact?.whatsapp || '')

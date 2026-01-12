@@ -1773,6 +1773,120 @@
                         </div>
                     </div>
 
+                    <!-- Feature Overrides Section -->
+                    <div class="mb-8 p-6 rounded-xl bg-yellow-50 border-2 border-yellow-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                    </svg>
+                                    Feature Overrides
+                                </h4>
+                                <p class="text-sm text-gray-600 mt-1">Override tier defaults for this property only</p>
+                            </div>
+                            <button onclick="toggleFeatureOverrides()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all">
+                                <span id="toggleOverridesText">Show Overrides</span>
+                            </button>
+                        </div>
+
+                        <div id="featureOverridesSection" style="display: none;" class="mt-4 space-y-4">
+                            <!-- Booking Features Override -->
+                            <div class="bg-white p-4 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Booking Features
+                                </h5>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                        <input type="checkbox" id="override_fullBookingSystem" class="w-4 h-4 text-purple-600 rounded">
+                                        <span class="text-sm text-gray-700">Full Booking System</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                        <input type="checkbox" id="override_calendar" class="w-4 h-4 text-purple-600 rounded">
+                                        <span class="text-sm text-gray-700">Calendar</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                        <input type="checkbox" id="override_dateRangePicker" class="w-4 h-4 text-purple-600 rounded">
+                                        <span class="text-sm text-gray-700">Date Range Picker</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                        <input type="checkbox" id="override_roomTypeSelection" class="w-4 h-4 text-purple-600 rounded">
+                                        <span class="text-sm text-gray-700">Room Type Selection</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                        <input type="checkbox" id="override_availabilityManagement" class="w-4 h-4 text-purple-600 rounded">
+                                        <span class="text-sm text-gray-700">Availability Mgmt</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Notification Features Override -->
+                            <div class="bg-white p-4 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                    </svg>
+                                    Notification Channels
+                                </h5>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                        <input type="checkbox" id="override_emailToCustomer" class="w-4 h-4 text-blue-600 rounded">
+                                        <span class="text-sm text-gray-700">Email to Customer</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                        <input type="checkbox" id="override_whatsappCTA" class="w-4 h-4 text-blue-600 rounded">
+                                        <span class="text-sm text-gray-700">WhatsApp CTA</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                        <input type="checkbox" id="override_whatsappAutomation" class="w-4 h-4 text-blue-600 rounded">
+                                        <span class="text-sm text-gray-700">WhatsApp Automation</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                        <input type="checkbox" id="override_sms" class="w-4 h-4 text-blue-600 rounded">
+                                        <span class="text-sm text-gray-700">SMS Notifications</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                        <input type="checkbox" id="override_telegram" class="w-4 h-4 text-blue-600 rounded">
+                                        <span class="text-sm text-gray-700">Telegram</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Branding Features Override -->
+                            <div class="bg-white p-4 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                                    </svg>
+                                    Branding & Customization
+                                </h5>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                        <input type="checkbox" id="override_customThemes" class="w-4 h-4 text-indigo-600 rounded">
+                                        <span class="text-sm text-gray-700">Custom Themes</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                        <input type="checkbox" id="override_removeBranding" class="w-4 h-4 text-indigo-600 rounded">
+                                        <span class="text-sm text-gray-700">Remove Branding</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                        <input type="checkbox" id="override_customDomain" class="w-4 h-4 text-indigo-600 rounded">
+                                        <span class="text-sm text-gray-700">Custom Domain</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-yellow-500">
+                                <p class="text-sm text-gray-600">
+                                    <strong>Note:</strong> Feature overrides allow you to enable/disable specific features for this property without changing its tier. Checked features will be enabled regardless of tier defaults.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons -->
                     <div class="flex gap-4">
                         <button onclick="closePlanModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all">
@@ -3026,6 +3140,21 @@
             document.getElementById('planModal').classList.add('hidden');
             document.getElementById('advancedConfig').style.display = 'none';
             document.getElementById('tier2Config').style.display = 'none';
+            document.getElementById('featureOverridesSection').style.display = 'none';
+            document.getElementById('toggleOverridesText').textContent = 'Show Overrides';
+        }
+
+        function toggleFeatureOverrides() {
+            const section = document.getElementById('featureOverridesSection');
+            const toggleText = document.getElementById('toggleOverridesText');
+
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                toggleText.textContent = 'Hide Overrides';
+            } else {
+                section.style.display = 'none';
+                toggleText.textContent = 'Show Overrides';
+            }
         }
 
         async function savePlanChanges() {
@@ -3056,6 +3185,38 @@
 
                 // Add branding settings
                 payload.customBranding = document.getElementById('enableCustomBranding').checked;
+
+                // Collect feature overrides
+                const featureOverrides = {
+                    booking: {
+                        fullBookingSystem: document.getElementById('override_fullBookingSystem').checked,
+                        calendar: document.getElementById('override_calendar').checked,
+                        dateRangePicker: document.getElementById('override_dateRangePicker').checked,
+                        roomTypeSelection: document.getElementById('override_roomTypeSelection').checked,
+                        availabilityManagement: document.getElementById('override_availabilityManagement').checked
+                    },
+                    notifications: {
+                        emailToCustomer: document.getElementById('override_emailToCustomer').checked,
+                        whatsappCTA: document.getElementById('override_whatsappCTA').checked,
+                        whatsappAutomation: document.getElementById('override_whatsappAutomation').checked,
+                        sms: document.getElementById('override_sms').checked,
+                        telegram: document.getElementById('override_telegram').checked
+                    },
+                    branding: {
+                        customThemes: document.getElementById('override_customThemes').checked,
+                        removeBranding: document.getElementById('override_removeBranding').checked,
+                        customDomain: document.getElementById('override_customDomain').checked
+                    }
+                };
+
+                // Only include feature overrides if any are checked
+                const hasOverrides = Object.values(featureOverrides.booking).some(v => v) ||
+                                    Object.values(featureOverrides.notifications).some(v => v) ||
+                                    Object.values(featureOverrides.branding).some(v => v);
+
+                if (hasOverrides) {
+                    payload.featureOverrides = featureOverrides;
+                }
 
                 // Send to backend
                 const response = await fetch(`${API_BASE}/api/ceo/property/${currentPlanSlug}/plan`, {
@@ -3147,9 +3308,10 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Pricing & Quotas -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Price</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">💰 Price</label>
                             <div class="flex items-center">
                                 <span class="text-gray-500 mr-2">$</span>
                                 <input type="number"
@@ -3160,7 +3322,7 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Booking Mode</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📅 Booking Mode</label>
                             <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     onchange="updateTierField('${tierId}', 'features.booking.mode', this.value)">
                                 <option value="inquiry" ${tier.features.booking.mode === 'inquiry' ? 'selected' : ''}>Inquiry Mode</option>
@@ -3168,59 +3330,188 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Quota/Month</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📧 Email Quota</label>
+                            <input type="number"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   value="${tier.features.quota.email_monthly}"
+                                   onchange="updateTierField('${tierId}', 'features.quota.email_monthly', parseInt(this.value))"
+                                   placeholder="Monthly emails">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">💬 WhatsApp Quota</label>
                             <input type="number"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                    value="${tier.features.quota.whatsapp_monthly}"
-                                   onchange="updateTierField('${tierId}', 'features.quota.whatsapp_monthly', parseInt(this.value))">
+                                   onchange="updateTierField('${tierId}', 'features.quota.whatsapp_monthly', parseInt(this.value))"
+                                   placeholder="Monthly WhatsApp">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📱 SMS Quota</label>
+                            <input type="number"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   value="${tier.features.quota.sms_monthly}"
+                                   onchange="updateTierField('${tierId}', 'features.quota.sms_monthly', parseInt(this.value))"
+                                   placeholder="Monthly SMS">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📊 Bookings Quota</label>
+                            <input type="number"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   value="${tier.features.quota.bookings_monthly}"
+                                   onchange="updateTierField('${tierId}', 'features.quota.bookings_monthly', parseInt(this.value))"
+                                   placeholder="-1 for unlimited">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">🖼️ Gallery Images</label>
+                            <input type="number"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   value="${tier.limits.maxGalleryImages}"
+                                   onchange="updateTierField('${tierId}', 'limits.maxGalleryImages', parseInt(this.value))"
+                                   placeholder="Max gallery images">
                         </div>
                     </div>
 
                     <!-- Feature Toggles -->
                     <div class="border-t pt-4">
-                        <h4 class="font-semibold text-gray-700 mb-3">Features</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                        <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Booking Features
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.inquiryForm ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.inquiryForm', this.checked)">
+                                <span class="text-sm text-gray-700">Inquiry Form</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
                                 <input type="checkbox"
                                        class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                                        ${tier.features.booking.fullBookingSystem ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.booking.fullBookingSystem', this.checked)">
-                                <span class="text-sm text-gray-700">Full Booking</span>
+                                <span class="text-sm text-gray-700">Full Booking System</span>
                             </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
                                 <input type="checkbox"
                                        class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                                        ${tier.features.booking.calendar ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.booking.calendar', this.checked)">
                                 <span class="text-sm text-gray-700">Calendar</span>
                             </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
                                 <input type="checkbox"
                                        class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.dateRangePicker ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.dateRangePicker', this.checked)">
+                                <span class="text-sm text-gray-700">Date Range Picker</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.roomTypeSelection ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.roomTypeSelection', this.checked)">
+                                <span class="text-sm text-gray-700">Room Type Selection</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-purple-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       ${tier.features.booking.availabilityManagement ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.booking.availabilityManagement', this.checked)">
+                                <span class="text-sm text-gray-700">Availability Management</span>
+                            </label>
+                        </div>
+
+                        <h4 class="font-semibold text-gray-700 mb-3 mt-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            Notification Channels
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                       ${tier.features.notifications.googleSheets ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.googleSheets', this.checked)">
+                                <span class="text-sm text-gray-700">Google Sheets</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                       ${tier.features.notifications.emailToOwner ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.emailToOwner', this.checked)">
+                                <span class="text-sm text-gray-700">Email to Owner</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                        ${tier.features.notifications.emailToCustomer ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.notifications.emailToCustomer', this.checked)">
                                 <span class="text-sm text-gray-700">Email to Customer</span>
                             </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
                                 <input type="checkbox"
-                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                        ${tier.features.notifications.whatsappCTA ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.notifications.whatsappCTA', this.checked)">
-                                <span class="text-sm text-gray-700">WhatsApp CTA</span>
+                                <span class="text-sm text-gray-700">WhatsApp CTA Button</span>
                             </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
                                 <input type="checkbox"
-                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                        ${tier.features.notifications.whatsappAutomation ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.notifications.whatsappAutomation', this.checked)">
-                                <span class="text-sm text-gray-700">WhatsApp Auto</span>
+                                <span class="text-sm text-gray-700">WhatsApp Automation</span>
                             </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
                                 <input type="checkbox"
-                                       class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                        ${tier.features.notifications.sms ? 'checked' : ''}
                                        onchange="updateTierField('${tierId}', 'features.notifications.sms', this.checked)">
-                                <span class="text-sm text-gray-700">SMS</span>
+                                <span class="text-sm text-gray-700">SMS Notifications</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-blue-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                       ${tier.features.notifications.telegram ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.notifications.telegram', this.checked)">
+                                <span class="text-sm text-gray-700">Telegram</span>
+                            </label>
+                        </div>
+
+                        <h4 class="font-semibold text-gray-700 mb-3 mt-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                            </svg>
+                            Branding & Customization
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                                       ${tier.features.branding.customThemes ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.branding.customThemes', this.checked)">
+                                <span class="text-sm text-gray-700">Custom Themes</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                                       ${tier.features.branding.removeBranding ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.branding.removeBranding', this.checked)">
+                                <span class="text-sm text-gray-700">Remove Branding</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-indigo-50">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                                       ${tier.features.branding.customDomain ? 'checked' : ''}
+                                       onchange="updateTierField('${tierId}', 'features.branding.customDomain', this.checked)">
+                                <span class="text-sm text-gray-700">Custom Domain</span>
                             </label>
                         </div>
                     </div>
@@ -3268,9 +3559,46 @@
                 "currency": "USD",
                 "billingPeriod": "month",
                 "features": {
-                    "booking": { "mode": "inquiry", "enabled": true, "fullBookingSystem": false, "calendar": false },
-                    "notifications": { "googleSheets": true, "emailToOwner": true, "emailToCustomer": false, "whatsappCTA": false, "whatsappAutomation": false, "sms": false },
-                    "quota": { "whatsapp_monthly": 0, "email_monthly": 100 }
+                    "booking": {
+                        "mode": "inquiry",
+                        "enabled": true,
+                        "inquiryForm": true,
+                        "fullBookingSystem": false,
+                        "calendar": false,
+                        "dateRangePicker": false,
+                        "roomTypeSelection": false,
+                        "availabilityManagement": false
+                    },
+                    "notifications": {
+                        "googleSheets": true,
+                        "emailToOwner": true,
+                        "emailToCustomer": false,
+                        "whatsappCTA": false,
+                        "whatsappAutomation": false,
+                        "sms": false,
+                        "telegram": false
+                    },
+                    "quota": {
+                        "whatsapp_monthly": 0,
+                        "sms_monthly": 0,
+                        "email_monthly": 100,
+                        "bookings_monthly": 0
+                    },
+                    "branding": {
+                        "customThemes": false,
+                        "removeBranding": false,
+                        "customDomain": false
+                    },
+                    "support": {
+                        "level": "community",
+                        "responseTime": "72h"
+                    }
+                },
+                "limits": {
+                    "maxBookingsPerMonth": 0,
+                    "maxInquiriesPerMonth": -1,
+                    "maxGalleryImages": 10,
+                    "maxRoomTypes": 1
                 }
             };
             renderTierEditor();

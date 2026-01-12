@@ -3821,7 +3821,7 @@ async function handleCEOUpdateTiers(request, env) {
  */
 async function handleCEOUpdatePropertyPlan(slug, request, env) {
   try {
-    const { plan, bookingMode, quota, plan_expiry, customBranding } = await request.json();
+    const { plan, bookingMode, quota, plan_expiry, customBranding, featureOverrides } = await request.json();
 
     if (!plan) {
       return jsonResponse({ error: 'Plan tier is required' }, 400);
@@ -3875,7 +3875,21 @@ async function handleCEOUpdatePropertyPlan(slug, request, env) {
     // Apply tier-specific features from tier config
     const tierFeatures = tierConfig.tiers[plan].features;
 
-    // Update notification channels based on tier
+    // Store feature overrides if provided
+    if (featureOverrides) {
+      if (!config.featureOverrides) config.featureOverrides = {};
+      config.featureOverrides = featureOverrides;
+    }
+
+    // Update booking features based on tier (with overrides)
+    if (!config.booking) config.booking = {};
+    config.booking.fullBookingSystem = featureOverrides?.booking?.fullBookingSystem ?? tierFeatures.booking.fullBookingSystem;
+    config.booking.calendar = featureOverrides?.booking?.calendar ?? tierFeatures.booking.calendar;
+    config.booking.dateRangePicker = featureOverrides?.booking?.dateRangePicker ?? tierFeatures.booking.dateRangePicker;
+    config.booking.roomTypeSelection = featureOverrides?.booking?.roomTypeSelection ?? tierFeatures.booking.roomTypeSelection;
+    config.booking.availabilityManagement = featureOverrides?.booking?.availabilityManagement ?? tierFeatures.booking.availabilityManagement;
+
+    // Update notification channels based on tier (with overrides)
     if (!config.notifications) config.notifications = {};
     if (!config.notifications.channels) config.notifications.channels = {};
 
@@ -3884,16 +3898,22 @@ async function handleCEOUpdatePropertyPlan(slug, request, env) {
       email: {
         enabled: tierFeatures.notifications.emailToOwner,
         ownerEmail: config.contact?.email || '',
-        customerConfirmation: tierFeatures.notifications.emailToCustomer
+        customerConfirmation: featureOverrides?.notifications?.emailToCustomer ?? tierFeatures.notifications.emailToCustomer
       },
       whatsapp: {
-        automated: tierFeatures.notifications.whatsappAutomation,
-        ctaButton: tierFeatures.notifications.whatsappCTA,
+        automated: featureOverrides?.notifications?.whatsappAutomation ?? tierFeatures.notifications.whatsappAutomation,
+        ctaButton: featureOverrides?.notifications?.whatsappCTA ?? tierFeatures.notifications.whatsappCTA,
         phone: config.contact?.whatsapp || config.contact?.phone || ''
       },
-      sms: { enabled: tierFeatures.notifications.sms },
-      telegram: { enabled: tierFeatures.notifications.telegram }
+      sms: { enabled: featureOverrides?.notifications?.sms ?? tierFeatures.notifications.sms },
+      telegram: { enabled: featureOverrides?.notifications?.telegram ?? tierFeatures.notifications.telegram }
     };
+
+    // Update branding based on tier (with overrides)
+    if (!config.branding) config.branding = {};
+    config.branding.customThemes = featureOverrides?.branding?.customThemes ?? tierFeatures.branding.customThemes;
+    config.branding.removeBranding = featureOverrides?.branding?.removeBranding ?? tierFeatures.branding.removeBranding;
+    config.branding.customDomain = featureOverrides?.branding?.customDomain ?? tierFeatures.branding.customDomain;
 
     // Update quota from tier config
     if (!config.quota) config.quota = {};

@@ -1,11 +1,12 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "tiers": {
     "basic": {
       "id": "basic",
       "name": "Basic",
       "displayName": "Basic",
-      "marketingName": "WhatsApp Button Integration",
+      "marketingName": "Get Started Online",
+      "tagline": "Perfect for small properties starting out",
       "price": 99,
       "currency": "INR",
       "billingPeriod": "month",
@@ -21,13 +22,19 @@
           "availabilityManagement": false
         },
         "notifications": {
-          "googleSheets": true,
+          "googleSheets": false,
           "emailToOwner": true,
           "emailToCustomer": false,
           "whatsappCTA": true,
           "whatsappAutomation": false,
           "sms": false,
           "telegram": false
+        },
+        "integrations": {
+          "googleMaps": false,
+          "socialMedia": true,
+          "videoGallery": false,
+          "reviewsSection": false
         },
         "quota": {
           "whatsapp_monthly": 0,
@@ -38,29 +45,48 @@
         "branding": {
           "customThemes": false,
           "removeBranding": false,
-          "customDomain": false
+          "customDomain": false,
+          "logoUpload": true,
+          "colorCustomization": true
         },
         "support": {
           "level": "community",
-          "responseTime": "72h"
+          "responseTime": "72h",
+          "channels": ["email"]
         }
       },
       "limits": {
         "maxBookingsPerMonth": 0,
         "maxInquiriesPerMonth": -1,
-        "maxGalleryImages": 10,
-        "maxRoomTypes": 1
+        "maxGalleryImages": 5,
+        "maxRoomTypes": 1,
+        "maxVideos": 0
       },
+      "displayFeatures": [
+        "Professional website",
+        "5 gallery images",
+        "Contact form",
+        "WhatsApp button",
+        "Logo & colors",
+        "Standard email alerts"
+      ],
       "upsell": {
         "upgradeTo": "premium",
-        "highlightFeatures": ["15 Gallery Images", "Email Notifications", "Priority Support"]
+        "highlightFeatures": [
+          "Google Maps integration",
+          "Google Sheets auto-logging",
+          "Customer email confirmations",
+          "15 gallery images (3x more!)"
+        ]
       }
     },
     "premium": {
       "id": "premium",
       "name": "Premium",
       "displayName": "Premium",
-      "marketingName": "15 Images",
+      "marketingName": "Everything You Need",
+      "tagline": "Most Popular - Professional presence that converts",
+      "badge": "MOST POPULAR",
       "price": 199,
       "currency": "INR",
       "billingPeriod": "month",
@@ -84,6 +110,12 @@
           "sms": false,
           "telegram": false
         },
+        "integrations": {
+          "googleMaps": true,
+          "socialMedia": true,
+          "videoGallery": true,
+          "reviewsSection": true
+        },
         "quota": {
           "whatsapp_monthly": 0,
           "sms_monthly": 0,
@@ -93,29 +125,52 @@
         "branding": {
           "customThemes": false,
           "removeBranding": false,
-          "customDomain": false
+          "customDomain": false,
+          "logoUpload": true,
+          "colorCustomization": true,
+          "customMenuLabels": true
         },
         "support": {
           "level": "email",
-          "responseTime": "48h"
+          "responseTime": "48h",
+          "channels": ["email", "whatsapp"]
         }
       },
       "limits": {
         "maxBookingsPerMonth": 0,
         "maxInquiriesPerMonth": -1,
         "maxGalleryImages": 15,
-        "maxRoomTypes": 2
+        "maxRoomTypes": 3,
+        "maxVideos": 5
       },
+      "displayFeatures": [
+        "Everything in Basic, PLUS:",
+        "15 gallery images (3x more)",
+        "Google Maps integration 🗺️",
+        "Google Sheets auto-logging 📊",
+        "Customer email confirmations ✉️",
+        "Reviews & testimonials",
+        "Video gallery",
+        "Custom menu labels",
+        "Priority support (48h)"
+      ],
       "upsell": {
         "upgradeTo": "professional",
-        "highlightFeatures": ["Full Booking System", "25 Images", "Calendar & Availability"]
+        "highlightFeatures": [
+          "Full booking calendar system",
+          "Accept real bookings online",
+          "25 gallery images",
+          "Unlimited bookings"
+        ]
       }
     },
     "professional": {
       "id": "professional",
       "name": "Professional",
       "displayName": "Professional",
-      "marketingName": "25 Images",
+      "marketingName": "Full Booking System",
+      "tagline": "For serious hotels ready to accept bookings",
+      "badge": "RECOMMENDED",
       "price": 499,
       "currency": "INR",
       "billingPeriod": "month",
@@ -139,6 +194,12 @@
           "sms": false,
           "telegram": false
         },
+        "integrations": {
+          "googleMaps": true,
+          "socialMedia": true,
+          "videoGallery": true,
+          "reviewsSection": true
+        },
         "quota": {
           "whatsapp_monthly": 0,
           "sms_monthly": 0,
@@ -146,31 +207,56 @@
           "bookings_monthly": -1
         },
         "branding": {
-          "customThemes": false,
+          "customThemes": true,
           "removeBranding": false,
-          "customDomain": false
+          "customDomain": false,
+          "logoUpload": true,
+          "colorCustomization": true,
+          "customMenuLabels": true
         },
         "support": {
           "level": "priority",
-          "responseTime": "24h"
+          "responseTime": "24h",
+          "channels": ["email", "whatsapp", "phone"]
         }
       },
       "limits": {
         "maxBookingsPerMonth": -1,
         "maxInquiriesPerMonth": -1,
         "maxGalleryImages": 25,
-        "maxRoomTypes": 10
+        "maxRoomTypes": 10,
+        "maxVideos": 10
       },
+      "displayFeatures": [
+        "Everything in Premium, PLUS:",
+        "25 gallery images",
+        "Full booking calendar 📅",
+        "Date range picker",
+        "Room availability management",
+        "Real-time booking confirmations",
+        "Up to 10 room types",
+        "Unlimited bookings/month",
+        "500 emails/month",
+        "Custom themes",
+        "Priority support (24h)"
+      ],
       "upsell": {
         "upgradeTo": "enterprise",
-        "highlightFeatures": ["100 Images", "WhatsApp Automation", "Custom Themes", "Premium Support"]
+        "highlightFeatures": [
+          "Automated WhatsApp notifications",
+          "100 gallery images",
+          "Remove branding",
+          "Custom domain"
+        ]
       }
     },
     "enterprise": {
       "id": "enterprise",
       "name": "Enterprise",
       "displayName": "Enterprise",
-      "marketingName": "100 Images",
+      "marketingName": "Premium Automation",
+      "tagline": "Complete automation for large properties",
+      "badge": "PREMIUM",
       "price": 999,
       "currency": "INR",
       "billingPeriod": "month",
@@ -194,6 +280,12 @@
           "sms": true,
           "telegram": true
         },
+        "integrations": {
+          "googleMaps": true,
+          "socialMedia": true,
+          "videoGallery": true,
+          "reviewsSection": true
+        },
         "quota": {
           "whatsapp_monthly": 100,
           "sms_monthly": 50,
@@ -203,19 +295,39 @@
         "branding": {
           "customThemes": true,
           "removeBranding": true,
-          "customDomain": true
+          "customDomain": true,
+          "logoUpload": true,
+          "colorCustomization": true,
+          "customMenuLabels": true
         },
         "support": {
           "level": "premium",
-          "responseTime": "12h"
+          "responseTime": "12h",
+          "channels": ["email", "whatsapp", "phone", "dedicated-manager"]
         }
       },
       "limits": {
         "maxBookingsPerMonth": -1,
         "maxInquiriesPerMonth": -1,
         "maxGalleryImages": 100,
-        "maxRoomTypes": -1
+        "maxRoomTypes": -1,
+        "maxVideos": 20
       },
+      "displayFeatures": [
+        "Everything in Professional, PLUS:",
+        "100 gallery images",
+        "Automated WhatsApp booking notifications 📲",
+        "Official WhatsApp Business integration",
+        "100-1000 messages/month",
+        "SMS notifications (50/month)",
+        "Telegram integration",
+        "Remove 'Powered by Webzyl' branding",
+        "Custom domain (yourbrand.com)",
+        "Unlimited room types",
+        "1000 emails/month",
+        "Premium support (12h)",
+        "Dedicated account manager"
+      ],
       "quotaOptions": [100, 250, 500, 1000],
       "upsell": null
     }
@@ -224,8 +336,9 @@
   "allowDowngrade": true,
   "prorationEnabled": true,
   "metadata": {
-    "lastUpdated": "2026-01-12T12:00:00Z",
+    "lastUpdated": "2026-01-14T12:30:00Z",
     "updatedBy": "ceo",
-    "version": "1.0"
+    "version": "2.0",
+    "notes": "Optimized for Indian market with clear value ladder"
   }
 }

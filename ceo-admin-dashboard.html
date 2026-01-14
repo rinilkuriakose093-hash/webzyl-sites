@@ -1643,99 +1643,150 @@
                     </div>
 
                     <!-- Plan Selection Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         <!-- Basic Plan -->
-                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg"
+                        <div class="plan-card border-2 border-gray-300 rounded-xl p-5 cursor-pointer transition-all hover:shadow-lg hover:border-gray-400"
                              data-plan="basic" onclick="selectPlan('basic')">
-                            <div class="text-center mb-4">
-                                <h3 class="text-xl font-bold text-gray-900">Basic</h3>
-                                <p class="text-sm text-gray-500">Inquiry Mode</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-2">FREE</p>
+                            <div class="text-center mb-3">
+                                <h3 class="text-lg font-bold text-gray-900">Basic</h3>
+                                <p class="text-xs text-gray-500">Get Started</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-2">₹99<span class="text-xs text-gray-500">/mo</span></p>
                             </div>
-                            <ul class="space-y-2 text-sm">
+                            <ul class="space-y-1.5 text-xs">
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Inquiry Form</span>
+                                    <span>5 gallery images</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Google Sheets Logging</span>
+                                    <span>Contact form</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Email Alerts</span>
+                                    <span>WhatsApp button</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Email alerts</span>
                                 </li>
                                 <li class="flex items-start text-gray-400">
                                     <span class="mr-2">✗</span>
-                                    <span>Booking Calendar</span>
+                                    <span>Google Maps</span>
                                 </li>
                                 <li class="flex items-start text-gray-400">
                                     <span class="mr-2">✗</span>
-                                    <span>WhatsApp Integration</span>
+                                    <span>Google Sheets</span>
                                 </li>
                             </ul>
                         </div>
 
-                        <!-- Tier 1 Plan -->
-                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg border-blue-500"
-                             data-plan="tier-1" onclick="selectPlan('tier-1')">
-                            <div class="text-center mb-4">
-                                <h3 class="text-xl font-bold text-blue-600">Tier 1 (Pro 1)</h3>
-                                <p class="text-sm text-gray-500">Booking Mode</p>
-                                <p class="text-3xl font-bold text-blue-600 mt-2">$29<span class="text-sm text-gray-500">/mo</span></p>
+                        <!-- Premium Plan -->
+                        <div class="plan-card border-3 border-blue-500 rounded-xl p-5 cursor-pointer transition-all hover:shadow-xl bg-blue-50 relative"
+                             data-plan="premium" onclick="selectPlan('premium')">
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                <span class="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
                             </div>
-                            <ul class="space-y-2 text-sm">
+                            <div class="text-center mb-3 mt-2">
+                                <h3 class="text-lg font-bold text-blue-600">Premium</h3>
+                                <p class="text-xs text-gray-600">Everything You Need</p>
+                                <p class="text-2xl font-bold text-blue-600 mt-2">₹199<span class="text-xs text-gray-600">/mo</span></p>
+                            </div>
+                            <ul class="space-y-1.5 text-xs">
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Full Booking System</span>
+                                    <span class="font-semibold">15 images (3x more!)</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Calendar & Availability</span>
+                                    <span class="font-semibold">Google Maps 🗺️</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Email Confirmations</span>
+                                    <span class="font-semibold">Google Sheets 📊</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>WhatsApp CTA Button</span>
+                                    <span>Customer emails ✉️</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Reviews & videos</span>
                                 </li>
                                 <li class="flex items-start text-gray-400">
                                     <span class="mr-2">✗</span>
-                                    <span>WhatsApp Automation</span>
+                                    <span>Booking calendar</span>
                                 </li>
                             </ul>
                         </div>
 
-                        <!-- Tier 2 Plan -->
-                        <div class="plan-card border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg border-purple-500"
-                             data-plan="tier-2" onclick="selectPlan('tier-2')">
-                            <div class="text-center mb-4">
-                                <h3 class="text-xl font-bold text-purple-600">Tier 2 (Pro 2)</h3>
-                                <p class="text-sm text-gray-500">Booking + WhatsApp Auto</p>
-                                <p class="text-3xl font-bold text-purple-600 mt-2">$49<span class="text-sm text-gray-500">/mo</span></p>
+                        <!-- Professional Plan -->
+                        <div class="plan-card border-2 border-purple-400 rounded-xl p-5 cursor-pointer transition-all hover:shadow-lg hover:border-purple-500"
+                             data-plan="professional" onclick="selectPlan('professional')">
+                            <div class="text-center mb-3">
+                                <h3 class="text-lg font-bold text-purple-600">Professional</h3>
+                                <p class="text-xs text-gray-500">Full Booking</p>
+                                <p class="text-2xl font-bold text-purple-600 mt-2">₹499<span class="text-xs text-gray-500">/mo</span></p>
                             </div>
-                            <ul class="space-y-2 text-sm">
+                            <ul class="space-y-1.5 text-xs">
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Everything in Tier 1</span>
+                                    <span class="font-semibold">25 images</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>WhatsApp API Automation</span>
+                                    <span class="font-semibold">Booking calendar 📅</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>100-1000 msgs/month</span>
+                                    <span>Date range picker</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Premium Themes</span>
+                                    <span>10 room types</span>
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-green-500 mr-2">✓</span>
-                                    <span>Priority Support</span>
+                                    <span>Unlimited bookings</span>
+                                </li>
+                                <li class="flex items-start text-gray-400">
+                                    <span class="mr-2">✗</span>
+                                    <span>WhatsApp automation</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Enterprise Plan -->
+                        <div class="plan-card border-2 border-indigo-300 rounded-xl p-5 cursor-pointer transition-all hover:shadow-lg hover:border-indigo-400"
+                             data-plan="enterprise" onclick="selectPlan('enterprise')">
+                            <div class="text-center mb-3">
+                                <h3 class="text-lg font-bold text-indigo-600">Enterprise</h3>
+                                <p class="text-xs text-gray-500">Premium</p>
+                                <p class="text-2xl font-bold text-indigo-600 mt-2">₹999<span class="text-xs text-gray-500">/mo</span></p>
+                            </div>
+                            <ul class="space-y-1.5 text-xs">
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span class="font-semibold">100 images</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span class="font-semibold">WhatsApp automation 📲</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>SMS notifications</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Remove branding</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Custom domain</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2">✓</span>
+                                    <span>Dedicated manager</span>
                                 </li>
                             </ul>
                         </div>
@@ -3062,14 +3113,16 @@
 
             // Update current plan display
             const planNames = {
-                'basic': 'Basic (FREE)',
-                'tier-1': 'Tier 1 - Booking Mode ($29/mo)',
-                'tier-2': 'Tier 2 - Booking + WhatsApp Auto ($49/mo)'
+                'basic': 'Basic (₹99/mo)',
+                'premium': 'Premium (₹199/mo)',
+                'professional': 'Professional (₹499/mo)',
+                'enterprise': 'Enterprise (₹999/mo)'
             };
             const bookingModes = {
                 'basic': 'Inquiry Mode',
-                'tier-1': 'Booking Mode',
-                'tier-2': 'Booking + Automation'
+                'premium': 'Inquiry Mode',
+                'professional': 'Full Booking',
+                'enterprise': 'Full Booking + Automation'
             };
 
             document.getElementById('currentPlanName').textContent = planNames[currentPlan] || 'Unknown';
@@ -3088,7 +3141,7 @@
                 const response = await fetch(`${API_BASE}/api/config/${slug}`);
                 const config = await response.json();
 
-                if (config && currentPlan === 'tier-2') {
+                if (config && currentPlan === 'enterprise') {
                     document.getElementById('whatsappQuota').value = config.quota?.whatsapp_limit || 100;
                     document.getElementById('planExpiry').value = config.plan_expiry || '';
                 }
@@ -3103,8 +3156,8 @@
             // Show modal
             document.getElementById('planModal').classList.remove('hidden');
 
-            // Show tier-specific config if tier-2
-            if (currentPlan === 'tier-2') {
+            // Show tier-specific config if enterprise
+            if (currentPlan === 'enterprise') {
                 document.getElementById('advancedConfig').style.display = 'block';
                 document.getElementById('tier2Config').style.display = 'block';
             }
@@ -3122,10 +3175,10 @@
             });
 
             // Show/hide tier-specific configuration
-            if (plan === 'tier-2') {
+            if (plan === 'enterprise') {
                 document.getElementById('advancedConfig').style.display = 'block';
                 document.getElementById('tier2Config').style.display = 'block';
-            } else if (plan === 'tier-1') {
+            } else if (plan === 'professional') {
                 document.getElementById('advancedConfig').style.display = 'block';
                 document.getElementById('tier2Config').style.display = 'none';
             } else {

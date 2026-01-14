@@ -4,10 +4,10 @@
     "basic": {
       "id": "basic",
       "name": "Basic",
-      "displayName": "Basic (FREE)",
-      "marketingName": "Inquiry Mode",
-      "price": 0,
-      "currency": "USD",
+      "displayName": "Basic",
+      "marketingName": "WhatsApp Button Integration",
+      "price": 99,
+      "currency": "INR",
       "billingPeriod": "month",
       "features": {
         "booking": {
@@ -24,7 +24,7 @@
           "googleSheets": true,
           "emailToOwner": true,
           "emailToCustomer": false,
-          "whatsappCTA": false,
+          "whatsappCTA": true,
           "whatsappAutomation": false,
           "sms": false,
           "telegram": false
@@ -52,18 +52,72 @@
         "maxRoomTypes": 1
       },
       "upsell": {
-        "upgradeTo": "tier-1",
-        "highlightFeatures": ["Full Booking System", "Calendar & Availability", "WhatsApp CTA Button"]
+        "upgradeTo": "premium",
+        "highlightFeatures": ["15 Gallery Images", "Email Notifications", "Priority Support"]
       }
     },
-    "tier-1": {
-      "id": "tier-1",
-      "name": "Tier 1",
-      "displayName": "Tier 1 - Booking Mode",
-      "marketingName": "Booking Mode",
-      "subtitle": "Pro 1",
-      "price": 29,
-      "currency": "USD",
+    "premium": {
+      "id": "premium",
+      "name": "Premium",
+      "displayName": "Premium",
+      "marketingName": "15 Images",
+      "price": 199,
+      "currency": "INR",
+      "billingPeriod": "month",
+      "features": {
+        "booking": {
+          "mode": "inquiry",
+          "enabled": true,
+          "inquiryForm": true,
+          "fullBookingSystem": false,
+          "calendar": false,
+          "dateRangePicker": false,
+          "roomTypeSelection": false,
+          "availabilityManagement": false
+        },
+        "notifications": {
+          "googleSheets": true,
+          "emailToOwner": true,
+          "emailToCustomer": true,
+          "whatsappCTA": true,
+          "whatsappAutomation": false,
+          "sms": false,
+          "telegram": false
+        },
+        "quota": {
+          "whatsapp_monthly": 0,
+          "sms_monthly": 0,
+          "email_monthly": 200,
+          "bookings_monthly": 0
+        },
+        "branding": {
+          "customThemes": false,
+          "removeBranding": false,
+          "customDomain": false
+        },
+        "support": {
+          "level": "email",
+          "responseTime": "48h"
+        }
+      },
+      "limits": {
+        "maxBookingsPerMonth": 0,
+        "maxInquiriesPerMonth": -1,
+        "maxGalleryImages": 15,
+        "maxRoomTypes": 2
+      },
+      "upsell": {
+        "upgradeTo": "professional",
+        "highlightFeatures": ["Full Booking System", "25 Images", "Calendar & Availability"]
+      }
+    },
+    "professional": {
+      "id": "professional",
+      "name": "Professional",
+      "displayName": "Professional",
+      "marketingName": "25 Images",
+      "price": 499,
+      "currency": "INR",
       "billingPeriod": "month",
       "features": {
         "booking": {
@@ -97,29 +151,28 @@
           "customDomain": false
         },
         "support": {
-          "level": "email",
-          "responseTime": "48h"
+          "level": "priority",
+          "responseTime": "24h"
         }
       },
       "limits": {
         "maxBookingsPerMonth": -1,
         "maxInquiriesPerMonth": -1,
-        "maxGalleryImages": 50,
+        "maxGalleryImages": 25,
         "maxRoomTypes": 10
       },
       "upsell": {
-        "upgradeTo": "tier-2",
-        "highlightFeatures": ["WhatsApp Automation", "100-1000 msgs/month", "Premium Themes", "Priority Support"]
+        "upgradeTo": "enterprise",
+        "highlightFeatures": ["100 Images", "WhatsApp Automation", "Custom Themes", "Premium Support"]
       }
     },
-    "tier-2": {
-      "id": "tier-2",
-      "name": "Tier 2",
-      "displayName": "Tier 2 - Booking + WhatsApp Auto",
-      "marketingName": "Booking + WhatsApp Automation",
-      "subtitle": "Pro 2",
-      "price": 49,
-      "currency": "USD",
+    "enterprise": {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "displayName": "Enterprise",
+      "marketingName": "100 Images",
+      "price": 999,
+      "currency": "INR",
       "billingPeriod": "month",
       "features": {
         "booking": {
@@ -153,14 +206,14 @@
           "customDomain": true
         },
         "support": {
-          "level": "priority",
-          "responseTime": "24h"
+          "level": "premium",
+          "responseTime": "12h"
         }
       },
       "limits": {
         "maxBookingsPerMonth": -1,
         "maxInquiriesPerMonth": -1,
-        "maxGalleryImages": 200,
+        "maxGalleryImages": 100,
         "maxRoomTypes": -1
       },
       "quotaOptions": [100, 250, 500, 1000],
@@ -171,7 +224,7 @@
   "allowDowngrade": true,
   "prorationEnabled": true,
   "metadata": {
-    "lastUpdated": "2026-01-12T09:00:00Z",
+    "lastUpdated": "2026-01-12T12:00:00Z",
     "updatedBy": "ceo",
     "version": "1.0"
   }

@@ -2908,6 +2908,16 @@ o	Inspect source → verify Schema.org markup present
 Deliverable: Site renders with HTML template
 ________________________________________
 DAY 4: Perfect SEO (3-4 hours)
+
+⚠️ **IMPORTANT NOTE**: The code example below has been DEPRECATED and replaced with the correct implementation that follows CEO Directive #3 (Sitemap index + sharded sitemaps). See "CORRECTED IMPLEMENTATION" section below.
+
+/*
+========================================
+DEPRECATED CODE - DO NOT USE
+This implementation does NOT follow CEO Directive #3
+(Sitemap index + sharded sitemaps + 24h cache TTL)
+========================================
+
 Add SEO Routes to Worker:
 javascript
 // worker.js (add to existing code)
@@ -2916,7 +2926,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const pathname = url.pathname;
-    
+
     // Robots.txt
     if (pathname === '/robots.txt') {
       return new Response(
@@ -2931,12 +2941,12 @@ Sitemap: https://webzyl.dev/sitemap.xml`,
         }
       );
     }
-    
-    // Sitemap.xml
+
+    // Sitemap.xml - WRONG: Single sitemap approach
     if (pathname === '/sitemap.xml') {
       return await generateSitemap(env);
     }
-    
+
     // ... rest of existing code
   }
 };
@@ -2945,10 +2955,10 @@ async function generateSitemap(env) {
   // Check cache first
   const cached = await env.WEBZYL_CONFIGS.get('sitemap_cache');
   const cacheTs = await env.WEBZYL_CONFIGS.get('sitemap_cache_ts');
-  
+
   const now = Date.now();
   const isStale = !cacheTs || (now - parseInt(cacheTs) > 86400000); // 24h
-  
+
   if (cached && !isStale) {
     return new Response(cached, {
       headers: {
@@ -2957,7 +2967,7 @@ async function generateSitemap(env) {
       }
     });
   }
-  
+
   // Generate sitemap from sharded indexes
   const prefixes = [];
   for (let a of 'abcdefghijklmnopqrstuvwxyz') {
@@ -2965,19 +2975,20 @@ async function generateSitemap(env) {
       prefixes.push(a + b);
     }
   }
-  
-  // Fetch all shards in parallel
+
+  // PROBLEM: Fetches ALL 676 shards on every cache miss
+  // This violates the "Crawler-Resilient Sitemaps" directive
   const shards = await Promise.all(
-    prefixes.map(prefix => 
+    prefixes.map(prefix =>
       env.WEBZYL_CONFIGS.get(`site_index:${prefix}`, {type: 'json'})
     )
   );
-  
+
   // Flatten and filter
   const allSlugs = shards
     .filter(shard => shard !== null)
     .flat();
-  
+
   // Generate XML
   const today = new Date().toISOString().split('T')[0];
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2995,12 +3006,130 @@ ${allSlugs.map(slug => `  <url>
     <priority>0.8</priority>
   </url>`).join('\n')}
 </urlset>`;
-  
+
   // Cache for 24h
   await env.WEBZYL_CONFIGS.put('sitemap_cache', sitemap);
   await env.WEBZYL_CONFIGS.put('sitemap_cache_ts', now.toString());
-  
+
   return new Response(sitemap, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600'
+    }
+  });
+}
+
+========================================
+END DEPRECATED CODE
+========================================
+*/
+
+---
+
+### ✅ CORRECTED IMPLEMENTATION (CEO Directive #3 Compliant)
+
+**Architecture**: Sitemap Index + Sharded Sitemaps + 24h Cache TTL
+
+**File Structure**:
+```
+/seo/
+  ├── robots.js              # Robots.txt generator
+  ├── sitemap-index.js       # Sitemap index generator
+  ├── sitemap-shard.js       # Per-shard sitemap generator
+  ├── schema.js              # Schema.org generator
+  └── meta.js                # Meta tags builder
+```
+
+**Add SEO Routes to Worker**:
+
+```javascript
+// worker.js (add to existing code)
+
+// Import SEO modules
+import { generateRobotsTxt } from './seo/robots.js';
+import { generateSitemapIndex } from './seo/sitemap-index.js';
+import { generateSitemapShard } from './seo/sitemap-shard.js';
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Route 1: Robots.txt
+    if (pathname === '/robots.txt') {
+      return generateRobotsTxt(url.hostname);
+    }
+
+    // Route 2: Sitemap Index (lists all shard sitemaps)
+    if (pathname === '/sitemap.xml') {
+      return generateSitemapIndex(url.hostname);
+    }
+
+    // Route 3: Per-Shard Sitemaps (aa-zz, 676 total)
+    const sitemapMatch = pathname.match(/^\/sitemap-([a-z]{2})\.xml$/);
+    if (sitemapMatch) {
+      const prefix = sitemapMatch[1];
+      return await generateSitemapShard(env.WEBZYL_CONFIGS, prefix, url.hostname);
+    }
+
+    // ... rest of existing code
+  }
+};
+```
+
+**File: seo/robots.js**
+```javascript
+export function generateRobotsTxt(hostname) {
+  const content = `User-agent: *
+Allow: /
+Sitemap: https://${hostname}/sitemap.xml
+
+# Disallow internal endpoints
+User-agent: *
+Disallow: /_internal/
+Disallow: /operator/
+Disallow: /admin/
+Disallow: /api/
+
+# Crawl-delay for aggressive bots
+User-agent: GPTBot
+Crawl-delay: 10
+
+User-agent: CCBot
+Crawl-delay: 10
+`;
+
+  return new Response(content, {
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'public, max-age=86400'
+    }
+  });
+}
+```
+
+**File: seo/sitemap-index.js**
+```javascript
+export function generateSitemapIndex(hostname) {
+  // Generate all 676 shard prefixes (aa-zz)
+  const prefixes = [];
+  for (let a of 'abcdefghijklmnopqrstuvwxyz') {
+    for (let b of 'abcdefghijklmnopqrstuvwxyz') {
+      prefixes.push(a + b);
+    }
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${prefixes.map(prefix => `  <sitemap>
+    <loc>https://${hostname}/sitemap-${prefix}.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>`).join('\n')}
+</sitemapindex>`;
+
+  return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml',
       'Cache-Control': 'public, max-age=3600'
@@ -3009,16 +3138,91 @@ ${allSlugs.map(slug => `  <url>
 }
 ```
 
+**File: seo/sitemap-shard.js**
+```javascript
+export async function generateSitemapShard(KV, prefix, hostname) {
+  // Check per-shard cache first
+  const cacheKey = `sitemap_cache:${prefix}`;
+  const cacheTs = `sitemap_cache_ts:${prefix}`;
+
+  const cached = await KV.get(cacheKey);
+  const cachedTime = await KV.get(cacheTs);
+
+  const now = Date.now();
+  const isStale = !cachedTime || (now - parseInt(cachedTime) > 86400000); // 24h
+
+  // Return cached version if fresh
+  if (cached && !isStale) {
+    return new Response(cached, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Cache': 'HIT'
+      }
+    });
+  }
+
+  // Cache miss - read ONLY this shard (not all 676)
+  const shardData = await KV.get(`site_index:${prefix}`, { type: 'json' });
+
+  // Handle empty shard
+  if (!shardData || shardData.length === 0) {
+    const emptySitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+</urlset>`;
+
+    return new Response(emptySitemap, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Cache': 'MISS-EMPTY'
+      }
+    });
+  }
+
+  // Generate sitemap XML for this shard
+  const today = new Date().toISOString().split('T')[0];
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${shardData.map(slug => `  <url>
+    <loc>https://${hostname}/${slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  // Cache this shard for 24h
+  await Promise.all([
+    KV.put(cacheKey, sitemap, { expirationTtl: 86400 }),
+    KV.put(cacheTs, now.toString(), { expirationTtl: 86400 })
+  ]);
+
+  return new Response(sitemap, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600',
+      'X-Cache': 'MISS-GENERATED'
+    }
+  });
+}
+```
+
+**Key Benefits**:
+- ✅ Only reads 1 shard per request (not 676)
+- ✅ Per-shard caching (surgical cache invalidation)
+- ✅ Protects KV read budget (CEO Directive #3)
+- ✅ Scales to millions of sites
+
 **Test SEO:**
 
 1. Visit `/robots.txt` → Should see robots file
-2. Visit `/sitemap.xml` → Should see XML sitemap
-3. Test structured data:
-   - Go to: https://search.google.com/test/rich-results
-   - Enter your test site URL
-   - Should show valid LodgingBusiness schema
+2. Visit `/sitemap.xml` → Should see sitemap INDEX (list of 676 shard URLs)
+3. Visit `/sitemap-aa.xml` → Should see sitemap for "aa" shard
+4. Visit `/sitemap-zz.xml` → Should see sitemap for "zz" shard
+5. Check `X-Cache` header → Should be HIT on second request
 
-**Deliverable:** Perfect SEO infrastructure (robots, sitemap, schema)
+**Deliverable:** Perfect SEO infrastructure (robots, sitemap index, sharded sitemaps)
 
 ---
 

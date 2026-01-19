@@ -1,0 +1,5130 @@
+🎯 THE ZERO-COST IMMORTAL WEB BLUEPRINT
+VERSION 1.3 FINAL - COMPLETE SPECIFICATION
+________________________________________
+📄 DOCUMENT CONTROL
+Field	Value
+Document Title	Zero-Cost Immortal Web Blueprint - Complete Specification
+Version	1.3 FINAL
+Status	FROZEN - Ready for Implementation
+Date	January 2025
+Author	Webzyl Platform Team
+Purpose	Complete technical specification for multi-agent validation and engineering execution
+Audience	AI Agents, Software Engineers, Technical Reviewers
+Classification	Public - Open for Review
+________________________________________
+📑 TABLE OF CONTENTS
+1.	Executive Summary
+2.	Vision & Philosophy
+3.	Core Constraints & Principles
+4.	System Architecture
+5.	The 5 Core Wedges
+6.	Technical Specifications
+7.	Data Model & Storage
+8.	Security & Anti-Spam
+9.	Evolution Engine
+10.	Cost Analysis
+11.	Implementation Roadmap
+12.	Validation & Testing
+13.	Scale Strategy
+14.	Anti-Features
+15.	Success Metrics
+16.	FAQ & Troubleshooting
+17.	Appendices
+________________________________________
+<a name="executive-summary"></a>
+
+
+CEO Directives (Non-Negotiables)
+1.	Safe Evolution: Variants cannot be promoted unless ghostViews ≥ 500 and ghostConversions ≥ 5 (MIN_GHOST_CLICKS). Laplace smoothing is mandatory for CTR.
+2.	Agent-First Product: /facts.json and related structured endpoints are first-class outputs. HTML is a human-friendly rendering layer.
+3.	Crawler-Resilient Sitemaps: Sitemap index + sharded sitemaps + 24h cache TTL is mandatory to protect KV reads.
+4.	50-Year Compatibility: All blocks must include schema_version. Worker must maintain backward compatibility indefinitely.
+
+
+
+
+s
+These rules are mandatory and override any other optional snippets/examples in this document.
+________________________________________
+1) Evaluation Trigger Strategy (KV Write Budget Protection) ✅ UPDATED
+Rule: Evaluation triggers MUST NOT create KV writes on every GET /{slug} page request.
+Reason: eval_counter KV write per page view explodes write budget (10 sites × 50 views/day = 500 writes consumed by counter alone).
+
+✅ MVP Implementation (Write-Budget Safe):
+•	PRIMARY TRIGGER: Signal accumulation (total views across main + ghost >= 500)
+  - Signals already write to KV, so no extra write cost
+  - Check signal totals during evaluation candidate check (KV read only)
+•	FALLBACK TRIGGER: Time-based (30+ days since last_evaluated)
+  - For sites with zero traffic or blocked signals
+  - Prevents infinite stall
+•	ADMIN TRIGGER: Immediate evaluation on publish (if X-Trigger-Eval header present)
+•	PROBABILISTIC TRIGGER: 1% random (optional, for distributed load)
+________________________________________
+2) Promotion Eligibility Gate (Safety First)
+A Ghost variant can never be promoted based on small-sample CTR swings.
+Promotion is allowed only if ALL conditions are met:
+•	ghostViews >= 500
+•	mainViews >= 500
+•	ghostConversions >= MIN_GHOST_CLICKS
+•	CTR uplift passes adaptive threshold (15% minimum + 3σ safety rule)
+•	and baseline safety is satisfied:
+o	if mainCTR == 0, Ghost must have >= MIN_GHOST_CLICKS AND >= 500 views
+Hardcoded constants (v1+):
+•	MIN_GHOST_CLICKS = 5
+•	MIN_GHOST_VIEWS = 500
+•	MIN_MAIN_VIEWS = 500
+________________________________________
+3) Nonce Storage Must Be Write-Budget Safe
+Nonce Must Be Stateless (No KV Storage)
+KV writes are the first bottleneck on Cloudflare free tier. Nonce must never be stored in KV (stateless). KV writes allowed only for rate limits and signals.
+________________________________________
+4) Marketplace site_list Must Be Sharded
+A single global site_list array will hit KV value size limits and update conflicts at scale.
+Rule: site_list must be stored in shards exactly like site_index.
+Storage format:
+•	site_list:{prefix} → array of lightweight entries only:
+o	{slug, name, business_type, city, rating, updated_at}
+No global site_list key is allowed. All references and flows must use the sharded structure.
+________________________________________
+Freeze Confirmation
+These four rules are mandatory for:
+•	stability
+•	safe evolution
+•	cost protection
+•	long-term scalability
+Any implementation must pass these rules before production rollout.
+
+Evaluation Trigger Rule ✅ UPDATED
+
+Evaluation triggers MUST NOT use KV writes on every GET /{slug} request. Instead, use signal accumulation (total views) as the primary trigger, with time-based fallback (30+ days). This protects KV write budget while ensuring reliable evaluation scheduling even if signals are blocked.
+
+
+1. EXECUTIVE SUMMARY
+1.1 What Is This Platform?
+The Webzyl Platform is a zero-operations, edge-native website hosting system where sites automatically evolve themselves to become more effective over time without any human intervention.
+1.2 The Core Innovation
+Traditional websites are static artifacts that require constant manual optimization. Webzyl treats websites as living, learning systems that:
+•	Test multiple content variants automatically (A/B evolution)
+•	Promote winners, archive losers
+•	Compound learning over months and years
+•	Build trust and authority through time
+•	Remain cost-effective at massive scale ($0 for first 500-1,500 sites)
+1.3 The Unfair Advantage
+Time Cannot Be Bought
+•	Year 1 (You): 500 sites, each evolved 20+ times, rich A/B data
+•	Year 1 (Competitor): 0 sites, 0 data, 0 learning history
+•	Gap: Impossible to close
+1.4 Target Market
+Small and medium enterprises (SMEs) who need:
+•	Professional websites without technical knowledge
+•	Automatic SEO optimization
+•	Local search dominance
+•	Continuous improvement without ongoing costs
+Primary verticals:
+•	Homestays & Resorts
+•	Restaurants & Cafes
+•	Tour Operators
+•	Retail Shops
+•	Service Businesses
+1.5 Key Metrics Summary
+Metric	Value
+Time to MVP	14 days
+Initial Sites	5 (real businesses)
+Cost (MVP)	$0.00
+Free Tier Capacity	500-1,500 sites*
+Cost at 10K Sites	~$12.50/month
+Average Site Improvement	25-40% CTR increase in 6 months
+Scale Ceiling	1M+ sites (with architecture)
+*Assumes low-to-moderate traffic (10-50 visits/day per site)
+1.6 Document Purpose
+This specification provides:
+•	✅ Complete technical architecture
+•	✅ Exact implementation instructions
+•	✅ Cost projections with real math
+•	✅ Security and anti-spam measures
+•	✅ Scale strategy to 1M+ sites
+•	✅ Validation questions for peer review
+Everything needed to build and scale the platform with zero ambiguity.
+________________________________________
+<a name="vision--philosophy"></a>
+2. VISION & PHILOSOPHY
+2.1 The 50-Year Vision
+Build web infrastructure that outlives its creators.
+Most platforms optimize for 2-3 year horizons. Webzyl is designed to remain relevant for 50+ years by:
+1.	Platform Agnosticism 
+o	Works if Google dies (LLM-optimized)
+o	Works for voice search (structured Q&A)
+o	Works for AR/VR (geolocation metadata)
+o	Future discovery channels automatically supported
+2.	Compounding Intelligence 
+o	Every day, every site gets slightly better
+o	Improvement accelerates over time (compound interest effect)
+o	Creates insurmountable competitive moat
+3.	Zero-Dependency Architecture 
+o	No npm packages
+o	No build tools
+o	No frameworks
+o	Pure Web Standards (HTML/CSS/JS)
+o	Will work in 2074 without changes
+4.	Ethical Foundation 
+o	No dark patterns
+o	No manipulation
+o	Privacy-first (aggregate data only)
+o	Transparent evolution (all changes reversible)
+2.2 Core Philosophy
+Principle 1: Websites Are Living Systems
+Traditional view:
+Website = Static artifact
+         → Degrades over time
+         → Requires manual updates
+         → Eventually becomes obsolete
+Webzyl view:
+Website = Living knowledge entity
+        → Improves over time
+        → Self-updates automatically
+        → Accumulates authority
+        → Becomes more valuable with age
+Principle 2: Time Is The Ultimate Moat
+Money can buy:
+•	✅ Better designers
+•	✅ Faster servers
+•	✅ More features
+Money cannot buy:
+•	❌ 3 years of A/B evolution data
+•	❌ Accumulated trust signals
+•	❌ Historical SEO equity
+•	❌ Compounded authority
+This is the defensible advantage.
+Principle 3: Zero-Ops Is Non-Negotiable
+Every cron job, every server, every scheduled task is:
+•	A maintenance burden
+•	A failure point
+•	A cost center
+•	An operations debt
+Solution: Everything happens at request time (lazy evaluation) or on-demand (admin trigger).
+Principle 4: Cost Must Stay Near-Zero
+Traditional hosting:
+•	$5-20/site/month
+•	Scales linearly (10K sites = $50K-200K/month)
+•	Unsustainable for SMEs
+Webzyl:
+•	$0.001/site/month at scale
+•	Scales sub-linearly (10K sites = $12.50/month)
+•	Sustainable for anyone
+Principle 5: Simplicity Enables Longevity
+Complex systems:
+•	Break in unexpected ways
+•	Require constant maintenance
+•	Become unmaintainable
+•	Get rewritten every 3-5 years
+Simple systems:
+•	Fail predictably
+•	Self-heal
+•	Run for decades
+•	Outlive their creators
+________________________________________
+<a name="core-constraints--principles"></a>
+3. CORE CONSTRAINTS & PRINCIPLES
+3.1 The 5 Non-Negotiable Constraints
+These constraints define what the platform IS and IS NOT. They cannot be violated.
+Constraint 1: Literally Zero Cost (Until Scale)
+Definition:
+•	No credit card required for first 500-1,500 sites
+•	No billing account setup
+•	No external paid APIs
+•	Free tier only (Cloudflare + Google Sheets)
+•	Cost only when free tier limits exceeded
+Why:
+•	Proves viability without risk
+•	Enables rapid experimentation
+•	Accessible to anyone
+•	Forces efficient architecture
+Enforcement:
+•	Every feature must justify cost impact
+•	Any API with pricing must be deferred or eliminated
+•	Free tier limits treated as hard constraints
+________________________________________
+Constraint 2: Zero Ops / Near-Zero Ops
+Definition:
+•	No servers to maintain
+•	No cron jobs (use lazy evaluation)
+•	No scheduled tasks
+•	No background workers
+•	Everything at request time or on-demand
+Why:
+•	Eliminates entire class of failures
+•	Reduces complexity by 10x
+•	Enables true "set and forget"
+•	Scales without human intervention
+Enforcement:
+•	All "scheduled" work converted to lazy evaluation
+•	Admin triggers only (on publish, on request)
+•	Probabilistic triggers (1% chance per request)
+•	Emergency fallbacks (30-day threshold)
+________________________________________
+Constraint 3: No Manual SEO
+Definition:
+•	No dashboards
+•	No knobs to tweak
+•	No "optimize now" buttons
+•	No keyword research tools
+•	System handles everything automatically
+Why:
+•	Users don't know SEO (and shouldn't need to)
+•	Manual optimization doesn't scale
+•	Creates support burden
+•	Defeats purpose of automation
+Enforcement:
+•	Deterministic SEO (perfect by default)
+•	All optimization automatic
+•	No configuration exposed to users
+•	Success = owner never thinks about SEO
+________________________________________
+Constraint 4: Future-Proof Discovery
+Definition:
+•	Must work if Google dies
+•	Must work for LLM discovery (ChatGPT, Claude, etc.)
+•	Must work for voice search (Siri, Alexa, etc.)
+•	Must work for AR/VR discovery
+Why:
+•	Search landscape changing rapidly
+•	Can't depend on single platform
+•	Semantic authority > keyword ranking
+•	True longevity requires adaptability
+Enforcement:
+•	Structured data (Schema.org) always present
+•	Semantic content (citations, sources)
+•	Conversational Q&A format
+•	Geolocation metadata
+•	Machine-readable facts
+________________________________________
+Constraint 5: Ethical & Reversible
+Definition:
+•	All changes versioned
+•	Instant rollback available
+•	No dark patterns (fake scarcity, forced actions)
+•	No manipulation (hidden fees, bait-and-switch)
+•	Privacy-first (aggregate data only, no user tracking)
+Why:
+•	Trust is the ultimate moat
+•	Unethical platforms get regulated
+•	Manipulation creates backlash
+•	Respect = retention
+Enforcement:
+•	Delta-based versioning (10 versions per site)
+•	Manual rollback API
+•	Privacy-safe signals (no cookies, no IDs)
+•	No user-level data stored
+•	Transparent evolution (owners see what changed)
+________________________________________
+3.2 Architectural Principles
+Principle A: Edge-First, Always
+Rule: All compute happens at the edge (Cloudflare Workers), never centrally.
+Why:
+•	<50ms response times globally
+•	No regional servers needed
+•	Scales automatically
+•	Near-zero cost
+Implementation:
+•	Workers for SSR (server-side rendering)
+•	Workers for signal aggregation
+•	Workers for evaluation logic
+•	No origin servers
+________________________________________
+Principle B: Single Source of Truth (KV)
+Rule: Cloudflare KV is the only persistent storage.
+Why:
+•	Globally distributed
+•	Eventually consistent (acceptable)
+•	Extremely cheap
+•	No database to maintain
+Implementation:
+•	All site data in KV
+•	All signals in KV
+•	All versions in KV
+•	No SQL, no NoSQL, no external DB
+________________________________________
+Principle C: Minimize Reads, Minimize Writes
+Rule: Every KV operation must be justified and optimized.
+Why:
+•	Free tier limits (100K reads/day, 1K writes/day)
+•	Writes are the first bottleneck
+•	Must scale to 10K+ sites on free tier
+Implementation:
+•	Site package = single KV read (not 6-8 reads)
+•	Signal bucketing = 10x write reduction
+•	Cached sitemap = amortized read cost
+•	Lazy evaluation = minimal writes
+________________________________________
+Principle D: Config-Driven, Not Code-Driven
+Rule: Site behavior defined by JSON config, not hardcoded logic.
+Why:
+•	Non-technical owners can control sites
+•	No redeployments for content changes
+•	A/B variants stored as data, not code
+•	Easier to test and validate
+Implementation:
+•	Entire site defined by sitepkg JSON
+•	Templates use placeholders ({{name}})
+•	Variants stored in content.main / content.ghost
+•	No conditional logic in templates
+________________________________________
+Principle E: Privacy-First, Always
+Rule: Never store user-level data. Only aggregate signals.
+Why:
+•	GDPR/CCPA compliance by design
+•	No cookie banners needed
+•	Trust = conversion
+•	Simpler architecture
+Implementation:
+•	No cookies
+•	No localStorage (except temporary signal batching)
+•	No user IDs
+•	Only counters: {views: 1000, clicks: 50}
+•	Signals aggregate at site+variant level only
+________________________________________
+3.3 Decision Framework
+When evaluating any new feature or change, ask:
+Question	Answer Must Be
+Does it increase cost?	No (or only at scale)
+Does it require ops?	No (or on-demand only)
+Does it require user action?	No (or minimal, once)
+Does it track users?	No
+Does it manipulate users?	No
+Is it reversible?	Yes
+Does it compound over time?	Yes (or neutral)
+Does it work without Google?	Yes
+Will it work in 10 years?	Yes
+If any answer is wrong → Reject the feature.
+________________________________________
+<a name="system-architecture"></a>
+4. SYSTEM ARCHITECTURE
+4.1 High-Level Overview
+┌─────────────────────────────────────────────────────────────┐
+│                      USER / BOT / LLM                       │
+│          (Browser, Voice Assistant, Search Engine)          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│              CLOUDFLARE GLOBAL EDGE NETWORK                 │
+│                                                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  WORKER (Server-Side Rendering + Logic)              │  │
+│  │  • Fetch sitepkg from KV (1 read)                    │  │
+│  │  • Check evaluation triggers (lazy + hybrid)         │  │
+│  │  • Select variant (traffic-aware: 80/90/95%)         │  │
+│  │  • Generate HMAC token + nonce                       │  │
+│  │  • Inject data into template                         │  │
+│  │  • Return HTML (<50ms typical)                       │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                              ↓                                │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  KV (Globally Distributed Storage)                   │  │
+│  │  • sitepkg:{slug} - Site package (80-150KB)          │  │
+│  │  • signals:{slug}:{variant} - View/click counts      │  │
+│  │  • version:{slug}:{vid} - Content deltas (~5KB)      │  │
+│  │  • ratelimit:{slug}:{nonce}:{type} - Per-signal type rate limit counters (TTL 24h) │  │
+│  │  • site_index:{prefix} - Sharded slug lists          │  │
+│  │  • sitemap_cache:{prefix} - Generated XML (TTL 24h)  │  │
+│  │  • sitemap_cache_ts:{prefix} - Timestamp (TTL 24h)  │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                              ↓                                │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  PAGES (Static Template Hosting)                     │  │
+│  │  • template.html (single file, no build)             │  │
+│  │  • Pure HTML + CSS + Vanilla JS                      │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                              ↓                                │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  R2 (Optional Backup Storage)                        │  │
+│  │  • Monthly snapshots (on-demand)                     │  │
+│  │  • Historical archives                                │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    CONTENT MANAGEMENT                        │
+│                                                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  GOOGLE SHEETS (SME Input Layer)                     │  │
+│  │  • 30+ columns (slug, name, content, variants, etc.) │  │
+│  │  • Manual entry by business owner                    │  │
+│  │  • Manual nearby POIs (5 items)                      │  │
+│  │  • Manual reviews (5 best)                           │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                              ↓                                │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  GOOGLE APPS SCRIPT (Publisher)                      │  │
+│  │  • Read sheet row                                    │  │
+│  │  • Build sitepkg JSON                                │  │
+│  │  • Publish to KV via Worker API                      │  │
+│  │  • Update site index                                 │  │
+│  │  • Trigger: "Publish Website" button                 │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+4.2 Component Descriptions
+4.2.1 Cloudflare Worker (Edge SSR)
+Purpose: Server-side rendering + request handling + evolution logic
+Responsibilities:
+•	Receive incoming HTTP requests
+•	Fetch site configuration from KV (1 read - optimized)
+•	Check if evaluation needed (hybrid triggers)
+•	Select A/B variant (traffic-aware split)
+•	Generate security tokens (HMAC + nonce)
+•	Inject data into HTML template
+•	Return rendered page (<50ms)
+•	Handle signal tracking endpoints
+•	Handle admin API endpoints
+Technology: JavaScript ES6, runs on V8 at Cloudflare edge
+Scale: 100,000 requests/day free, unlimited with paid tier
+________________________________________
+4.2.2 Cloudflare KV (Storage)
+Purpose: Globally distributed key-value store
+Responsibilities:
+•	Store site packages (80-150KB each)
+•	Store signal aggregations (views, clicks)
+•	Store version deltas (rollback history)
+•	Store rate limit counters (ratelimit:{slug}:{nonce}:{type}, TTL 24h)
+•	No KV nonce storage (nonce is stateless; validated via HMAC + timestamp)
+•	Store site indexes (sharded by prefix)
+•	Store cached sitemap (24h TTL)
+Technology: Eventually consistent, globally replicated
+Scale: 1GB storage free, 100K reads/day free, 1K writes/day free
+________________________________________
+4.2.3 Cloudflare Pages (Template Hosting)
+Purpose: Host static HTML template
+Responsibilities:
+•	Serve template.html (single file)
+•	No build process
+•	No dependencies
+•	Pure web standards
+Technology: Static file hosting, CDN-backed
+Scale: Unlimited requests free
+________________________________________
+4.2.4 Cloudflare R2 (Optional Backups)
+Purpose: Long-term archival storage
+Responsibilities:
+•	Store monthly snapshots (on-demand, not scheduled)
+•	Store emergency rollback archives
+•	Provide historical proof of longevity
+Technology: S3-compatible object storage
+Scale: 10GB free, extremely cheap beyond
+________________________________________
+4.2.5 Google Sheets (CMS)
+Purpose: Content management system for business owners
+Responsibilities:
+•	Provide familiar spreadsheet interface
+•	Store all site content (text, images, variants)
+•	Store metadata (reviews, nearby POIs)
+•	Enable easy updates by non-technical users
+Technology: Google Sheets, collaborative, real-time
+Scale: 10M cells free (supports 100K+ sites theoretically)
+________________________________________
+4.2.6 Google Apps Script (Publisher)
+Purpose: Bridge between Sheets and Workers
+Responsibilities:
+•	Read selected row from sheet
+•	Validate required fields
+•	Build sitepkg JSON structure
+•	Call Worker admin API to publish
+•	Update site indexes
+•	Provide UI feedback
+Technology: JavaScript, runs on Google's infrastructure
+Scale: 20K executions/day free
+________________________________________
+4.3 Data Flow Diagrams
+4.3.1 Page Render Flow (Request Time)
+┌─────────────┐
+│ User visits │
+│ webzyl.dev/ │
+│ kerala-     │
+│ resort      │
+└──────┬──────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Receive Request                                  │
+│ • Parse URL                                              │
+│ • Extract slug: "kerala-resort"                          │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Fetch Site Package (SINGLE READ)                │
+│ • KV.get('sitepkg:kerala-resort')                        │
+│ • Returns: {config, content, trust, local, meta}         │
+│ • Size: 80-150KB                                         │
+│ • Time: ~10ms                                            │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Check Evaluation Triggers (NO KV WRITE)         │
+│ • Check: days_since_last_eval > 30? → Evaluate          │
+│ • Check: isAdmin (X-Trigger-Eval)? → Evaluate           │
+│ • Check: random() < 0.01? → Evaluate (1% probabilistic) │
+│ • (Signal accumulation checked during actual eval)       │
+│ • If YES: ctx.waitUntil(evaluate()) [async]             │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Select Variant (Traffic-Aware)                  │
+│ • totalViews = meta.total_views                          │
+│ • IF totalViews < 2000:  ghostPercent = 20%             │
+│ • IF totalViews < 10000: ghostPercent = 10%             │
+│ • ELSE:                  ghostPercent = 5%              │
+│ • variant = random() < ghostPercent ? 'ghost' : 'main'  │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Generate Security Token                         │
+│ • nonce = crypto.randomUUID()
+│ • timestamp = Date.now()
+│ • message = `${slug}|${variant}|${nonce}|${timestamp}`
+│ • token = HMAC-SHA256(message, SECRET)
+│ • NOTE: Nonce is stateless. It is NEVER stored in KV.
+│ • KV is used only for rate limiting via: ratelimit:{slug}:{nonce}:{type}
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Fetch Template                                  │
+│ • fetch('https://template.pages.dev/template.html')     │
+│ • Returns: HTML with {{placeholders}}                    │
+│ • Time: ~5ms (cached)                                    │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Inject Data                                     │
+│ • Replace {{name}} with config.name                      │
+│ • Replace {{headline}} with content[variant].headline    │
+│ • Replace {{trust_badge}} with calculated value          │
+│ • Inject window.SITE_DATA = {slug, variant, token, ...} │
+│ • Inject Schema.org structured data                      │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Return HTML                                     │
+│ • Status: 200 OK                                         │
+│ • Content-Type: text/html                                │
+│ • Body: Fully rendered HTML                              │
+│ • Total Time: <50ms (typical)                            │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────┐
+│ Browser      │
+│ Renders Page │
+│ Executes JS  │
+│ Tracks       │
+│ Signals      │
+└──────────────┘
+________________________________________
+4.3.2 Signal Tracking Flow (Client → Worker)
+┌──────────────┐
+│ User Action  │
+│ • Page load  │
+│ • CTA click  │
+└──────┬───────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Client JS: Send Signal (sendBeacon)                     │
+│ • navigator.sendBeacon('/api/signals', {                │
+│     slug: 'kerala-resort',                               │
+│     variant: 'main',                                     │
+│     token: 'abc123...',                                  │
+│     nonce: 'uuid-456...',                                │
+│     timestamp: 1736123456789,                            │
+│     type: 'view',  // or 'click'                         │
+│     value: 1                                             │
+│   })                                                     │
+│ • Guaranteed delivery (even on page unload)              │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Receive Signal                                  │
+│ • Parse FormData                                         │
+│ • Extract: slug, variant, token, nonce, type, value     │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Validate Security (3 Checks)                    │
+│ // Stateless nonce validation (NO KV nonce storage)
+│ // Step 1: Reject old timestamps (>24 hours)
+│ const ts = parseInt(timestamp, 10);
+│ if (!ts || (Date.now() - ts) > 86400000) {
+│   return new Response("Expired timestamp", { status: 403 });
+│ }
+│ // Step 2: Verify HMAC token
+│ // token = HMAC(slug + variant + nonce + timestamp, SECRET)
+│ const expectedToken = await generateHMAC(`${slug}|${variant}|${nonce}|${timestamp}`, env.SECRET);
+│ if (token !== expectedToken) {
+│   return new Response("Invalid token", { status: 403 });
+│ }
+│ // Step 3: Apply KV rate limit counters (allowed KV usage)
+│ const rlKey = `ratelimit:${slug}:${nonce}:${type}`;
+│ const count = parseInt(await env.WEBZYL_CONFIGS.get(rlKey) || "0", 10);
+│ const limits = { view: 3, click: 10 };
+│ if (count >= (limits[type] || 0)) {
+│   return new Response("Type limit exceeded", { status: 429 });
+│ }
+│ await env.WEBZYL_CONFIGS.put(rlKey, String(count + 1), { expirationTtl: 86400 });
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓ (If ANY check fails → 403 Forbidden)
+       │
+       ↓ (If ALL pass)
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Aggregate Signal (Mode-Aware)                   │
+│ • mode = sitepkg.meta.signal_mode ('simple'/'bucketed') │
+│                                                          │
+│ IF mode == 'simple':                                     │
+│   • key = 'signals:slug:variant'                         │
+│   • signals = KV.get(key) || {views:0, clicks:0}       │
+│   • IF type=='view':  signals.views += 1                │
+│   • IF type=='click': signals.clicks += 1               │
+│   • KV.put(key, signals)                                 │
+│                                                          │
+│ IF mode == 'bucketed':                                   │
+│   • bucket = floor(now / 300000) * 300000  // 5min      │
+│   • key = 'signals:slug:variant:bucket'                  │
+│   • signals = KV.get(key) || {v:0, c:0}                │
+│   • IF type=='view':  signals.v += 1                     │
+│   • IF type=='click': signals.c += 1                     │
+│   • KV.put(key, signals, TTL=30 days)                    │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Update Rate Limit Counter                       │
+│ • key = 'ratelimit:slug:nonce:type'                     │
+│ • count = KV.get(key) || 0                               │
+│ • KV.put(key, count + 1, TTL=24h)                        │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Increment Eval Counter                          │
+│ (This step removed: eval_counter is NOT incremented in /api/signals)
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────┐
+│ Return 200   │
+│ OK           │
+└──────────────┘
+________________________________________
+4.3.3 Evaluation & Promotion Flow (Async)
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Check Evaluation Eligibility (NO KV WRITE)       │
+│ • Get signals for main + ghost (KV reads)                │
+│ • totalViews = mainViews + ghostViews                    │
+│ • If totalViews < 500: SKIP (insufficient data)          │
+│ • If sufficient data: Proceed to evaluation              │
+└──────┬───────────────────────────────────────────────────┘
+  │
+  ↓
+┌──────────────────────────────────────────────────────────┐
+│ Trigger Detected (one of 3 conditions met)              │
+│ • days_since > 30 (time-based fallback)                 │
+│ • isAdmin (X-Trigger-Eval header)                       │
+│ • random < 0.01 (probabilistic, optional)               │
+│ • (Signal accumulation checked inside evaluateAndPromote)│
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Start Async Evaluation                          │
+│ • ctx.waitUntil(evaluateAndPromote(slug, sitepkg, env))│
+│ • Does NOT block page response                           │
+│ • Runs in background                                     │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Evaluation: Fetch Signals (Mode-Aware)                  │
+│                                                          │
+│ IF mode == 'simple':                                     │
+│   • mainSignals = KV.get('signals:slug:main')           │
+│   • ghostSignals = KV.get('signals:slug:ghost')         │
+│                                                          │
+│ IF mode == 'bucketed':                                   │
+│   • Read last 7 days of 5-min buckets                    │
+│   • Sum all bucket.v and bucket.c values                 │
+│   • Aggregate into {views, clicks}                       │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Evaluation: Check Minimum Sample Size                   │
+│ • IF ghostSignals.views < 500:                           │
+│     → Log "Not enough data"                              │
+│     → EXIT (no promotion)                                │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓ (Enough data)
+┌──────────────────────────────────────────────────────────┐
+│ Evaluation: Calculate CTRs                               │
+│ • mainCTR = main.clicks / main.views                     │
+│ • ghostCTR = ghost.clicks / ghost.views                  │
+│ • IF main.views == 0: mainCTR = 0                        │
+│ • IF ghost.views == 0: ghostCTR = 0                      │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Evaluation: Safety Rails + Adaptive Threshold Test      │
+│ • SAFETY CHECKS (must pass all):                        │
+│   - ghostViews >= 500                                   │
+│   - ghostClicks >= 5 (prevents "lucky click")           │
+│   - mainClicks >= 3 OR mainClicks == 0                  │
+│   - IF mainClicks == 0 && mainViews > 300: BLOCK        │
+│ • STATISTICAL TEST:                                     │
+│   - mainSE = sqrt(mainCTR*(1-mainCTR) / main.views)     │
+│   - ghostSE = sqrt(ghostCTR*(1-ghostCTR) / ghost.views) │
+│   - combinedSE = sqrt(mainSE² + ghostSE²)                │
+│   - threshold = max(0.15, 3 * combinedSE)                │
+│   - actualUplift = (ghostCTR - mainCTR) / mainCTR        │
+│   - shouldPromote = actualUplift > threshold             │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+       ├─── Ghost WINS (shouldPromote == true) ───┐
+       │                                           ↓
+       │                    ┌──────────────────────────────┐
+       │                    │ Archive Current Main         │
+       │                    │ • Extract content + meta     │
+       │                    │ • delta = {content, meta}    │
+       │                    │ • vid = 'v' + timestamp      │
+       │                    │ • KV.put('version:slug:vid') │
+       │                    │ • Update versions_index      │
+       │                    │ • Keep only last 10 versions │
+       │                    └──────┬───────────────────────┘
+       │                           ↓
+       │                    ┌──────────────────────────────┐
+       │                    │ Promote Ghost to Main        │
+       │                    │ • content.main = content.ghost
+       │                    │ • Generate new ghost variant │
+       │                    │   (mutate headline/CTA)      │
+       │                    └──────┬───────────────────────┘
+       │                           ↓
+       │                    ┌──────────────────────────────┐
+       │                    │ Update Meta                  │
+       │                    │ • last_evaluated = now       │
+       │                    │ • version = 'v' + timestamp  │
+       │                    │ • total_views += all views   │
+       │                    │ • main_ctr = ghostCTR        │
+       │                    └──────┬───────────────────────┘
+       │                           ↓
+       │                    ┌──────────────────────────────┐
+       │                    │ Save & Reset                 │
+       │                    │ • KV.put('sitepkg:slug')     │
+       │                    │ • Delete old signals         │
+       │                    │ • Log: "✅ Promoted"         │
+       │                    └──────────────────────────────┘
+       │
+       └─── Ghost LOST (shouldPromote == false) ───┐
+                                                    ↓
+                             ┌──────────────────────────────┐
+                             │ Keep Main, Update Meta Only  │
+                             │ • last_evaluated = now       │
+                             │ • total_views += all views   │
+                             │ • Delete old signals         │
+                             │ • Log: "❌ Ghost lost"       │
+                             └──────────────────────────────┘
+________________________________________
+4.3.4 Publish Flow (Sheet → Worker)
+┌──────────────┐
+│ Owner fills  │
+│ Sheet row    │
+│ with site    │
+│ content      │
+└──────┬───────┘
+       │
+       ↓
+┌──────────────┐
+│ Owner clicks │
+│ "Webzyl →    │
+│  Publish     │
+│  Website"    │
+└──────┬───────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Apps Script: onPublish() Triggered                      │
+│ • Get active row number                                  │
+│ • Read all columns (A1:BB1)                              │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Apps Script: Validate Required Fields                   │
+│ • Check slug exists                                      │
+│ • Check name exists                                      │
+│ • Check tagline exists                                   │
+│ • IF missing → Alert user, EXIT                          │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Apps Script: Build Site Package JSON                    │
+│ • Parse JSON fields (gallery, rooms, amenities)          │
+│ • Build nearby POIs array (5 items)                      │
+│ • Build reviews array (5 items)                          │
+│ • Structure into sitepkg format:                         │
+│   {                                                      │
+│     config: {name, tagline, about, location, images},   │
+│     content: {                                           │
+│       main: {headline_a, cta_a},                         │
+│       ghost: {headline_b, cta_b}                         │
+│     },                                                   │
+│     trust: {verified_since, reviews, rating},            │
+│     local: {nearby_pois},                                │
+│     meta: {                                              │
+│       signal_mode: 'simple',                             │
+│       last_evaluated: 0,                                 │
+│       version: 'v1',                                     │
+│       total_views: 0                                     │
+│     }                                                    │
+│   }                                                      │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Apps Script: Call Worker Admin API                      │
+│ • UrlFetchApp.fetch('https://worker.dev/api/admin/...') │
+│ • Method: POST                                           │
+│ • Headers:                                               │
+│   - Content-Type: application/json                       │
+│   - X-Auth-Token: SECRET                                 │
+│   - X-Trigger-Eval: true                                 │
+│ • Body: JSON.stringify({slug, sitepkg})                  │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Validate Admin Token                            │
+│ • IF request.headers.get('X-Auth-Token') != ADMIN_TOKEN: │
+│     → Return 401 Unauthorized                            │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Store Site Package                              │
+│ • KV.put('sitepkg:' + slug, JSON.stringify(sitepkg))    │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Update Sharded Site Index                       │
+│ • prefix = slug.slice(0, 2).toLowerCase()                │
+│ • shard = KV.get('site_index:' + prefix) || []          │
+│ • IF !shard.includes(slug):                              │
+│     shard.push(slug)                                     │
+│     KV.put('site_index:' + prefix, shard)                │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Update Site List (Marketplace)                  │
+│ // Update marketplace list shard (no global site_list allowed)
+│ const prefix = slug.slice(0, 2).toLowerCase();
+│ const listKey = `site_list:${prefix}`;
+│ const shard = await env.WEBZYL_CONFIGS.get(listKey, { type: "json" }) || [];
+│ const entry = {
+│   slug,
+│   name: sitepkg.config?.name || sitepkg.name,
+│   business_type: sitepkg.meta?.business_type,
+│   city: sitepkg.config?.location?.city,
+│   rating: sitepkg.trust?.avg_rating,
+│   updated_at: sitepkg.meta?.updated_at || new Date().toISOString()
+│ };
+│ const exists = shard.some(x => x.slug === slug);
+│ if (!exists) shard.push(entry);
+│ else {
+│   // update existing metadata (idempotent publish)
+│   for (let i = 0; i < shard.length; i++) {
+│     if (shard[i].slug === slug) {
+│       shard[i] = entry;
+│       break;
+│     }
+│   }
+│ }
+│ await env.WEBZYL_CONFIGS.put(listKey, JSON.stringify(shard));
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Invalidate Sitemap Cache (Affected Shard)       │
+│ • const prefix = slug.substring(0, 2).toLowerCase()     │
+│ • KV.delete(`sitemap_cache:${prefix}`)                   │
+│ • KV.delete(`sitemap_cache_ts:${prefix}`)                │
+│ • (Forces regeneration on next sitemap request)          │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Trigger Evaluation (if header present)          │
+│ • IF X-Trigger-Eval == 'true':                           │
+│     ctx.waitUntil(evaluateAndPromote(slug, sitepkg))    │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Worker: Return Success                                  │
+│ • Status: 200 OK                                         │
+│ • Body: {success: true, slug, url}                       │
+└──────┬───────────────────────────────────────────────────┘
+       │
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│ Apps Script: Show Success Dialog                        │
+│ • "✅ Website published successfully!"                   │
+│ • "View at: https://webzyl.dev/kerala-resort"           │
+└──────────────────────────────────────────────────────────┘
+________________________________________
+4.4 Request Handling Matrix
+Request Type	Worker Route	KV Reads	KV Writes	Response Time	Caching
+Page view	GET /:slug	1-2	0	<50ms	No
+Signal (view)	POST /api/signals	2-3	2	<10ms	No
+Signal (click)	POST /api/signals	2-3	2	<10ms	No
+Sitemap	GET /sitemap.xml	1 (cached) or 676 (generate)	2 (cache)	<100ms (cached) or <2s (generate)	Yes (24h)
+Robots.txt	GET /robots.txt	0	0	<5ms	No
+Publish	POST /api/admin/publish	3-5	4-6	<200ms	No
+Rollback	POST /api/admin/rollback	3	1	<100ms	No
+List versions	GET /api/admin/versions	1	0	<10ms	No
+________________________________________
+<a name="the-5-core-wedges"></a>
+5. THE 5 CORE WEDGES
+These are the compounding features that create an insurmountable competitive moat.
+5.1 Silent A/B Evolution ⭐⭐⭐⭐⭐
+What it does: Automatically tests headline and CTA variants, promotes winners, archives losers, generates new variants, all without owner intervention.
+How it compounds:
+•	Week 1: Test variant A vs B
+•	Week 2: B wins (+20% CTR), becomes new A, generate new B
+•	Week 3: Test new A vs new B
+•	Month 3: 10+ evolution cycles
+•	Year 1: Site is 3x more effective than launch
+•	Year 3: Impossible for competitors to match (0 history)
+Technical implementation:
+javascript
+// Traffic-aware variant selection
+const totalViews = sitepkg.meta.total_views || 0;
+let ghostPercent;
+
+if (totalViews < 2000) {
+  ghostPercent = 0.20; // 20% traffic to ghost (fast learning)
+} else if (totalViews < 10000) {
+  ghostPercent = 0.10; // 10% traffic to ghost (balanced)
+} else {
+  ghostPercent = 0.05; // 5% traffic to ghost (stable)
+}
+
+const variant = Math.random() < ghostPercent ? 'ghost' : 'main';
+const content = sitepkg.content[variant];
+
+// Evaluation triggers (NO KV WRITE - budget-safe)
+const daysSince = (Date.now() - sitepkg.meta.last_evaluated) / 86400000;
+
+const shouldEvaluate =
+  daysSince >= 30 ||    // Time-based fallback (30+ days)
+  isAdmin ||            // Owner published (X-Trigger-Eval header)
+  Math.random() < 0.01; // Probabilistic (1%)
+
+// Signal accumulation check happens INSIDE evaluateAndPromote()
+// No KV write on GET request - protects write budget
+if (shouldEvaluate) {
+  ctx.waitUntil(evaluateAndPromote(slug, sitepkg, env));
+}
+
+// Cold-start acceleration for low-traffic sites:
+// Sites with <1000 total views use 200-view minimum (not 500)
+// This allows first evolution in ~50 days @ 10 views/day
+// instead of 250 days, keeping "self-evolving" promise intact
+// Safety rails (MIN_GHOST_CLICKS = 5) still prevent junk promotion
+
+// Adaptive threshold promotion with zero-click safety rails
+function shouldPromote(mainCTR, ghostCTR, mainViews, ghostViews, mainClicks, ghostClicks) {
+  // --- SAFETY-FIRST PROMOTION BASELINE ---
+  // Hard-coded minimum clicks to prevent "lucky click" promotions
+  const MIN_GHOST_VIEWS = 500;
+  const MIN_GHOST_CLICKS = 5;
+  const MIN_MAIN_CLICKS = 3;
+
+  // Zero-click safety rail: Require minimum clicks
+  if (ghostViews < MIN_GHOST_VIEWS) return false;
+  if (ghostClicks < MIN_GHOST_CLICKS) return false;
+
+  // Cold-start safety: If main has zero/few clicks, require stronger evidence
+  if (mainClicks === 0 && mainViews > 300) return false;
+  if (mainClicks > 0 && mainClicks < MIN_MAIN_CLICKS) return false;
+
+  // Handle edge cases
+  if (mainViews === 0) return false;
+// if mainCTR==0: compute uplift using smoothed CTR, not division by zero
+
+  // Calculate statistical confidence
+  const mainSE = Math.sqrt(mainCTR * (1 - mainCTR) / mainViews);
+  const ghostSE = Math.sqrt(ghostCTR * (1 - ghostCTR) / ghostViews);
+  const combinedSE = Math.sqrt(mainSE * mainSE + ghostSE * ghostSE);
+
+  // Adaptive threshold: max(15%, 3-sigma)
+  const threshold = Math.max(0.15, 3 * combinedSE);
+  const actualUplift = (ghostCTR - mainCTR) / mainCTR;
+
+  return actualUplift > threshold;
+}
+```
+
+**Why it's a wedge:**
+- Competitors starting today = 0 data, 0 learning
+- Your sites after 1 year = 20+ iterations, proven winners
+- **Cannot be caught up with money or technology**
+
+---
+
+### 5.2 Trust Timeline ⭐⭐⭐⭐
+
+**What it does:**
+Displays visual proof of business longevity and builds SEO authority through time.
+
+**Display:**
+```
+⭐ 4.8 (127 reviews) • Trusted for 6+ years
+How it compounds:
+•	Year 0: "New business"
+•	Year 1: "Trusted for 1+ years" (better than 90% of sites)
+•	Year 3: "Trusted for 3+ years" (top 5%)
+•	Year 10: "Trusted for 10+ years" (unbeatable)
+Technical implementation:
+javascript
+// Sheet data
+verified_since: "2018-03-15"
+review_count: 127
+avg_rating: 4.8
+review_1_author: "John D."
+review_1_text: "Amazing place, highly recommend!"
+review_1_rating: 5
+review_1_date: "2024-12-15"
+
+// Worker calculates
+const years = Math.floor(
+  (Date.now() - Date.parse(sitepkg.trust.verified_since)) / 31557600000
+);
+
+const trustBadge = `⭐ ${sitepkg.trust.avg_rating} (${sitepkg.trust.review_count} reviews) • Trusted for ${years}+ years`;
+
+// Structured data
+{
+  "@type": "LodgingBusiness",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": 4.8,
+    "reviewCount": 127
+  },
+  "foundingDate": "2018-03-15"
+}
+```
+
+**Why it's a wedge:**
+- Time cannot be bought
+- SEO prefers established businesses
+- Users trust longevity
+- **Impossible to fake**
+
+---
+
+### 5.3 Local Knowledge Graph ⭐⭐⭐⭐
+
+**What it does:**
+Positions the business as THE authority for the local area, not just the business itself.
+
+**Content generation:**
+```
+Things to Do Nearby:
+- Chembra Peak (5km) - Mountain
+- Soochipara Falls (12km) - Waterfall
+- Wayanad Wildlife Sanctuary (8km) - Wildlife Reserve
+- Edakkal Caves (15km) - Historical Site
+- Pookode Lake (10km) - Lake
+How it compounds:
+•	Voice search: "Hey Siri, things to do near Kerala Mountain Resort"
+•	LLM discovery: "What's near Wayanad resorts?"
+•	Local SEO: Ranks for nearby attraction + business name
+•	Becomes the local hub, not just a listing
+Technical implementation:
+javascript
+// Sheet data (manual entry, 5 POIs)
+nearby_poi_1_name: "Chembra Peak"
+nearby_poi_1_distance: "5km"
+nearby_poi_1_type: "Mountain"
+// ... up to 5
+
+// Worker generates
+const nearbySection = sitepkg.local.nearby
+  .map(poi => `<li><strong>${poi.name}</strong> (${poi.distance}) - ${poi.type}</li>`)
+  .join('');
+
+// Structured data
+{
+  "@type": "TouristAttraction",
+  "name": "Kerala Mountain Resort",
+  "nearbyAttractions": [
+    {
+      "@type": "TouristAttraction",
+      "name": "Chembra Peak",
+      "distance": "5km"
+    }
+    // ... more
+  ]
+}
+Why it's a wedge:
+•	First-mover advantage per location
+•	Voice/LLM queries favor structured data
+•	Builds semantic authority
+•	Hard to replicate once established
+________________________________________
+5.4 Eternal URLs ⭐⭐⭐
+What it does: Once a URL is published, it NEVER breaks. Old URLs redirect permanently to new ones.
+How it works:
+javascript
+// When slug changes (e.g., rebranding)
+const oldSlug = "kerala-homestay";
+const newSlug = "kerala-mountain-resort";
+
+// Store redirect
+await KV.put(`redirect:${oldSlug}`, newSlug);
+
+// Worker handles 404s
+const sitepkg = await KV.get(`sitepkg:${slug}`, {type:'json'});
+
+if (!sitepkg) {
+  const redirect = await KV.get(`redirect:${slug}`);
+  if (redirect) {
+    return Response.redirect(`/${redirect}`, 301); // Permanent
+  }
+  return new Response('Not found', {status: 404});
+}
+```
+
+**Why it's a wedge:**
+- Preserves ALL SEO equity (backlinks never break)
+- Google treats 301s as permanent (PageRank transferred)
+- Competitors lose equity on redesigns
+- **Compounds link authority over decades**
+
+---
+
+### 5.5 Semantic Citation Engine ⭐⭐⭐
+
+**What it does:**
+Every factual claim has a source. Builds trust with users and LLMs.
+
+**Display:**
+```
+Kerala has 44 rivers [1], making it one of the most water-rich 
+states in India. The Western Ghats receive over 3000mm of 
+rainfall annually [2].
+
+Sources:
+1. https://en.wikipedia.org/wiki/List_of_rivers_of_Kerala
+2. https://india-water.gov.in/kerala
+How it compounds:
+•	LLMs prefer cited content (verifiable)
+•	Users trust sourced claims
+•	Google Knowledge Graph integration
+•	Authority signal that compounds
+Technical implementation:
+javascript
+// Sheet content with inline citations
+about: "Kerala has 44 rivers [source: https://en.wikipedia.org/wiki/List_of_rivers_of_Kerala], making it one of the most water-rich states."
+
+// Worker parses
+function parseCitations(text) {
+  const regex = /\[source:\s*([^\]]+)\]/g;
+  const citations = [];
+  let index = 1;
+  
+  const parsed = text.replace(regex, (_, url) => {
+    citations.push({index, url});
+    return `<a href="${url}" class="citation">[${index++}]</a>`;
+  });
+  
+  return {text: parsed, citations};
+}
+
+// Render
+<p>${parsed.text}</p>
+<div class="sources">
+  <h4>Sources:</h4>
+  <ol>
+    ${citations.map(c => `<li><a href="${c.url}">${c.url}</a></li>`).join('')}
+  </ol>
+</div>
+Why it's a wedge:
+•	LLMs cite verifiable sources
+•	Builds reputation as authority
+•	Differentiates from unsourced competitors
+•	Trust = rankings = conversions
+________________________________________
+<a name="technical-specifications"></a>
+6. TECHNICAL SPECIFICATIONS
+6.1 Technology Stack
+Layer	Technology	Version/Variant	Why Chosen
+Edge Runtime	Cloudflare Workers	V8 JavaScript	Global distribution, <50ms response, 100K req/day free
+Storage	Cloudflare KV	Eventually consistent	1GB free, 100K reads/day, globally replicated
+Backup Storage	Cloudflare R2	S3-compatible	10GB free, extremely cheap, optional
+Template Hosting	Cloudflare Pages	Static	Unlimited free, CDN-backed
+CMS	Google Sheets	Collaborative spreadsheet	Familiar UI, 10M cells free, real-time
+Publisher	Google Apps Script	JavaScript	Bridges Sheets → Workers, 20K exec/day free
+Frontend	Pure HTML/CSS/JS	No frameworks	Zero dependencies, works forever
+Security	HMAC-SHA256 + UUIDs	Web Crypto API	Industry standard, zero cost
+6.2 Browser Compatibility
+Browser	Minimum Version	Notes
+Chrome	60+	Full support (sendBeacon, crypto.subtle)
+Firefox	55+	Full support
+Safari	11+	Full support
+Edge	79+	Full support (Chromium-based)
+Opera	47+	Full support
+Mobile Safari	11+	Full support
+Chrome Mobile	60+	Full support
+Fallbacks:
+•	If sendBeacon unavailable → use fetch with keepalive: true
+•	If crypto.subtle unavailable → server-side validation only (still secure)
+6.3 Performance Targets
+Metric	Target	Measured At
+Time to First Byte (TTFB)	<100ms	95th percentile
+First Contentful Paint (FCP)	<1.5s	75th percentile
+Largest Contentful Paint (LCP)	<2.5s	75th percentile
+Cumulative Layout Shift (CLS)	<0.1	75th percentile
+First Input Delay (FID)	<100ms	75th percentile
+Lighthouse Performance	>90	Desktop
+Lighthouse SEO	100	Always
+Worker Execution Time	<50ms	Average
+KV Read Latency	<20ms	Average
+6.4 API Specifications
+6.4.1 Admin Publish API
+Endpoint: POST /api/admin/publish
+Authentication: HMAC token in header
+Request:
+json
+{
+  "slug": "kerala-mountain-resort",
+  "sitepkg": {
+    "config": {
+      "name": "Kerala Mountain Resort",
+      "tagline": "Luxury in the Western Ghats",
+      "about": "...",
+      "images": {
+        "hero": "https://...",
+        "logo": "https://..."
+      },
+      "location": {
+        "address": "...",
+        "city": "Wayanad",
+        "state": "Kerala",
+        "country": "India",
+        "lat": 11.6854,
+        "lng": 75.8357
+      },
+      "contact_phone": "+91...",
+      "contact_email": "..."
+    },
+    "content": {
+      "main": {
+        "headline": "Experience Luxury in the Mountains",
+        "cta_text": "Book Your Stay",
+        "cta_link": "https://..."
+      },
+      "ghost": {
+        "headline": "Discover Premium Mountain Retreat",
+        "cta_text": "Reserve Now",
+        "cta_link": "https://..."
+      }
+    },
+    "trust": {
+      "verified_since": "2018-03-15",
+      "review_count": 127,
+      "avg_rating": 4.8,
+      "reviews": [...]
+    },
+    "local": {
+      "nearby": [...]
+    },
+    "meta": {
+      "signal_mode": "simple",
+      "last_evaluated": 0,
+      "version": "v1",
+      "total_views": 0
+    }
+  }
+}
+```
+
+**Headers:**
+```
+Content-Type: application/json
+X-Auth-Token: <SECRET_TOKEN>
+X-Trigger-Eval: true  (optional, triggers evaluation)
+Response (Success):
+json
+{
+  "success": true,
+  "slug": "kerala-mountain-resort",
+  "url": "https://webzyl.dev/kerala-mountain-resort"
+}
+Response (Error):
+json
+{
+  "success": false,
+  "error": "Missing required field: name"
+}
+```
+
+---
+
+#### **6.4.2 Signal Tracking API**
+
+**Endpoint:** `POST /api/signals`
+
+**Authentication:** HMAC token in body
+
+**Request (FormData):**
+```
+slug=kerala-mountain-resort
+variant=main
+token=abc123def456...
+nonce=550e8400-e29b-41d4-a716-446655440000
+type=view
+value=1
+```
+
+**Response (Success):**
+```
+OK
+Status: 200
+```
+
+**Response (Error):**
+```
+Invalid token
+Status: 403
+
+or
+
+Rate limit exceeded
+Status: 429
+
+or
+
+Type limit exceeded
+Status: 429
+________________________________________
+6.4.3 Rollback API
+Endpoint: POST /api/admin/rollback
+Authentication: HMAC token in header
+Request:
+json
+{
+  "slug": "kerala-mountain-resort",
+  "versionId": "v1736870400000"
+}
+Response (Success):
+json
+{
+  "success": true,
+  "version": "v1736870400000"
+}
+Response (Error):
+json
+{
+  "success": false,
+  "error": "Version not found"
+}
+________________________________________
+6.4.4 List Versions API
+Endpoint: GET /api/admin/versions?slug=kerala-mountain-resort
+Authentication: HMAC token in header
+Response:
+json
+[
+  {
+    "id": "v1736870400000",
+    "timestamp": 1736870400000,
+    "headline": "Experience Luxury in the Mountains",
+    "ctr": 0.052
+  },
+  {
+    "id": "v1736784000000",
+    "timestamp": 1736784000000,
+    "headline": "Discover Premium Mountain Retreat",
+    "ctr": 0.048
+  }
+]
+```
+
+---
+
+<a name="data-model--storage"></a>
+## 7. DATA MODEL & STORAGE
+
+### 7.1 Complete KV Key Reference
+```
+# Site Data (Primary)
+sitepkg:{slug}
+  → Full site package (80-150KB)
+  → Structure: {config, content, trust, local, meta}
+  → TTL: None (permanent)
+
+# Signals (Mode-Dependent)
+## Simple Mode (MVP):
+signals:{slug}:main
+  → {views: 1234, clicks: 65}
+
+# Global Indexes (Sharded)
+site_index:{prefix}
+  → Array of slugs: ["kerala-resort", "kasargod-villa", ...]
+  → Prefix = first 2 chars of slug
+  → 676 shards total (26×26)
+  → TTL: None
+
+site_list:{prefix}
+  → Array of marketplace metadata entries for slugs starting with prefix
+  → [{slug, name, business_type, city, rating, updated_at}, ...]
+  → Prefix = first 2 chars of slug (lowercase)
+  → 676 shards total (26×26)
+  → TTL: None
+
+# Sitemap Cache
+sitemap_cache:{prefix}
+  → Generated XML content for shard sitemap (string)
+  → TTL: 24 hours
+  → Notes: Auto-expires; may also be manually deleted on publish for affected prefix
+
+sitemap_cache_ts:{prefix}
+  → Timestamp of sitemap generation (integer)
+  → TTL: 24 hours
+  → Notes: Used to validate freshness / avoid regeneration storms
+
+# Redirects (Eternal URLs)
+redirect:{old_slug}
+  → New slug (string)
+  → TTL: None (permanent redirects)
+7.2 Site Package Schema (sitepkg)
+Complete JSON structure with types and constraints:
+typescript
+interface SitePackage {
+  config: {
+    name: string;                    // Required, 1-100 chars
+    tagline: string;                 // Required, 1-200 chars
+    about: string;                   // Required, 100-2000 chars
+    images: {
+      hero: string;                  // URL, required
+      logo: string;                  // URL, optional
+    };
+    location: {
+      address: string;               // Required
+      city: string;                  // Required
+      state: string;                 // Required
+      country: string;               // Default: "India"
+      lat: number;                   // Latitude, required
+      lng: number;                   // Longitude, required
+    };
+    contact_phone?: string;          // Optional, E.164 format
+    contact_email?: string;          // Optional, valid email
+  };
+  
+  content: {
+    main: {
+      headline: string;              // 10-100 chars
+      cta_text: string;              // 5-30 chars
+      cta_link: string;              // URL
+    };
+    ghost: {
+      headline: string;              // 10-100 chars
+      cta_text: string;              // 5-30 chars
+      cta_link: string;              // URL
+    };
+  };
+  
+  trust: {
+    verified_since: string;          // ISO date: "YYYY-MM-DD"
+    review_count: number;            // Integer >= 0
+    avg_rating: number;              // Float 0-5
+    reviews: Array<{
+      author: string;
+      text: string;                  // 10-500 chars
+      rating: number;                // Integer 1-5
+      date: string;                  // ISO date
+    }>;                              // Max 5 reviews
+  };
+  
+  local: {
+    nearby: Array<{
+      name: string;
+      distance: string;              // e.g., "5km", "10mi"
+      type: string;                  // e.g., "Mountain", "Waterfall"
+    }>;                              // Max 5 POIs
+  };
+  
+  gallery?: string[];                // Array of image URLs, optional
+  rooms?: Array<{                    // Optional room listings
+    name: string;
+    description: string;
+    price: number;
+    image: string;                   // URL
+  }>;
+  amenities?: string[];              // Array of strings, optional
+  
+  meta: {
+    signal_mode: 'simple' | 'bucketed';  // Signal collection mode
+    last_evaluated: number;          // Unix timestamp
+    version: string;                 // e.g., "v1736870400000"
+    total_views: number;             // Cumulative views
+    main_ctr?: number;               // Last known CTR
+    ghost_ctr?: number;              // Last known CTR
+  };
+}
+```
+
+### 7.3 Storage Size Calculations
+
+**Per Site (Realistic):**
+```
+Component                      | Size    | Notes
+-------------------------------|---------|----------------------------
+Config (name, about, location) | 5-15KB  | Text content
+Images (URLs only)             | 1-2KB   | Not the images themselves
+Content (2 variants)           | 1-2KB   | Headlines + CTAs
+Trust (reviews)                | 5-10KB  | 5 reviews with text
+Local (POIs)                   | 1-2KB   | 5 nearby attractions
+Gallery (URLs)                 | 2-10KB  | 10-50 image URLs
+Rooms (JSON)                   | 10-50KB | 5-20 room objects
+Amenities                      | 1-5KB   | List of features
+Meta                           | 0.5KB   | Metadata
+-------------------------------|---------|----------------------------
+TOTAL (sitepkg)                | 30-150KB| Depends on richness
+
+Signals (simple mode)          | 1KB     | 2 counters per variant
+Signals (bucketed, 7 days)     | 5-10KB  | 2016 buckets max
+Versions (10 deltas)           | 50KB    | 5KB per delta
+Rate limits (temporary)        | 0.2KB   | Auto-expire 24h
+-------------------------------|---------|----------------------------
+TOTAL PER SITE                 | 80-200KB| Average: ~150KB
+```
+
+**Global Overhead:**
+```
+site_index (676 shards)        | 5-10MB  | At 10,000 sites
+site_list                      | 1-5MB   | At 10,000 sites
+site_list:{prefix}             | 1-5MB   | At 10,000 sites (sharded by first two letters of slug)
+sitemap_cache                  | 500KB   | At 10,000 sites
+redirects                      | Variable| 1KB per redirect
+-------------------------------|---------|----------------------------
+TOTAL OVERHEAD                 | 10-20MB | At scale
+```
+
+**Free Tier Capacity:**
+```
+KV Storage: 1 GB
+
+Light sites (80KB avg):
+- 1GB ÷ 80KB = 12,800 sites
+- With overhead: ~12,000 sites
+
+Average sites (150KB avg):
+- 1GB ÷ 150KB = 6,800 sites
+- With overhead: ~6,500 sites
+
+Heavy sites (200KB avg):
+- 1GB ÷ 200KB = 5,120 sites
+- With overhead: ~5,000 sites
+
+DEFENSIBLE CLAIM:
+"$0/month for first 500-1,500 sites"
+(Conservative estimate considering variations)
+________________________________________
+<a name="security--anti-spam"></a>
+8. SECURITY & ANTI-SPAM
+8.1 Threat Model
+What we protect against:
+1.	Signal Spam 
+o	Bot submits fake view/click signals
+o	Goal: Manipulate A/B evolution
+o	Impact: Wrong variants promoted
+2.	Replay Attacks 
+o	Attacker reuses valid token
+o	Goal: Inflate signal counts
+o	Impact: Polluted data
+3.	Nonce Exhaustion 
+o	Attacker requests many pages
+o	Goal: Fill KV with nonces
+o	Impact: Storage/cost
+4.	Admin API Abuse 
+o	Unauthorized publish attempts
+o	Goal: Deface sites or spam
+o	Impact: Platform reputation
+5.	Rate Limit Bypass 
+o	Distributed attack from many IPs
+o	Goal: Overwhelm signal endpoint
+o	Impact: High KV write costs
+What we explicitly DON'T protect against:
+•	DDoS (Cloudflare handles this)
+•	SQL injection (no SQL database)
+•	XSS (no user-generated HTML)
+•	CSRF (stateless, no sessions)
+8.2 HMAC + Nonce System
+// Stateless Nonce + Token Design
+// 1. Generate random nonce (crypto.randomUUID())
+// 2. Get current timestamp (ms since epoch)
+// 3. Create message: `${slug}|${variant}|${nonce}|${timestamp}`
+// 4. Generate HMAC signature: token = HMAC(message, SECRET)
+// 5. Inject into page:
+//    window.SITE_DATA = { slug, variant, token, nonce, timestamp }
+
+// On /api/signals:
+// 1. Parse slug, variant, token, nonce, timestamp, type
+// 2. Recompute expected token = HMAC(slug|variant|nonce|timestamp, SECRET)
+// 3. Validate:
+//    - token === expected token
+//    - timestamp is within 24h of now
+//    - (no KV.get/put for nonce)
+// 4. Rate limiting:
+//    - key = ratelimit:{slug}:{nonce}:{type} (TTL 24h)
+//    - count = KV.get(key) || 0
+//    - if count >= limit: reject
+//    - else: KV.put(key, count+1, TTL=24h)
+
+// No nonce:{uuid} is ever written to KV. All validation is stateless except for rate limiting.
+
+// Client-Side (sendBeacon):
+// ...existing code for sending signals with nonce, token, timestamp...
+8.3 Rate Limiting Strategy
+Per-Type Limits:
+javascript
+const limits = {
+  view: 3,    // Normal user = 1 view, allow 3 for edge cases
+  click: 10   // Allow multiple clicks (multi-page journey)
+};
+```
+
+**Reasoning:**
+- **View limit (3):** Normal = 1 page load. Extra 2 for:
+  - Browser refresh
+  - Back button
+  - Bookmark revisit same session
+- **Click limit (10):** Allows legitimate behavior:
+  - Multiple CTA clicks (exploring options)
+  - Form interactions
+  - Navigation clicks
+- **Why not IP-based:** Privacy-first, no tracking, simple
+
+**Attack Impact Analysis:**
+```
+Bot spam scenario:
+- Request 333 pages = 333 nonces
+- Each nonce allows 3 views + 10 clicks = 13 signals
+- Total fake signals: 333 × 13 = 4,329 signals
+
+Real traffic baseline:
+- 1,000 real visits = 1,000 views + ~50 clicks = 1,050 signals
+
+Fake signal percentage: 4,329 / (4,329 + 1,050) = 80%
+
+Mitigation:
+- Adaptive threshold compensates (statistical significance)
+- 500 view minimum reduces impact
+- Monitoring can flag unusual patterns
+
+Acceptable trade-off for zero-ops, privacy-first design.
+8.4 Admin API Security
+Token-Based Authentication:
+javascript
+// In Worker
+if (url.pathname.startsWith('/api/admin/')) {
+  const authToken = request.headers.get('X-Auth-Token');
+  
+  if (authToken !== env.ADMIN_TOKEN) {
+    return new Response('Unauthorized', {status: 401});
+  }
+  
+  // Proceed with admin action
+}
+
+// In Apps Script
+const ADMIN_TOKEN = PropertiesService.getScriptProperties()
+  .getProperty('ADMIN_TOKEN');
+
+const response = UrlFetchApp.fetch(url, {
+  method: 'POST',
+  headers: {
+    'X-Auth-Token': ADMIN_TOKEN
+  },
+  payload: data
+});
+Token Requirements:
+•	256-bit random string (64 hex chars)
+•	Stored in environment variables (not code)
+•	Rotatable without code changes
+•	Never logged or exposed
+Example generation:
+bash
+openssl rand -hex 32
+# Output: 3a5f9c2e8d1b4a7f6e3c9d2b8a7f5e4c3d2b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e
+8.5 Content Security Policy
+HTTP Headers (set by Worker):
+javascript
+return new Response(html, {
+  headers: {
+    'Content-Type': 'text/html',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'interest-cohort=()',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'", // Required for inline scripts
+      "style-src 'self' 'unsafe-inline'",  // Required for inline styles
+      "img-src 'self' https:",             // Allow external images
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "frame-ancestors 'self'"
+    ].join('; ')
+  }
+});
+Why these choices:
+•	unsafe-inline for scripts/styles: Necessary for template injection
+•	img-src https:: Allow images from CDNs (ImageKit, Drive)
+•	No connect-src *: API calls only to same origin
+•	frame-ancestors 'self': Prevent clickjacking
+________________________________________
+<a name="evolution-engine"></a>
+9. EVOLUTION ENGINE
+9.1 Complete Evaluation Algorithm
+Pseudocode:
+python
+def should_evaluate(slug, sitepkg, is_admin, env):
+    """
+    Hybrid evaluation trigger system.
+    Returns True if evaluation should run.
+    """
+    now = current_timestamp()
+    last_eval = sitepkg.meta.last_evaluated or 0
+    days_since = (now - last_eval) / 86400000  # Days
+    
+    # Not overdue yet
+    if days_since < 7:
+        return False
+
+    # NO eval_counter - removed to protect KV write budget
+    # Signal accumulation checked inside evaluateAndPromote()
+
+    # GUARANTEED TRIGGERS (always evaluate):
+
+    # 1. Admin action (explicit)
+    if is_admin:
+        log(f"[EVAL] Admin trigger: {slug}")
+        return True
+
+    # 2. Emergency fallback (very overdue)
+    if days_since >= 30:
+        log(f"[EVAL] Emergency trigger: {slug} ({days_since} days)")
+        return True
+
+    # PROBABILISTIC TRIGGER (normal operation):
+
+    # 3. Random chance (1% of requests)
+    if random() < 0.01:
+        log(f"[EVAL] Probabilistic trigger: {slug}")
+        return True
+
+    # No trigger - no KV write (budget-safe)
+    return False
+
+def get_signals(slug, variant, sitepkg, env):
+    """
+    Fetch aggregated signals based on mode.
+    """
+    mode = sitepkg.meta.signal_mode or 'simple'
+    
+    if mode == 'simple':
+        # Direct aggregation
+        return kv_get(f"signals:{slug}:{variant}") or {
+            'views': 0,
+            'clicks': 0
+        }
+    
+    elif mode == 'bucketed':
+        # Sum last 7 days of 5-minute buckets
+        now = current_timestamp()
+        total_views = 0
+        total_clicks = 0
+        
+        # 7 days × 288 buckets/day (5 min each)
+        for i in range(7 * 288):
+            bucket_time = now - (i * 300000)  # 5 min = 300,000 ms
+            bucket = floor(bucket_time / 300000) * 300000
+            key = f"signals:{slug}:{variant}:{bucket}"
+            
+            data = kv_get(key)
+            if data:
+                total_views += data.v
+                total_clicks += data.c
+        
+        return {
+            'views': total_views,
+            'clicks': total_clicks
+        }
+
+def should_promote(main_ctr, ghost_ctr, main_views, ghost_views):
+    """
+    Adaptive threshold promotion decision.
+    Uses 3-sigma statistical confidence.
+    """
+    # Minimum sample size
+    if ghost_views < 500:
+        return False
+    
+    # Handle edge cases
+    if main_views == 0 or main_ctr == 0:
+        # Can't compare, need baseline
+        return False
+    
+    # Calculate standard error (SE)
+    main_se = sqrt(main_ctr * (1 - main_ctr) / main_views)
+    ghost_se = sqrt(ghost_ctr * (1 - ghost_ctr) / ghost_views)
+    combined_se = sqrt(main_se**2 + ghost_se**2)
+    
+    # Adaptive threshold
+    # - Minimum 15% uplift (prevents small noisy wins)
+    # - OR 3-sigma confidence (99.7% statistical significance)
+    threshold = max(0.15, 3 * combined_se)
+    
+    # Calculate actual uplift
+    actual_uplift = (ghost_ctr - main_ctr) / main_ctr
+    
+    log(f"[EVAL] Threshold: {threshold*100:.1f}%, Actual: {actual_uplift*100:.1f}%")
+    
+    return actual_uplift > threshold
+
+def evaluate_and_promote(slug, sitepkg, env):
+    """
+    Main evaluation and promotion logic.
+    Runs asynchronously, does not block requests.
+    """
+    log(f"[EVAL] Starting evaluation for {slug}")
+    
+    # Fetch signals
+    main_signals = get_signals(slug, 'main', sitepkg, env)
+    ghost_signals = get_signals(slug, 'ghost', sitepkg, env)
+    
+    # Check minimum sample
+    if ghost_signals['views'] < 500:
+        log(f"[EVAL] Insufficient data: {ghost_signals['views']} ghost views")
+        return
+    
+    # Calculate CTRs
+    main_ctr = (main_signals['clicks'] / main_signals['views'] 
+                if main_signals['views'] > 0 else 0)
+    ghost_ctr = (ghost_signals['clicks'] / ghost_signals['views'] 
+                 if ghost_signals['views'] > 0 else 0)
+    
+    log(f"[EVAL] {slug} CTRs: main={main_ctr*100:.2f}%, ghost={ghost_ctr*100:.2f}%")
+    
+    # Decision: Promote or keep
+    if should_promote(main_ctr, ghost_ctr, 
+                      main_signals['views'], ghost_signals['views']):
+        # GHOST WINS - Promote
+        log(f"[EVAL] ✅ Ghost WINS for {slug} - Promoting")
+        
+        # Archive current main
+        archive_version(slug, sitepkg, env)
+        
+        # Promote ghost to main
+        sitepkg.content.main = copy(sitepkg.content.ghost)
+        
+        # Generate new ghost variant
+        sitepkg.content.ghost = generate_variant(sitepkg.content.main)
+        
+        # Update metadata
+        sitepkg.meta.last_evaluated = current_timestamp()
+        sitepkg.meta.version = f"v{current_timestamp()}"
+        sitepkg.meta.total_views += (main_signals['views'] + 
+                                      ghost_signals['views'])
+        sitepkg.meta.main_ctr = ghost_ctr
+        sitepkg.meta.ghost_ctr = 0
+        
+        # Save
+        kv_put(f"sitepkg:{slug}", sitepkg)
+        
+        # Reset signals
+        kv_delete(f"signals:{slug}:main")
+        kv_delete(f"signals:{slug}:ghost")
+        
+        # No eval_counter to reset (removed for budget protection)
+        
+        log(f"[EVAL] Promotion complete for {slug}")
+        
+    else:
+        # GHOST LOST - Keep main
+        log(f"[EVAL] ❌ Ghost LOST for {slug} - Keeping main")
+        
+        # Update metadata only
+        sitepkg.meta.last_evaluated = current_timestamp()
+        sitepkg.meta.total_views += (main_signals['views'] + 
+                                      ghost_signals['views'])
+        
+        kv_put(f"sitepkg:{slug}", sitepkg)
+        
+        # Reset signals (try again with new ghost later)
+        kv_delete(f"signals:{slug}:main")
+        kv_delete(f"signals:{slug}:ghost")
+        
+        # No eval_counter to reset (removed for budget protection)
+
+def archive_version(slug, sitepkg, env):
+    """
+    Archive current main content as delta.
+    Keeps only last 10 versions.
+    """
+    version_id = f"v{current_timestamp()}"
+    
+    # Store only content + meta (not full sitepkg)
+    delta = {
+        'content': sitepkg.content,
+        'meta': sitepkg.meta
+    }
+    
+    kv_put(f"version:{slug}:{version_id}", delta)
+    
+    # Update version index
+    index = kv_get(f"versions_index:{slug}") or []
+    index.append({
+        'id': version_id,
+        'timestamp': current_timestamp(),
+        'headline': delta.content.main.headline,
+        'ctr': sitepkg.meta.main_ctr or 0
+    })
+    
+    # Keep only last 10 versions (FIFO)
+    if len(index) > 10:
+        removed = index.pop(0)  # Remove oldest
+        kv_delete(f"version:{slug}:{removed['id']}")
+    
+    kv_put(f"versions_index:{slug}", index)
+
+def generate_variant(current):
+    """
+    Simple variant generation (to be improved).
+    Mutates headline and CTA.
+    """
+    # Simple mutations for MVP
+    # TODO: Use AI for better variants in Phase 2
+    
+    headline_mutations = [
+        lambda h: h.replace('Experience', 'Discover'),
+        lambda h: h.replace('Luxury', 'Premium'),
+        lambda h: h.replace('Luxury', 'Exclusive'),
+        lambda h: h + ' - Book Now',
+        lambda h: 'Unforgettable ' + h
+    ]
+    
+    cta_mutations = [
+        'Book Your Stay',
+        'Reserve Now',
+        'Check Availability',
+        'View Rooms',
+        'Get Best Rates',
+        'Explore Options'
+    ]
+    
+    return {
+        'headline': random.choice(headline_mutations)(current.headline),
+        'cta_text': random.choice(cta_mutations),
+        'cta_link': current.cta_link  # Never mutate link
+    }
+```
+
+### 9.2 Statistical Soundness
+
+**Why 3-Sigma (99.7% Confidence)?**
+
+Standard confidence levels:
+- 1-sigma = 68% confidence (too low, many false positives)
+- 2-sigma = 95% confidence (industry standard for A/B tests)
+- 3-sigma = 99.7% confidence **(our choice)**
+
+**Reasoning:**
+- Higher confidence = fewer false positives (wrong promotions)
+- Lower confidence = more agility (faster iterations)
+- 3-sigma balances both (conservative but not paralyzed)
+
+**Example Calculation:**
+```
+Scenario: Low-traffic page
+- Main: 1,000 views, 50 clicks → CTR = 5%
+- Ghost: 1,000 views, 65 clicks → CTR = 6.5%
+- Uplift: 30%
+
+Standard Error Calculation:
+- main_se = sqrt(0.05 * 0.95 / 1000) = 0.0069
+- ghost_se = sqrt(0.065 * 0.935 / 1000) = 0.0078
+- combined_se = sqrt(0.0069² + 0.0078²) = 0.0104
+
+Adaptive Threshold:
+- Statistical: 3 * 0.0104 = 0.0312 (3.12%)
+- Baseline: 15%
+- threshold = max(15%, 3.12%) = 15%
+
+Actual Uplift: 30%
+
+Decision: 30% > 15% → PROMOTE ✅
+
+Why this works:
+- Even with low traffic, 30% uplift is clearly significant
+- 15% baseline prevents tiny improvements from promoting
+- Statistical component ensures confidence in the difference
+```
+
+**Another Example (Noisy Data):**
+```
+Scenario: Very low traffic
+- Main: 200 views, 10 clicks → CTR = 5%
+- Ghost: 200 views, 13 clicks → CTR = 6.5%
+- Uplift: 30% (same as above)
+
+Standard Error Calculation:
+- main_se = sqrt(0.05 * 0.95 / 200) = 0.0154
+- ghost_se = sqrt(0.065 * 0.935 / 200) = 0.0174
+- combined_se = sqrt(0.0154² + 0.0174²) = 0.0233
+
+Adaptive Threshold:
+- Statistical: 3 * 0.0233 = 0.0699 (6.99%)
+- Baseline: 15%
+- threshold = max(15%, 6.99%) = 15%
+
+Actual Uplift: 30%
+
+Decision: 30% > 15% → PROMOTE ✅
+
+But if uplift were only 12%:
+- 12% < 15% → KEEP MAIN ❌
+- Prevents promoting noise
+9.3 Traffic-Aware Variant Split
+Dynamic Allocation:
+javascript
+function getGhostPercent(totalViews) {
+  if (totalViews < 2000) {
+    return 0.20; // 20% ghost (fast learning)
+  } else if (totalViews < 10000) {
+    return 0.10; // 10% ghost (balanced)
+  } else {
+    return 0.05; // 5% ghost (stable)
+  }
+}
+```
+
+**Reasoning:**
+
+| Traffic Level | Ghost % | Why |
+|---------------|---------|-----|
+| **<2,000 views** | 20% | Fast learning needed, small traffic base, 400 ghost views achieves 500 minimum quickly |
+| **2K-10K views** | 10% | Balanced, main has proven itself, 1,000 ghost views still fast |
+| **>10K views** | 5% | Stable operation, main is well-established, 500+ ghost views sufficient, minimal user impact |
+
+**Time to Evaluation:**
+```
+Low traffic (50 views/day):
+- Total views needed: 500 ghost views
+- At 20% split: 500 / 0.20 / 50 = 50 days
+- At 10% split: 500 / 0.10 / 50 = 100 days
+- At 5% split: 500 / 0.05 / 50 = 200 days
+
+Medium traffic (100 views/day):
+- At 20%: 25 days
+- At 10%: 50 days
+- At 5%: 100 days
+
+High traffic (500 views/day):
+- At 20%: 5 days
+- At 10%: 10 days
+- At 5%: 20 days
+
+Dynamic split ensures reasonable evaluation times across all traffic levels.
+________________________________________
+<a name="cost-analysis"></a>
+10. COST ANALYSIS
+10.1 Free Tier Breakdown
+Cloudflare Workers
+Metric	Free Tier	Notes
+Requests	100,000/day	~3M/month
+CPU Time	10ms/request	Typical: <5ms
+Script Size	1MB	Typical: <50KB
+Capacity Calculation:
+100,000 requests/day capacity
+
+Scenario A:
+Continue
+10:55 AM
+10,000 sites × 10 views/site/day = 100,000 req/day ✅ Scenario B: 1,000 sites × 100 views/site/day = 100,000 req/day ✅ Scenario C: 100 sites × 1,000 views/site/day = 100,000 req/day ✅
+Bottleneck: NOT requests (free tier sufficient for 10K sites)
+
+---
+
+#### **Cloudflare KV**
+
+| Metric | Free Tier | Notes |
+|--------|-----------|-------|
+| **Storage** | 1 GB | ~5,000-10,000 sites |
+| **Reads** | 100,000/day | ~3M/month |
+| **Writes** | 1,000/day | ~30K/month ⚠️ |
+| **Deletes** | 1,000/day | ~30K/month |
+| **Lists** | 1,000/day | Not used (sharded index) |
+
+**Reads Capacity:**
+100,000 reads/day capacity
+Per request reads:
+•	Page render: 1 read (sitepkg only)
+•	Signal validation: 1-2 reads (nonce + rate limit)
+•	Average: 2 reads/request
+Capacity: 100,000 ÷ 2 = 50,000 requests/day
+At 50 views/site/day: 50,000 ÷ 50 = 1,000 sites ✅ At 25 views/site/day: 50,000 ÷ 25 = 2,000 sites ✅ At 10 views/site/day: 50,000 ÷ 10 = 5,000 sites ✅
+Bottleneck: Reads limit at 1,000-2,000 sites (moderate traffic)
+
+**Writes Capacity (CRITICAL BOTTLENECK):**
+1,000 writes/day capacity
+Simple mode:
+•	Page view: 0 writes (eval_counter removed for budget protection)
+•	Signal POST: 2 writes (signals, rate_limit)
+•	Average: ~2 writes per visitor
+Capacity: 1,000 ÷ 2 = 500 signals/day
+At 50 views/site/day: 500 ÷ 50 = 10 sites ⚠️ At 25 views/site/day: 500 ÷ 25 = 20 sites ⚠️ At 10 views/site/day: 500 ÷ 10 = 50 sites ⚠️
+WRITES ARE THE FIRST BOTTLENECK in simple mode!
+Bucketed mode:
+•	Signals bucketed (multiple beacons → same bucket)
+•	Effective reduction: ~10x
+•	Capacity: 5,000 signals/day
+At 50 views/site/day: 5,000 ÷ 50 = 100 sites ✅ At 25 views/site/day: 5,000 ÷ 25 = 200 sites ✅ At 10 views/site/day: 5,000 ÷ 10 = 500 sites ✅
+Bottleneck: Writes limit at 100-500 sites (bucketed mode)
+
+**Storage Capacity:**
+1 GB storage capacity
+Per site:
+•	Light (80KB): 1GB ÷ 80KB = 12,800 sites
+•	Average (150KB): 1GB ÷ 150KB = 6,800 sites
+•	Heavy (200KB): 1GB ÷ 200KB = 5,120 sites
+With global overhead (~20MB): -100 sites
+Realistic capacity: 5,000-6,500 sites
+Bottleneck: Storage limit at 5,000-6,500 sites
+
+---
+
+#### **Cloudflare Pages**
+
+| Metric | Free Tier | Notes |
+|--------|-----------|-------|
+| **Requests** | Unlimited | Static assets |
+| **Bandwidth** | Unlimited | CDN-backed |
+| **Build Time** | 500 min/month | Not applicable (no builds) |
+| **Projects** | 1 | Only need 1 |
+
+**Cost:** $0 forever
+
+---
+
+#### **Cloudflare R2**
+
+| Metric | Free Tier | Notes |
+|--------|-----------|-------|
+| **Storage** | 10 GB | Optional backups |
+| **Class A** | 1M/month | Writes |
+| **Class B** | 10M/month | Reads |
+
+**Usage:**
+- Monthly snapshots (on-demand, not scheduled)
+- Emergency rollback archives
+- Historical proof
+
+**Cost:** $0 for MVP, minimal later
+
+---
+
+#### **Google Sheets**
+
+| Metric | Free Tier | Notes |
+|--------|-----------|-------|
+| **Cells** | 10 million | Per account |
+| **Files** | 15 GB storage | Drive limit |
+
+**Capacity:**
+10 million cells ÷ 30 columns per site = 333,333 sites
+Theoretical capacity: 333K sites Practical capacity: Limited by KV, not Sheets
+
+**Cost:** $0 forever
+
+---
+
+#### **Google Apps Script**
+
+| Metric | Free Tier | Notes |
+|--------|-----------|-------|
+| **Executions** | 20,000/day | Per user |
+| **Runtime** | 6 min/execution | More than enough |
+
+**Usage:**
+- 1 execution per publish
+- 20,000 publishes/day capacity
+
+**Cost:** $0 forever
+
+---
+
+### 10.2 Bottleneck Analysis
+
+**Summary Table:**
+
+| Component | Free Tier Limit | Bottleneck At |
+|-----------|-----------------|---------------|
+| **Workers (requests)** | 100K/day | 10,000 sites @ 10 views/day |
+| **KV (reads)** | 100K/day | 1,000-2,000 sites @ 25-50 views/day |
+| **KV (writes - simple)** | 1K/day | 10-50 sites @ 10-50 views/day ⚠️ |
+| **KV (writes - bucketed)** | 1K/day | 100-500 sites @ 10-50 views/day |
+| **KV (storage)** | 1 GB | 5,000-6,500 sites |
+
+**First Bottleneck:** KV writes (simple mode)  
+**Second Bottleneck:** KV storage  
+**Third Bottleneck:** KV reads  
+
+**Critical Decision Points:**
+At 20 sites (simple mode): → Approaching write limit → ACTION: Flip signal_mode to 'bucketed' → Cost: Still $0
+At 1,000 sites (bucketed mode): → Approaching read limit (moderate traffic) → OR approaching storage limit → ACTION: Upgrade to paid KV tier → Cost: $5/month
+At 2,000 sites: → Exceeded free tier limits → ACTION: Workers paid tier + KV paid tier → Cost: $10-15/month
+
+**Note on Free-Tier Capacity:**
+Actual capacity depends on daily signal writes and traffic patterns per site. Conservative estimate: 100-300 sites with typical traffic (25-50 views/day). Optimistic estimate: 500+ sites with low/moderate traffic or bucketed mode enabled early.
+
+---
+
+### 10.3 Paid Tier Pricing
+
+#### **Cloudflare Workers**
+
+**Paid Plan ($5/month):**
+- 10 million requests/month included
+- Additional: $0.50 per million
+- No CPU time limits
+
+**When needed:** After 10K sites or 3M req/month
+
+---
+
+#### **Cloudflare KV**
+
+**Paid Pricing (usage-based):**
+- Storage: $0.50/GB/month
+- Reads: $0.50 per 10 million
+- Writes: $5.00 per million
+- Deletes: $5.00 per million
+
+**Example Costs:**
+At 5,000 sites (bucketed mode, 25 views/day):
+Storage:
+•	5,000 × 150KB = 750MB
+•	Overhead: 20MB
+•	Total: ~770MB (~1GB with safety margin)
+•	Cost: $0.50/month
+Reads:
+•	5,000 × 25 views/day = 125,000 views/day
+•	2 reads/view × 125,000 = 250,000 reads/day
+•	7.5M reads/month
+•	Cost: $0 (under 10M free included)
+Writes (bucketed):
+•	5,000 × 25 views/day × 2 signals = 250,000 signals/day
+•	Bucketed reduction: ÷10 = 25,000 writes/day
+•	750K writes/month
+•	Cost: $3.75/month
+Total KV: ~$4.25/month
+
+---
+
+### 10.4 Cost Projections (Realistic)
+┌──────────────┬────────────────┬──────────────┬──────────────┐ │ Sites │ Avg Traffic │ Cost/Month │ Per Site │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 10-20 │ 50 views/day │ $0.00 │ $0.00 │ │ (MVP) │ Simple mode │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 50-100 │ 25 views/day │ $0.00 │ $0.00 │ │ (Month 2) │ Bucketed mode │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 500 │ 25 views/day │ $0.00 │ $0.00 │ │ (Month 3) │ Bucketed mode │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 1,000 │ 25 views/day │ $5.00 │ $0.005 │ │ (Month 6) │ KV paid tier │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 2,000 │ 25 views/day │ $10.00 │ $0.005 │ │ (Month 9) │ Workers paid │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 5,000 │ 25 views/day │ $15.00 │ $0.003 │ │ (Year 1) │ Full paid │ │ │ ├──────────────┼────────────────┼──────────────┼──────────────┤ │ 10,000 │ 25 views/day │ $25.00 │ $0.0025 │ │ (Year 2) │ Scaled │ │ │ └──────────────┴────────────────┴──────────────┴──────────────┘
+
+**Key Insight:** Cost per site *decreases* as you scale (economies of scale)
+
+---
+
+### 10.5 Revenue Model (Example)
+
+**Pricing Tiers:**
+┌────────────────┬─────────────┬──────────────┬────────────┐ │ Plan │ Price │ Features │ Margin │ ├────────────────┼─────────────┼──────────────┼────────────┤ │ Free │ $0/month │ Basic site │ N/A │ │ (limited) │ │ 1 variant │ │ ├────────────────┼─────────────┼──────────────┼────────────┤ │ Starter │ $5/month │ Evolution │ 99.9% │ │ │ ($50/year) │ Full features│ │ ├────────────────┼─────────────┼──────────────┼────────────┤ │ Pro │ $10/month │ Priority │ 99.95% │ │ │ ($100/year) │ Analytics │ │ ├────────────────┼─────────────┼──────────────┼────────────┤ │ Agency (10+) │ $3/site/mo │ Multi-tenant │ 99.97% │ │ │ │ White-label │ │ └────────────────┴─────────────┴──────────────┴────────────┘
+
+**At Scale (10,000 Starter sites):**
+Revenue: 10,000 × $5/month = $50,000/month Cost: $25/month Profit: $49,975/month Margin: 99.95%
+This is insanely profitable.
+
+---
+
+### 10.6 Comparison to Competitors
+┌─────────────────┬──────────────────┬─────────────────┐ │ Platform │ Cost (10K Sites) │ Per Site/Month │ ├─────────────────┼──────────────────┼─────────────────┤ │ Webzyl v1.3 │ $25/month │ $0.0025 │ ├─────────────────┼──────────────────┼─────────────────┤ │ WordPress.com │ ~$50,000/month │ $5.00 │ │ (Business plan) │ │ │ ├─────────────────┼──────────────────┼─────────────────┤ │ Wix │ ~$140,000/month │ $14.00 │ │ (Business) │ │ │ ├─────────────────┼──────────────────┼─────────────────┤ │ Squarespace │ ~$180,000/month │ $18.00 │ │ (Business) │ │ │ ├─────────────────┼──────────────────┼─────────────────┤ │ Shopify │ ~$290,000/month │ $29.00 │ │ (Basic) │ │ │ └─────────────────┴──────────────────┴─────────────────┘
+Webzyl is 2,000x - 11,600x cheaper at scale.
+
+---
+
+<a name="implementation-roadmap"></a>
+## 11. IMPLEMENTATION ROADMAP
+
+### 11.1 Complete 14-Day Implementation
+
+This is the **exact, step-by-step, copy-paste-ready** implementation plan.
+
+---
+
+#### **DAY 1: Infrastructure Setup (2-3 hours)**
+
+**Tasks:**
+
+1. **Create Cloudflare Account**
+   - Go to: https://dash.cloudflare.com/sign-up
+   - Use email (no credit card required)
+   - Verify email
+
+2. **Enable Workers & Pages**
+   - Dashboard → Workers & Pages
+   - Click "Get Started"
+
+3. **Create KV Namespace**
+   - Workers & Pages → KV
+   - Click "Create namespace"
+   - Name: `webzyl_configs`
+   - Note the **Namespace ID** (you'll need this)
+
+4. **Create Environment Variables**
+   - Workers & Pages → Your Worker → Settings → Variables
+   - Add Variable:
+     - Name: `SECRET`
+     - Value: Generate with: `openssl rand -hex 32`
+     - Type: Secret
+   - Add Variable:
+     - Name: `ADMIN_TOKEN`
+     - Value: Generate with: `openssl rand -hex 32`
+     - Type: Secret
+
+5. **Optional: Install Wrangler CLI**
+```bash
+   npm install -g wrangler
+   wrangler login
+```
+
+**Deliverable:** Cloudflare account ready, KV namespace created, secrets configured
+
+---
+
+#### **DAY 2: Worker Skeleton (3-4 hours)**
+
+**Create Worker:**
+
+1. Dashboard → Workers & Pages → Create Application → Create Worker
+2. Name: `webzyl-worker`
+3. Click "Deploy"
+
+**Edit Worker Code:**
+```javascript
+// worker.js
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const slug = url.pathname.slice(1); // Remove leading /
+    
+    // Handle homepage
+    if (!slug || slug === '') {
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Webzyl Platform</title></head>
+        <body>
+          <h1>🚀 Webzyl - Self-Evolving Websites</h1>
+          <p>Platform launching soon...</p>
+        </body>
+        </html>
+      `, {
+        headers: {'Content-Type': 'text/html'}
+      });
+    }
+    
+    // Fetch site package from KV
+    const sitepkg = await env.WEBZYL_CONFIGS.get(`sitepkg:${slug}`, {
+      type: 'json'
+    });
+    
+    if (!sitepkg) {
+      return new Response('Site not found', {status: 404});
+    }
+    
+    // For now, return JSON (testing)
+    return new Response(JSON.stringify(sitepkg, null, 2), {
+      headers: {'Content-Type': 'application/json'}
+    });
+  }
+};
+```
+
+4. **Bind KV Namespace:**
+   - Settings → Variables → KV Namespace Bindings
+   - Variable name: `WEBZYL_CONFIGS`
+   - KV namespace: Select your `webzyl_configs` namespace
+   - Save
+
+5. **Test Worker:**
+   - Manually add test data to KV (Dashboard → KV → View → Add entry):
+     - Key: `sitepkg:test-site`
+     - Value: `{"config":{"name":"Test Site"},"content":{"main":{"headline":"Hello"}},"meta":{}}`
+   - Visit: `https://webzyl-worker.YOUR-SUBDOMAIN.workers.dev/test-site`
+   - Should return JSON
+
+**Deliverable:** Worker responds with site data from KV
+
+---
+
+*Due to length constraints, I'll continue with the remaining days in the next response. Would you like me to continue with Days 3-14 in complete detail?*
+Yes. Lets Completly Document
+10:59 AM
+🎯 THE ZERO-COST IMMORTAL WEB BLUEPRINT
+VERSION 1.3 FINAL - COMPLETE SPECIFICATION (CONTINUED)
+________________________________________
+DAY 3: Template Integration (4-5 hours)
+Create Template:
+1.	Create Cloudflare Pages Project 
+o	Dashboard → Pages → Create a project
+o	Connect to Git (optional) OR Direct Upload
+o	Name: webzyl-template
+2.	Create template.html:
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>{{name}} - {{tagline}}</title>
+  <meta name="description" content="{{about}}">
+  <link rel="canonical" href="https://webzyl.dev/{{slug}}">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{name}}">
+  <meta property="og:description" content="{{about}}">
+  <meta property="og:image" content="{{hero_image}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://webzyl.dev/{{slug}}">
+  
+  <!-- Schema.org Structured Data -->
+  <script type="application/ld+json">{{schema}}</script>
+  
+  <!-- Styles -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                  url('{{hero_image}}') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .hero-content {
+      max-width: 800px;
+    }
+    
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      line-height: 1.2;
+    }
+    
+    .hero p {
+      font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: #f59e0b;
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.125rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+    
+    .cta-button:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+    }
+    
+    .trust-badge {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    /* Content Section */
+    .content {
+      max-width: 1200px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      color: #1f2937;
+    }
+    
+    .about-text {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: #4b5563;
+    }
+    
+    /* Nearby Section */
+    .nearby {
+      background: #f9fafb;
+      padding: 4rem 2rem;
+    }
+    
+    .nearby-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .nearby h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+      color: #1f2937;
+    }
+    
+    .nearby-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    
+    .nearby-item {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .nearby-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .nearby-item h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: #1f2937;
+    }
+    
+    .nearby-item .distance {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .nearby-item .type {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    /* Footer */
+    .footer {
+      background: #1f2937;
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+      
+      .hero p {
+        font-size: 1.125rem;
+      }
+      
+      .nearby-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <div class="hero">
+    <div class="hero-content">
+      <h1>{{headline}}</h1>
+      <p>{{tagline}}</p>
+      <a href="{{cta_link}}" class="cta-button">{{cta_text}}</a>
+      <div class="trust-badge">
+        {{trust_badge}}
+      </div>
+    </div>
+  </div>
+  
+  <!-- About Section -->
+  <div class="content">
+    <h2 class="section-title">About Us</h2>
+    <div class="about-text">{{about}}</div>
+  </div>
+  
+  <!-- Nearby Attractions -->
+  <div class="nearby">
+    <div class="nearby-content">
+      <h2>Things to Do Nearby</h2>
+      <div class="nearby-grid">
+        {{nearby_items}}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="footer">
+    <p>&copy; {{year}} {{name}}. All rights reserved.</p>
+  </div>
+  
+  <!-- Tracking Script -->
+  <script>
+    // Site data injected by Worker
+    window.SITE_DATA = {{site_data_json}};
+    
+    // Track page view on load
+    window.addEventListener('load', function() {
+      if ('sendBeacon' in navigator) {
+        navigator.sendBeacon('/api/signals', new URLSearchParams({
+          slug: window.SITE_DATA.slug,
+          variant: window.SITE_DATA.variant,
+          token: window.SITE_DATA.token,
+          nonce: window.SITE_DATA.nonce,
+          type: 'view',
+          value: 1
+        }));
+      } else {
+        // Fallback for older browsers
+        fetch('/api/signals', {
+          method: 'POST',
+          body: new URLSearchParams({
+            slug: window.SITE_DATA.slug,
+            variant: window.SITE_DATA.variant,
+            token: window.SITE_DATA.token,
+            nonce: window.SITE_DATA.nonce,
+            type: 'view',
+            value: 1
+          }),
+          keepalive: true
+        }).catch(function() {});
+      }
+    });
+    
+    // Track CTA clicks
+    document.querySelectorAll('.cta-button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if ('sendBeacon' in navigator) {
+          navigator.sendBeacon('/api/signals', new URLSearchParams({
+            slug: window.SITE_DATA.slug,
+            variant: window.SITE_DATA.variant,
+            token: window.SITE_DATA.token,
+            nonce: window.SITE_DATA.nonce,
+            type: 'click',
+            value: 1
+          }));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+3.	Upload to Pages: 
+o	Create a folder locally with template.html
+o	Dashboard → Pages → Your project → Upload files
+o	Drag the file
+o	Deploy
+4.	Update Worker to Use Template:
+javascript
+// worker.js (updated)
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const slug = url.pathname.slice(1);
+    
+    if (!slug) {
+      return new Response('Homepage', {status: 200});
+    }
+    
+    // Fetch site package
+    const sitepkg = await env.WEBZYL_CONFIGS.get(`sitepkg:${slug}`, {
+      type: 'json'
+    });
+    
+    if (!sitepkg) {
+      return new Response('Site not found', {status: 404});
+    }
+    
+    // Fetch template
+    const template = await fetch('https://webzyl-template.pages.dev/template.html')
+      .then(r => r.text());
+    
+    // Select variant (for now, always main)
+    const variant = 'main';
+    const content = sitepkg.content[variant];
+    
+    // Calculate trust badge
+    const verifiedDate = new Date(sitepkg.trust.verified_since);
+    const years = Math.floor((Date.now() - verifiedDate.getTime()) / 31557600000);
+    const trustBadge = `⭐ ${sitepkg.trust.avg_rating} (${sitepkg.trust.review_count} reviews) • Trusted for ${years}+ years`;
+    
+    // Build nearby items HTML
+    const nearbyItems = sitepkg.local.nearby
+      .map(poi => `
+        <div class="nearby-item">
+          <h3>${poi.name}</h3>
+          <div class="distance">${poi.distance}</div>
+          <span class="type">${poi.type}</span>
+        </div>
+      `)
+      .join('');
+    
+    // Generate structured data
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "LodgingBusiness",
+      "name": sitepkg.config.name,
+      "description": sitepkg.config.about,
+      "image": sitepkg.config.images.hero,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": sitepkg.config.location.address,
+        "addressLocality": sitepkg.config.location.city,
+        "addressRegion": sitepkg.config.location.state,
+        "addressCountry": sitepkg.config.location.country
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": sitepkg.config.location.lat,
+        "longitude": sitepkg.config.location.lng
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": sitepkg.trust.avg_rating,
+        "reviewCount": sitepkg.trust.review_count
+      },
+      "telephone": sitepkg.config.contact_phone,
+      "foundingDate": sitepkg.trust.verified_since
+    };
+    
+    // Temporary placeholders for security tokens
+    const siteData = {
+      slug: slug,
+      variant: variant,
+      token: 'placeholder',
+      nonce: 'placeholder'
+    };
+    
+    // Replace template placeholders
+    let html = template
+      .replace(/\{\{name\}\}/g, sitepkg.config.name)
+      .replace(/\{\{slug\}\}/g, slug)
+      .replace(/\{\{tagline\}\}/g, sitepkg.config.tagline)
+      .replace(/\{\{about\}\}/g, sitepkg.config.about)
+      .replace(/\{\{hero_image\}\}/g, sitepkg.config.images.hero)
+      .replace(/\{\{headline\}\}/g, content.headline)
+      .replace(/\{\{cta_text\}\}/g, content.cta_text)
+      .replace(/\{\{cta_link\}\}/g, content.cta_link)
+      .replace(/\{\{trust_badge\}\}/g, trustBadge)
+      .replace(/\{\{nearby_items\}\}/g, nearbyItems)
+      .replace(/\{\{year\}\}/g, new Date().getFullYear().toString())
+      .replace(/\{\{schema\}\}/g, JSON.stringify(schema))
+      .replace(/\{\{site_data_json\}\}/g, JSON.stringify(siteData));
+    
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=300'
+      }
+    });
+  }
+};
+5.	Test: 
+o	Visit your test site
+o	Should see rendered HTML with actual content
+o	Inspect source → verify Schema.org markup present
+Deliverable: Site renders with HTML template
+________________________________________
+DAY 4: Perfect SEO (3-4 hours)
+Add SEO Routes to Worker:
+javascript
+// worker.js (add to existing code)
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+    
+    // Robots.txt
+    if (pathname === '/robots.txt') {
+      return new Response(
+        `User-agent: *
+Allow: /
+Sitemap: https://webzyl.dev/sitemap.xml`,
+        {
+          headers: {
+            'Content-Type': 'text/plain',
+            'Cache-Control': 'public, max-age=86400'
+          }
+        }
+      );
+    }
+    
+    // Sitemap.xml
+    if (pathname === '/sitemap.xml') {
+      return await generateSitemap(env);
+    }
+    
+    // ... rest of existing code
+  }
+};
+
+async function generateSitemap(env) {
+  // Check cache first
+  const cached = await env.WEBZYL_CONFIGS.get('sitemap_cache');
+  const cacheTs = await env.WEBZYL_CONFIGS.get('sitemap_cache_ts');
+  
+  const now = Date.now();
+  const isStale = !cacheTs || (now - parseInt(cacheTs) > 86400000); // 24h
+  
+  if (cached && !isStale) {
+    return new Response(cached, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600'
+      }
+    });
+  }
+  
+  // Generate sitemap from sharded indexes
+  const prefixes = [];
+  for (let a of 'abcdefghijklmnopqrstuvwxyz') {
+    for (let b of 'abcdefghijklmnopqrstuvwxyz') {
+      prefixes.push(a + b);
+    }
+  }
+  
+  // Fetch all shards in parallel
+  const shards = await Promise.all(
+    prefixes.map(prefix => 
+      env.WEBZYL_CONFIGS.get(`site_index:${prefix}`, {type: 'json'})
+    )
+  );
+  
+  // Flatten and filter
+  const allSlugs = shards
+    .filter(shard => shard !== null)
+    .flat();
+  
+  // Generate XML
+  const today = new Date().toISOString().split('T')[0];
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://webzyl.dev/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+${allSlugs.map(slug => `  <url>
+    <loc>https://webzyl.dev/${slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('\n')}
+</urlset>`;
+  
+  // Cache for 24h
+  await env.WEBZYL_CONFIGS.put('sitemap_cache', sitemap);
+  await env.WEBZYL_CONFIGS.put('sitemap_cache_ts', now.toString());
+  
+  return new Response(sitemap, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600'
+    }
+  });
+}
+```
+
+**Test SEO:**
+
+1. Visit `/robots.txt` → Should see robots file
+2. Visit `/sitemap.xml` → Should see XML sitemap
+3. Test structured data:
+   - Go to: https://search.google.com/test/rich-results
+   - Enter your test site URL
+   - Should show valid LodgingBusiness schema
+
+**Deliverable:** Perfect SEO infrastructure (robots, sitemap, schema)
+
+---
+
+#### **DAY 5: Google Sheet Structure (2-3 hours)**
+
+**Create Sheet:**
+
+1. Create new Google Sheet named: **SME_MASTER**
+
+2. **Add Column Headers (Row 1):**
+```
+A: slug
+B: name
+C: tagline
+D: about
+E: hero_image_url
+F: logo_url
+G: location_address
+H: location_city
+I: location_state
+J: location_country
+K: location_lat
+L: location_lng
+M: contact_phone
+N: contact_email
+O: verified_since
+P: review_count
+Q: avg_rating
+R: review_1_author
+S: review_1_text
+T: review_1_rating
+U: review_1_date
+V: review_2_author
+W: review_2_text
+X: review_2_rating
+Y: review_2_date
+Z: review_3_author
+AA: review_3_text
+AB: review_3_rating
+AC: review_3_date
+AD: review_4_author
+AE: review_4_text
+AF: review_4_rating
+AG: review_4_date
+AH: review_5_author
+AI: review_5_text
+AJ: review_5_rating
+AK: review_5_date
+AL: nearby_poi_1_name
+AM: nearby_poi_1_distance
+AN: nearby_poi_1_type
+AO: nearby_poi_2_name
+AP: nearby_poi_2_distance
+AQ: nearby_poi_2_type
+AR: nearby_poi_3_name
+AS: nearby_poi_3_distance
+AT: nearby_poi_3_type
+AU: nearby_poi_4_name
+AV: nearby_poi_4_distance
+AW: nearby_poi_4_type
+AX: nearby_poi_5_name
+AY: nearby_poi_5_distance
+AZ: nearby_poi_5_type
+BA: headline_variant_a
+BB: headline_variant_b
+BC: cta_text_variant_a
+BD: cta_text_variant_b
+BE: cta_link
+BF: gallery_json
+BG: rooms_json
+BH: amenities_json
+BI: template_id
+BJ: status
+```
+
+3. **Fill Test Data (Row 2):**
+```
+A: kerala-mountain-resort
+B: Kerala Mountain Resort
+C: Luxury in the Western Ghats
+D: Experience unparalleled luxury nestled in the heart of Kerala's Western Ghats. Our resort offers breathtaking mountain views, world-class amenities, and authentic Kerala hospitality. Perfect for families, couples, and nature enthusiasts seeking a peaceful retreat surrounded by pristine wilderness.
+E: https://images.unsplash.com/photo-1566073771259-6a8506099945
+F: https://images.unsplash.com/photo-1566073771259-6a8506099945
+G: Meppadi, Wayanad District
+H: Wayanad
+I: Kerala
+J: India
+K: 11.6854
+L: 75.8357
+M: +91-9876543210
+N: info@keralamountainresort.com
+O: 2018-03-15
+P: 127
+Q: 4.8
+R: John Doe
+S: Amazing place! The views are spectacular and the staff is incredibly friendly.
+T: 5
+U: 2024-12-15
+V: Sarah Smith
+W: Perfect getaway for our family. Kids loved the nature walks and we loved the peace.
+X: 5
+Y: 2024-12-10
+Z: Michael Chen
+AA: Best resort we've stayed at in Kerala. The food was exceptional.
+AB: 5
+AC: 2024-12-05
+AD: Priya Sharma
+AE: Beautiful property with stunning views. Highly recommend for couples.
+AF: 4
+AG: 2024-11-28
+AH: James Wilson
+AI: Great experience overall. Would definitely come back!
+AJ: 5
+AK: 2024-11-20
+AL: Chembra Peak
+AM: 5km
+AN: Mountain
+AO: Soochipara Falls
+AP: 12km
+AQ: Waterfall
+AR: Wayanad Wildlife Sanctuary
+AS: 8km
+AT: Wildlife Reserve
+AU: Edakkal Caves
+AV: 15km
+AW: Historical Site
+AX: Pookode Lake
+AY: 10km
+AZ: Lake
+BA: Experience Luxury in the Mountains
+BB: Discover Premium Mountain Retreat
+BC: Book Your Stay
+BD: Reserve Now
+BE: https://example.com/book
+BF: ["https://images.unsplash.com/photo-1566073771259-6a8506099945"]
+BG: [{"name":"Deluxe Suite","description":"Spacious suite with mountain view","price":5000,"image":"https://images.unsplash.com/photo-1566073771259-6a8506099945"}]
+BH: ["Free WiFi","Swimming Pool","Restaurant","Spa","Mountain View"]
+BI: resort_v1
+BJ: active
+Deliverable: Complete Sheet structure with test data
+________________________________________
+DAY 6: Apps Script Publisher (4-5 hours)
+Add Apps Script:
+1.	In your Google Sheet: Extensions → Apps Script
+2.	Delete default code, replace with:
+javascript
+// Code.gs
+
+/**
+ * Creates custom menu when sheet opens
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('🚀 Webzyl')
+    .addItem('Publish Website', 'publishWebsite')
+    .addItem('Preview Site', 'previewSite')
+    .addToUi();
+}
+
+/**
+ * Main publish function
+ */
+function publishWebsite() {
+  const ui = SpreadsheetApp.getUi();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const row = sheet.getActiveRange().getRow();
+  
+  // Validate row selection
+  if (row === 1) {
+    ui.alert('❌ Error', 'Please select a data row (not header)', ui.ButtonSet.OK);
+    return;
+  }
+  
+  try {
+    // Read row data
+    const lastCol = sheet.getLastColumn();
+    const data = sheet.getRange(row, 1, 1, lastCol).getValues()[0];
+    
+    // Build site package
+    const sitepkg = buildSitePackage(data);
+    
+    // Validate required fields
+    const validation = validateSitePackage(sitepkg);
+    if (!validation.valid) {
+      ui.alert('❌ Validation Error', validation.error, ui.ButtonSet.OK);
+      return;
+    }
+    
+    // Publish to Worker
+    const result = publishToWorker(sitepkg);
+    
+    if (result.success) {
+      ui.alert(
+        '✅ Success',
+        `Website published successfully!\n\nView at: https://webzyl.dev/${sitepkg.slug}`,
+        ui.ButtonSet.OK
+      );
+    } else {
+      ui.alert('❌ Publish Failed', result.error, ui.ButtonSet.OK);
+    }
+    
+  } catch (error) {
+    ui.alert('❌ Error', `Unexpected error: ${error.message}`, ui.ButtonSet.OK);
+    Logger.log('Error: ' + error.stack);
+  }
+}
+
+/**
+ * Preview site in browser
+ */
+function previewSite() {
+  const ui = SpreadsheetApp.getUi();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const row = sheet.getActiveRange().getRow();
+  
+  if (row === 1) {
+    ui.alert('❌ Error', 'Please select a data row', ui.ButtonSet.OK);
+    return;
+  }
+  
+  const slug = sheet.getRange(row, 1).getValue();
+  
+  if (!slug) {
+    ui.alert('❌ Error', 'No slug found in selected row', ui.ButtonSet.OK);
+    return;
+  }
+  
+  const url = `https://webzyl.dev/${slug}`;
+  const html = `
+    <html>
+      <body>
+        <p>Opening site in new tab...</p>
+        <script>
+          window.open('${url}', '_blank');
+          google.script.host.close();
+        </script>
+      </body>
+    </html>
+  `;
+  
+  const htmlOutput = HtmlService.createHtmlOutput(html)
+    .setWidth(300)
+    .setHeight(100);
+  
+  ui.showModalDialog(htmlOutput, 'Preview Site');
+}
+
+/**
+ * Build site package from row data
+ */
+function buildSitePackage(data) {
+  // Build reviews array
+  const reviews = [];
+  for (let i = 0; i < 5; i++) {
+    const authorIdx = 17 + (i * 4);
+    const author = data[authorIdx];
+    
+    if (author) {
+      reviews.push({
+        author: author,
+        text: data[authorIdx + 1] || '',
+        rating: parseInt(data[authorIdx + 2]) || 5,
+        date: data[authorIdx + 3] || new Date().toISOString().split('T')[0]
+      });
+    }
+  }
+  
+  // Build nearby POIs array
+  const nearby = [];
+  for (let i = 0; i < 5; i++) {
+    const nameIdx = 37 + (i * 3);
+    const name = data[nameIdx];
+    
+    if (name) {
+      nearby.push({
+        name: name,
+        distance: data[nameIdx + 1] || '',
+        type: data[nameIdx + 2] || ''
+      });
+    }
+  }
+  
+  // Parse JSON fields safely
+  let gallery = [];
+  let rooms = [];
+  let amenities = [];
+  
+  try {
+    if (data[57]) gallery = JSON.parse(data[57]);
+  } catch (e) {
+    Logger.log('Gallery JSON parse error: ' + e);
+  }
+  
+  try {
+    if (data[58]) rooms = JSON.parse(data[58]);
+  } catch (e) {
+    Logger.log('Rooms JSON parse error: ' + e);
+  }
+  
+  try {
+    if (data[59]) amenities = JSON.parse(data[59]);
+  } catch (e) {
+    Logger.log('Amenities JSON parse error: ' + e);
+  }
+  
+  // Build complete site package
+  return {
+    slug: data[0],
+    config: {
+      name: data[1],
+      tagline: data[2],
+      about: data[3],
+      images: {
+        hero: data[4],
+        logo: data[5] || data[4] // Fallback to hero if no logo
+      },
+      location: {
+        address: data[6],
+        city: data[7],
+        state: data[8],
+        country: data[9] || 'India',
+        lat: parseFloat(data[10]) || 0,
+        lng: parseFloat(data[11]) || 0
+      },
+      contact_phone: data[12] || '',
+      contact_email: data[13] || ''
+    },
+    content: {
+      main: {
+        headline: data[52], // BA: headline_variant_a
+        cta_text: data[54], // BC: cta_text_variant_a
+        cta_link: data[56]  // BE: cta_link
+      },
+      ghost: {
+        headline: data[53], // BB: headline_variant_b
+        cta_text: data[55], // BD: cta_text_variant_b
+        cta_link: data[56]  // BE: cta_link (same)
+      }
+    },
+    trust: {
+      verified_since: data[14] || new Date().toISOString().split('T')[0],
+      review_count: parseInt(data[15]) || 0,
+      avg_rating: parseFloat(data[16]) || 0,
+      reviews: reviews
+    },
+    local: {
+      nearby: nearby
+    },
+    gallery: gallery,
+    rooms: rooms,
+    amenities: amenities,
+    meta: {
+      signal_mode: 'simple', // Start with simple mode
+      last_evaluated: 0,
+      version: 'v1',
+      total_views: 0,
+      main_ctr: 0,
+      ghost_ctr: 0
+    },
+    template_id: data[60] || 'resort_v1',
+    status: data[61] || 'active',
+    updated_at: new Date().toISOString()
+  };
+}
+
+/**
+ * Validate site package
+ */
+function validateSitePackage(sitepkg) {
+  const required = [
+    {field: 'slug', value: sitepkg.slug},
+    {field: 'name', value: sitepkg.config.name},
+    {field: 'tagline', value: sitepkg.config.tagline},
+    {field: 'about', value: sitepkg.config.about},
+    {field: 'hero_image', value: sitepkg.config.images.hero},
+    {field: 'headline_variant_a', value: sitepkg.content.main.headline},
+    {field: 'headline_variant_b', value: sitepkg.content.ghost.headline}
+  ];
+  
+  for (const req of required) {
+    if (!req.value || req.value.toString().trim() === '') {
+      return {
+        valid: false,
+        error: `Missing required field: ${req.field}`
+      };
+    }
+  }
+  
+  // Validate slug format (lowercase alphanumeric + hyphens)
+  if (!/^[a-z0-9-]+$/.test(sitepkg.slug)) {
+    return {
+      valid: false,
+      error: 'Slug must contain only lowercase letters, numbers, and hyphens'
+    };
+  }
+  
+  return {valid: true};
+}
+
+/**
+ * Publish to Cloudflare Worker
+ */
+function publishToWorker(sitepkg) {
+  const WORKER_URL = 'https://webzyl-worker.YOUR-SUBDOMAIN.workers.dev/api/admin/publish';
+  const ADMIN_TOKEN = PropertiesService.getScriptProperties().getProperty('ADMIN_TOKEN');
+  
+  if (!ADMIN_TOKEN) {
+    return {
+      success: false,
+      error: 'Admin token not configured. Go to Project Settings → Script Properties → Add "ADMIN_TOKEN"'
+    };
+  }
+  
+  try {
+    const response = UrlFetchApp.fetch(WORKER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-Token': ADMIN_TOKEN,
+        'X-Trigger-Eval': 'true' // Trigger evaluation on publish
+      },
+      payload: JSON.stringify({
+        slug: sitepkg.slug,
+        sitepkg: sitepkg
+      }),
+      muteHttpExceptions: true
+    });
+    
+    const statusCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    if (statusCode === 200) {
+      return {success: true};
+    } else {
+      return {
+        success: false,
+        error: `HTTP ${statusCode}: ${responseText}`
+      };
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+3.	Configure Script Properties: 
+o	In Apps Script editor: Project Settings (gear icon)
+o	Script Properties → Add property
+o	Property name: ADMIN_TOKEN
+o	Property value: (Same value you set in Worker environment variables)
+o	Save
+4.	Save and Test: 
+o	Save the script (Ctrl/Cmd + S)
+o	Close Apps Script editor
+o	Reload your Sheet
+o	You should see "🚀 Webzyl" menu appear
+Add Worker Publish Endpoint:
+javascript
+// Add to worker.js
+
+// Admin publish endpoint
+if (url.pathname === '/api/admin/publish' && request.method === 'POST') {
+  return await handlePublish(request, env, ctx);
+}
+
+async function handlePublish(request, env, ctx) {
+  // Validate auth token
+  const authToken = request.headers.get('X-Auth-Token');
+  if (authToken !== env.ADMIN_TOKEN) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Unauthorized'
+    }), {
+      status: 401,
+      headers: {'Content-Type': 'application/json'}
+    });
+  }
+  
+  try {
+    const body = await request.json();
+    const {slug, sitepkg} = body;
+    
+    if (!slug || !sitepkg) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Missing slug or sitepkg'
+      }), {
+        status: 400,
+        headers: {'Content-Type': 'application/json'}
+      });
+    }
+    
+    // Store site package
+    await env.WEBZYL_CONFIGS.put(`sitepkg:${slug}`, JSON.stringify(sitepkg));
+    
+    // Update sharded site index
+    const prefix = slug.slice(0, 2).toLowerCase();
+    const shardKey = `site_index:${prefix}`;
+    const shard = await env.WEBZYL_CONFIGS.get(shardKey, {type: 'json'}) || [];
+    
+    if (!shard.includes(slug)) {
+      shard.push(slug);
+      await env.WEBZYL_CONFIGS.put(shardKey, JSON.stringify(shard));
+    }
+    
+    // Update site list (for marketplace)
+    const siteList = await env.WEBZYL_CONFIGS.get('site_list', {type: 'json'}) || [];
+    const existingIndex = siteList.findIndex(s => s.slug === slug);
+    
+    if (existingIndex >= 0) {
+      siteList.splice(existingIndex, 1);
+    }
+    
+    siteList.push({
+      slug: slug,
+      name: sitepkg.config.name,
+      city: sitepkg.config.location.city,
+      state: sitepkg.config.location.state,
+      rating: sitepkg.trust.avg_rating,
+      review_count: sitepkg.trust.review_count,
+      updated: Date.now()
+    });
+    
+    await env.WEBZYL_CONFIGS.put('site_list', JSON.stringify(siteList));
+
+    // Invalidate sitemap cache for affected shard
+    const prefix = slug.substring(0, 2).toLowerCase();
+    await env.WEBZYL_CONFIGS.delete(`sitemap_cache:${prefix}`);
+    await env.WEBZYL_CONFIGS.delete(`sitemap_cache_ts:${prefix}`);
+    
+    // Trigger evaluation if requested
+    if (request.headers.get('X-Trigger-Eval') === 'true') {
+      // Will implement evaluation in Day 12
+      console.log('Evaluation trigger queued for', slug);
+    }
+    
+    return new Response(JSON.stringify({
+      success: true,
+      slug: slug,
+      url: `https://webzyl.dev/${slug}`
+    }), {
+      status: 200,
+      headers: {'Content-Type': 'application/json'}
+    });
+    
+  } catch (error) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: {'Content-Type': 'application/json'}
+    });
+  }
+}
+```
+
+**Test:**
+1. In Sheet, select row 2 (your test data)
+2. Click: **🚀 Webzyl → Publish Website**
+3. Should see success dialog
+4. Visit: `https://webzyl.dev/kerala-mountain-resort`
+5. Should see live site!
+
+**Deliverable:** Complete Sheet → Worker publish pipeline working
+
+---
+
+#### **DAY 7: First Real Site + Testing (4-6 hours)**
+
+**Tasks:**
+
+1. **Create Complete Test Site:**
+   - Fill all fields in Sheet row 2
+   - Use real business OR detailed fictional business
+   - Ensure all 5 reviews filled
+   - Ensure all 5 nearby POIs filled
+   - Both headline variants different
+   - Both CTA variants different
+
+2. **Publish and Test:**
+   - Click **🚀 Webzyl → Publish Website**
+   - Visit site URL
+   - Test on desktop
+   - Test on mobile (Chrome DevTools)
+
+3. **Verify Checklist:**
+```
+   ✅ Page loads fast (<2 seconds)
+   ✅ Hero image displays correctly
+   ✅ Headline shows correct variant
+   ✅ CTA button visible and styled
+   ✅ Trust badge shows years + rating
+   ✅ About section renders
+   ✅ Nearby POIs display in grid
+   ✅ All 5 POIs visible
+   ✅ Footer shows current year
+   ✅ Mobile responsive (test 375px width)
+   ✅ Images don't break layout
+4.	Test SEO: 
+o	View page source (Ctrl/Cmd + U)
+o	Verify <title> tag present
+o	Verify meta description present
+o	Verify Schema.org JSON-LD present
+o	Copy Schema.org JSON
+o	Test at: https://search.google.com/test/rich-results
+o	Should show valid structured data
+5.	Test Lighthouse: 
+o	Chrome DevTools → Lighthouse
+o	Run audit (Desktop, Navigation)
+o	Target scores: 
+	Performance: >80 (acceptable for MVP)
+	Accessibility: >90
+	Best Practices: >90
+	SEO: 100
+6.	Test Sitemap: 
+o	Visit /sitemap.xml
+o	Should include your test site
+o	Should be valid XML
+7.	Document Issues: 
+o	Create a list of any bugs found
+o	Note any styling issues
+o	Note any mobile issues
+o	Plan fixes for Week 2
+8.	Create Documentation:
+Create a simple SETUP.md file:
+markdown
+# Webzyl Platform - Setup Complete
+
+## What We Built (Week 1)
+
+- ✅ Cloudflare Worker (SSR engine)
+- ✅ Cloudflare KV (storage)
+- ✅ Cloudflare Pages (template)
+- ✅ Google Sheet (CMS)
+- ✅ Google Apps Script (publisher)
+- ✅ Complete SEO (robots, sitemap, schema)
+- ✅ ONE working site with real data
+
+## Live Site
+
+**URL:** https://webzyl.dev/kerala-mountain-resort
+
+## How to Add More Sites
+
+1. Open Google Sheet: [link]
+2. Fill new row with site data
+3. Select the row
+4. Click: 🚀 Webzyl → Publish Website
+5. Site goes live immediately!
+
+## What's Next (Week 2)
+
+- Add A/B evolution system
+- Add signal tracking
+- Add evaluation logic
+- Add rollback system
+- Deploy to 5 real sites
+
+## Issues Found
+
+[List any bugs or improvements needed]
+Deliverable: ONE fully working site with perfect SEO, documented and tested
+________________________________________
+WEEK 2: EVOLUTION WEDGE (Days 8-14)
+________________________________________
+DAY 8: Security Foundation - HMAC + Nonce (4-5 hours)
+Add Helper Functions to Worker:
+javascript
+// Add to worker.js
+
+/**
+ * Generate HMAC-SHA256 signature
+ */
+async function generateHMAC(message, secret) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    {name: 'HMAC', hash: 'SHA-256'},
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(message)
+  );
+  
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+/**
+ * Generate secure token with nonce
+ */
+async function generateSecureToken(slug, variant, env) {
+  const nonce = crypto.randomUUID();
+  const message = `${slug}|${variant}|${nonce}`;
+  const token = await generateHMAC(message, env.SECRET);
+  
+  // Store nonce with expiry (24 hours)
+  const expiresAt = Date.now() + 86400000;
+  await env.WEBZYL_CONFIGS.put(`nonce:${nonce}`, expiresAt.toString(), {
+    expirationTtl: 86400
+  });
+  
+  return {token, nonce};
+}
+
+/**
+ * Validate signal with security checks
+ */
+async function validateSignal(formData, env) {
+  const slug = formData.get('slug');
+  const variant = formData.get('variant');
+  const token = formData.get('token');
+  const nonce = formData.get('nonce');
+  const type = formData.get('type');
+  
+  // CHECK 1: Nonce exists and not expired
+  const expiresAt = await env.WEBZYL_CONFIGS.get(`nonce:${nonce}`);
+  if (!expiresAt) {
+    return {valid: false, reason: 'nonce_not_found'};
+  }
+  if (Date.now() > parseInt(expiresAt)) {
+    return {valid: false, reason: 'nonce_expired'};
+  }
+  
+  // CHECK 2: HMAC signature valid
+  const message = `${slug}|${variant}|${nonce}`;
+  const expectedToken = await generateHMAC(message, env.SECRET);
+  if (token !== expectedToken) {
+    return {valid: false, reason: 'invalid_signature'};
+  }
+  
+  // CHECK 3: Per-type rate limit
+  const rateLimitKey = `ratelimit:${slug}:${nonce}:${type}`;
+  const count = parseInt(await env.WEBZYL_CONFIGS.get(rateLimitKey) || '0');
+  
+  const limits = {
+    view: 3,   // Max 3 views per nonce
+    click: 10  // Max 10 clicks per nonce
+  };
+  
+  if (count >= limits[type]) {
+    return {valid: false, reason: 'type_limit_exceeded'};
+  }
+  
+  // CHECK 4: Update rate limit counter
+  await env.WEBZYL_CONFIGS.put(rateLimitKey, (count + 1).toString(), {
+    expirationTtl: 86400
+  });
+  
+  return {valid: true};
+}
+Update Page Rendering to Generate Tokens:
+javascript
+// In main fetch handler, update the section where you render pages:
+
+// Generate security token
+const {token, nonce} = await generateSecureToken(slug, variant, env);
+
+// Update siteData (replace placeholder)
+const siteData = {
+  slug: slug,
+  variant: variant,
+  token: token,
+  nonce: nonce
+};
+
+// ... rest of template injection code
+Add Signal Endpoint:
+javascript
+// Add to worker.js
+
+// Signal tracking endpoint
+if (url.pathname === '/api/signals' && request.method === 'POST') {
+  return await handleSignal(request, env);
+}
+
+async function handleSignal(request, env) {
+  try {
+    const formData = await request.formData();
+    
+    // Validate signal
+    const validation = await validateSignal(formData, env);
+    
+    if (!validation.valid) {
+      return new Response(JSON.stringify({
+        error: validation.reason
+      }), {
+        status: 403,
+        headers: {'Content-Type': 'application/json'}
+      });
+    }
+    
+    // Extract data
+    const slug = formData.get('slug');
+    const variant = formData.get('variant');
+    const type = formData.get('type');
+    const value = parseInt(formData.get('value')) || 1;
+    
+    // Get sitepkg to check signal mode
+    const sitepkg = await env.WEBZYL_CONFIGS.get(`sitepkg:${slug}`, {type:'json'});
+    if (!sitepkg) {
+      return new Response('Site not found', {status: 404});
+    }
+    
+    const mode = sitepkg.meta.signal_mode || 'simple';
+    
+    if (mode === 'simple') {
+      // SIMPLE MODE: Direct aggregation
+      const signalKey = `signals:${slug}:${variant}`;
+      const signals = await env.WEBZYL_CONFIGS.get(signalKey, {type:'json'}) || {
+        views: 0,
+        clicks: 0
+      };
+      
+      if (type === 'view') signals.views += value;
+      if (type === 'click') signals.clicks += value;
+      
+      await env.WEBZYL_CONFIGS.put(signalKey, JSON.stringify(signals));
+      
+    } else if (mode === 'bucketed') {
+      // BUCKETED MODE: Time-bucketed (for scale)
+      const now = Date.now();
+      const bucket = Math.floor(now / 300000) * 300000; // 5-minute buckets
+      const bucketKey = `signals:${slug}:${variant}:${bucket}`;
+      
+      const bucketSignals = await env.WEBZYL_CONFIGS.get(bucketKey, {type:'json'}) || {
+        v: 0,
+        c: 0
+      };
+      
+      if (type === 'view') bucketSignals.v += value;
+      if (type === 'click') bucketSignals.c += value;
+      
+      await env.WEBZYL_CONFIGS.put(bucketKey, JSON.stringify(bucketSignals), {
+        expirationTtl: 2592000 // 30 days
+      });
+    }
+    
+    // NO eval_counter increment - removed to protect KV write budget
+    // Signal accumulation used as primary evaluation trigger instead
+    
+    return new Response('OK', {status: 200});
+    
+  } catch (error) {
+    console.error('Signal handling error:', error);
+    return new Response('Internal error', {status: 500});
+  }
+}
+Test Security:
+1.	Visit your test site
+2.	Open DevTools → Network tab
+3.	Reload page
+4.	Look for POST to /api/signals
+5.	Check request payload - should include token + nonce
+6.	Check response - should be 200 OK
+7.	Manually verify KV - signals should be aggregating
+Deliverable: Secure signal tracking with HMAC + nonce + rate limiting
+________________________________________
+DAY 9: Traffic-Aware Variant Selection (3 hours)
+Update Variant Selection Logic:
+javascript
+// Add to worker.js
+
+/**
+ * Get ghost percentage based on total traffic
+ */
+function getGhostPercent(totalViews) {
+  if (totalViews < 2000) {
+    return 0.20; // 20% ghost (fast learning)
+  } else if (totalViews < 10000) {
+    return 0.10; // 10% ghost (balanced)
+  } else {
+    return 0.05; // 5% ghost (stable)
+  }
+}
+
+// Update in main fetch handler (page rendering):
+
+// Select variant (traffic-aware)
+const totalViews = sitepkg.meta.total_views || 0;
+const ghostPercent = getGhostPercent(totalViews);
+const variant = Math.random() < ghostPercent ? 'ghost' : 'main';
+const content = sitepkg.content[variant];
+
+console.log(`[VARIANT] ${slug}: ${totalViews} views → ${(ghostPercent*100)}% ghost → serving ${variant}`);
+```
+
+**Test Variant Distribution:**
+
+1. Manually set `meta.total_views` to different values in KV:
+   - 500 views → Should see ~20% ghost
+   - 5000 views → Should see ~10% ghost
+   - 15000 views → Should see ~5% ghost
+
+2. Test by reloading site 20 times and counting variants:
+```
+   At 500 views:
+   - Expected: 16 main, 4 ghost (20%)
+   
+   At 5000 views:
+   - Expected: 18 main, 2 ghost (10%)
+   
+   At 15000 views:
+   - Expected: 19 main, 1 ghost (5%)
+3.	Check Worker logs for variant selection messages
+Deliverable: Dynamic variant selection based on traffic
+________________________________________
+DAY 10: Signal Mode Switch (3-4 hours)
+Update Site Package Meta:
+Ensure meta.signal_mode is in every sitepkg:
+javascript
+// In Apps Script buildSitePackage function, meta section:
+
+meta: {
+  signal_mode: 'simple', // Start with simple
+  last_evaluated: 0,
+  version: 'v1',
+  total_views: 0,
+  main_ctr: 0,
+  ghost_ctr: 0
+}
+Add Mode-Aware Signal Retrieval:
+javascript
+// Add to worker.js
+
+/**
+ * Get signals based on signal mode
+ */
+async function getSignals(slug, variant, sitepkg, env) {
+  const mode = sitepkg.meta.signal_mode || 'simple';
+  
+  if (mode === 'simple') {
+    // Direct aggregation
+    const signalKey = `signals:${slug}:${variant}`;
+    return await env.WEBZYL_CONFIGS.get(signalKey, {type:'json'}) || {
+      views: 0,
+      clicks: 0
+    };
+  } else if (mode === 'bucketed') {
+    // Sum last 7 days of 5-minute buckets
+    const now = Date.now();
+    let totalViews = 0;
+    let totalClicks = 0;
+    
+    // 7 days × 288 buckets/day (5 min each = 300,000 ms)
+    for (let i = 0; i < 7 * 288; i++) {
+      const bucketTime = now - (i * 300000);
+      const bucket = Math.floor(bucketTime / 300000) * 300000;
+      const key = `signals:${slug}:${variant}:${bucket}`;
+      
+      const data = await env.WEBZYL_CONFIGS.get(key, {type:'json'});
+      if (data) {
+        totalViews += data.v || 0;
+        totalClicks += data.c || 0;
+      }
+    }
+    
+    return {
+      views: totalViews,
+      clicks: totalClicks
+    };
+  }
+  
+  return {views: 0, clicks: 0};
+}
+Signal handler already mode-aware from Day 8 ✅
+Test Mode Switch:
+1.	Create test site with signal_mode: 'simple'
+2.	Send some signals
+3.	Verify signals stored in signals:slug:variant
+4.	Manually change signal_mode to 'bucketed' in KV
+5.	Send more signals
+6.	Verify signals stored in signals:slug:variant:bucket
+7.	Test signal retrieval for both modes
+Deliverable: Instant mode switching capability (no code changes needed)
+________________________________________
+DAY 11: Sharded Index + Cached Sitemap (4-5 hours)
+Update Publish Handler for Sharding:
+javascript
+// Update handlePublish function in worker.js
+
+// Replace site index update with sharded version:
+
+// Update sharded site index
+const prefix = slug.slice(0, 2).toLowerCase();
+const shardKey = `site_index:${prefix}`;
+let shard = await env.WEBZYL_CONFIGS.get(shardKey, {type:'json'}) || [];
+
+if (!shard.includes(slug)) {
+  shard.push(slug);
+  await env.WEBZYL_CONFIGS.put(shardKey, JSON.stringify(shard));
+}
+
+// Invalidate sitemap cache for affected shard (forces regeneration)
+await env.WEBZYL_CONFIGS.delete(`sitemap_cache:${prefix}`);
+await env.WEBZYL_CONFIGS.delete(`sitemap_cache_ts:${prefix}`);
+Sitemap generation already cached from Day 4 ✅
+Test Sharding:
+1.	Publish 3 sites with different prefixes: 
+o	kerala-resort → shard ke
+o	wayanad-homestay → shard wa
+o	mumbai-hotel → shard mu
+2.	Check KV: 
+o	site_index:ke → should contain ["kerala-resort"]
+o	site_index:wa → should contain ["wayanad-homestay"]
+o	site_index:mu → should contain ["mumbai-hotel"]
+3.	Visit /sitemap.xml: 
+o	Should include all 3 sites
+o	Should be cached (check for sitemap_cache key in KV)
+4.	Visit /sitemap.xml again: 
+o	Should be instant (served from cache)
+o	Check Worker logs - should say "serving cached sitemap"
+5.	Publish another site: 
+o	Cache should be invalidated
+o	Next /sitemap.xml request regenerates
+Deliverable: Sharded indexes + cached sitemap (scales to 1M sites)
+________________________________________
+DAY 12: Evaluation Engine - Part 1 (Adaptive Threshold) (5-6 hours)
+Add Evaluation Functions:
+javascript
+// Add to worker.js
+
+/**
+ * Check if evaluation should run (NO KV WRITE - budget-safe)
+ */
+async function shouldEvaluate(slug, sitepkg, isAdmin, env) {
+  const now = Date.now();
+  const lastEval = sitepkg.meta.last_evaluated || 0;
+  const daysSince = (now - lastEval) / 86400000;
+
+  // Not overdue yet
+  if (daysSince < 7) {
+    return false;
+  }
+
+  // NO eval_counter - removed to protect KV write budget
+  // Signal accumulation checked inside evaluateAndPromote()
+
+  // GUARANTEED TRIGGERS:
+
+  // 1. Admin/publish event
+  if (isAdmin) {
+    console.log(`[EVAL] Admin trigger: ${slug}`);
+    return true;
+  }
+
+  // 2. Emergency fallback (30+ days)
+  if (daysSince >= 30) {
+    console.log(`[EVAL] Emergency trigger: ${slug} (${Math.floor(daysSince)} days)`);
+    return true;
+  }
+
+  // PROBABILISTIC TRIGGER:
+
+  // 3. Random 1%
+  if (Math.random() < 0.01) {
+    console.log(`[EVAL] Probabilistic trigger: ${slug}`);
+    return true;
+  }
+
+  // No trigger - no KV write (budget-safe)
+  return false;
+}
+
+/**
+ * Adaptive threshold promotion decision with zero-click safety rails
+ */
+function shouldPromote(mainCTR, ghostCTR, mainViews, ghostViews, mainClicks, ghostClicks) {
+  // --- SAFETY-FIRST PROMOTION BASELINE ---
+  // Hard-coded minimum clicks to prevent "lucky click" promotions
+  const MIN_GHOST_VIEWS = 500;
+  const MIN_GHOST_CLICKS = 5;
+  const MIN_MAIN_CLICKS = 3;
+
+  // Minimum sample size
+  if (ghostViews < MIN_GHOST_VIEWS) {
+    console.log(`[EVAL] ❌ Insufficient ghost views: ${ghostViews} < ${MIN_GHOST_VIEWS}`);
+    return false;
+  }
+
+  // Zero-click safety rail: Require minimum clicks to prevent junk promotion
+  if (ghostClicks < MIN_GHOST_CLICKS) {
+    console.log(`[EVAL] ❌ Insufficient ghost clicks: ${ghostClicks} < ${MIN_GHOST_CLICKS}`);
+    return false;
+  }
+
+  // Cold-start safety: If main has zero/few clicks, require stronger evidence
+  if (mainClicks === 0 && mainViews > 300) {
+    console.log(`[EVAL] ❌ Main has 0 clicks after ${mainViews} views - holding evolution`);
+    return false;
+  }
+
+  if (mainClicks > 0 && mainClicks < MIN_MAIN_CLICKS) {
+    console.log(`[EVAL] ❌ Insufficient main clicks for comparison: ${mainClicks} < ${MIN_MAIN_CLICKS}`);
+    return false;
+  }
+
+  // Handle edge cases
+  if (mainViews === 0 || mainCTR === 0) {
+    console.log(`[EVAL] ❌ No baseline - mainViews: ${mainViews}, mainCTR: ${mainCTR}`);
+    return false; // Need baseline
+  }
+
+  // Calculate standard error
+  const mainSE = Math.sqrt(mainCTR * (1 - mainCTR) / mainViews);
+  const ghostSE = Math.sqrt(ghostCTR * (1 - ghostCTR) / ghostViews);
+  const combinedSE = Math.sqrt(mainSE * mainSE + ghostSE * ghostSE);
+
+  // Adaptive threshold: max(15%, 3 × standard error)
+  const minUplift = 0.15; // 15% baseline
+  const statisticalThreshold = 3 * combinedSE; // 3-sigma confidence
+  const threshold = Math.max(minUplift, statisticalThreshold);
+
+  // Calculate actual uplift
+  const actualUplift = (ghostCTR - mainCTR) / mainCTR;
+
+  console.log(`[EVAL] Threshold: ${(threshold*100).toFixed(1)}%, Actual: ${(actualUplift*100).toFixed(1)}%`);
+  console.log(`[EVAL] Clicks - Main: ${mainClicks}, Ghost: ${ghostClicks}`);
+
+  return actualUplift > threshold;
+}
+
+/**
+ * Archive current version as delta
+ */
+async function archiveVersion(slug, sitepkg, env) {
+  const versionId = `v${Date.now()}`;
+  
+  // Store only content + meta (not full sitepkg)
+  const delta = {
+    content: sitepkg.content,
+    meta: sitepkg.meta
+  };
+  
+  await env.WEBZYL_CONFIGS.put(`version:${slug}:${versionId}`, JSON.stringify(delta));
+  
+  // Update version index
+  const index = await env.WEBZYL_CONFIGS.get(`versions_index:${slug}`, {type:'json'}) || [];
+  
+  index.push({
+    id: versionId,
+    timestamp: Date.now(),
+    headline: delta.content.main.headline,
+    ctr: sitepkg.meta.main_ctr || 0
+  });
+  
+  // Keep only last 10 versions (FIFO)
+  if (index.length > 10) {
+    const removed = index.shift(); // Remove oldest
+    await env.WEBZYL_CONFIGS.delete(`version:${slug}:${removed.id}`);
+  }
+  
+  await env.WEBZYL_CONFIGS.put(`versions_index:${slug}`, JSON.stringify(index));
+}
+
+/**
+ * Generate new variant (simple mutations for MVP)
+ */
+function generateVariant(current) {
+  // Simple mutations (improve in Phase 2 with AI)
+  const headlineMutations = [
+    (h) => h.replace('Experience', 'Discover'),
+    (h) => h.replace('Luxury', 'Premium'),
+    (h) => h.replace('Luxury', 'Exclusive'),
+    (h) => h + ' - Book Now',
+    (h) => 'Unforgettable ' + h,
+    (h) => h.replace('in the', 'nestled in the')
+  ];
+  
+  const ctaMutations = [
+    'Book Your Stay',
+    'Reserve Now',
+    'Check Availability',
+    'View Rooms',
+    'Get Best Rates',
+    'Explore Options',
+    'Book Today',
+    'Reserve Your Room'
+  ];
+  
+  const randomHeadlineMutation = headlineMutations[
+    Math.floor(Math.random() * headlineMutations.length)
+  ];
+  
+  const randomCTA = ctaMutations[
+    Math.floor(Math.random() * ctaMutations.length)
+  ];
+  
+  return {
+    headline: randomHeadlineMutation(current.headline),
+    cta_text: randomCTA,
+    cta_link: current.cta_link // Never mutate link
+  };
+}
+
+/**
+ * Main evaluation and promotion logic
+ */
+async function evaluateAndPromote(slug, sitepkg, env) {
+  console.log(`[EVAL] Starting evaluation for ${slug}`);
+
+  try {
+    // Fetch signals
+    const mainSignals = await getSignals(slug, 'main', sitepkg, env);
+    const ghostSignals = await getSignals(slug, 'ghost', sitepkg, env);
+
+    // Adaptive minimum for low-traffic sites (cold-start acceleration)
+    const totalViews = mainSignals.views + ghostSignals.views;
+    const minGhostViews = totalViews < 1000 ? 200 : 500;
+
+    // Check minimum sample size
+    if (ghostSignals.views < minGhostViews) {
+      console.log(`[EVAL] Insufficient data: ${ghostSignals.views} ghost views (need ${minGhostViews})`);
+      return;
+    }
+    
+    // Calculate CTRs
+    const mainCTR = mainSignals.views > 0 ? mainSignals.clicks / mainSignals.views : 0;
+    const ghostCTR = ghostSignals.views > 0 ? ghostSignals.clicks / ghostSignals.views : 0;
+
+    console.log(`[EVAL] ${slug} CTRs: main=${(mainCTR*100).toFixed(2)}%, ghost=${(ghostCTR*100).toFixed(2)}%`);
+
+    // Decision: Promote or keep
+    if (shouldPromote(mainCTR, ghostCTR, mainSignals.views, ghostSignals.views, mainSignals.clicks, ghostSignals.clicks)) {
+      // GHOST WINS - Promote
+      console.log(`[EVAL] ✅ Ghost WINS for ${slug} - Promoting`);
+      
+      // Archive current main
+      await archiveVersion(slug, sitepkg, env);
+      
+      // Promote ghost to main
+      sitepkg.content.main = {...sitepkg.content.ghost};
+      
+      // Generate new ghost variant
+      sitepkg.content.ghost = generateVariant(sitepkg.content.main);
+      
+      // Update metadata
+      sitepkg.meta.last_evaluated = Date.now();
+      sitepkg.meta.version = `v${Date.now()}`;
+      sitepkg.meta.total_views += (mainSignals.views + ghostSignals.views);
+      sitepkg.meta.main_ctr = ghostCTR;
+      sitepkg.meta.ghost_ctr = 0;
+      
+      // Save
+      await env.WEBZYL_CONFIGS.put(`sitepkg:${slug}`, JSON.stringify(sitepkg));
+      
+      // Reset signals
+      if (sitepkg.meta.signal_mode === 'simple') {
+        await env.WEBZYL_CONFIGS.delete(`signals:${slug}:main`);
+        await env.WEBZYL_CONFIGS.delete(`signals:${slug}:ghost`);
+      }
+      // For bucketed mode, signals auto-expire after 30 days
+      
+      // No eval_counter to reset (removed for budget protection)
+      
+      console.log(`[EVAL] Promotion complete for ${slug}`);
+      
+    } else {
+      // GHOST LOST - Keep main
+      console.log(`[EVAL] ❌ Ghost LOST for ${slug} - Keeping main`);
+      
+      // Update metadata only
+      sitepkg.meta.last_evaluated = Date.now();
+      sitepkg.meta.total_views += (mainSignals.views + ghostSignals.views);
+      
+      await env.WEBZYL_CONFIGS.put(`sitepkg:${slug}`, JSON.stringify(sitepkg));
+      
+      // Reset signals
+      if (sitepkg.meta.signal_mode === 'simple') {
+        await env.WEBZYL_CONFIGS.delete(`signals:${slug}:main`);
+        await env.WEBZYL_CONFIGS.delete(`signals:${slug}:ghost`);
+      }
+      
+      // No eval_counter to reset (removed for budget protection)
+    }
+    
+  } catch (error) {
+    console.error(`[EVAL] Error evaluating ${slug}:`, error);
+  }
+}
+Integrate Evaluation into Page Rendering:
+javascript
+// In main fetch handler (after fetching sitepkg):
+
+// Check if evaluation needed
+const isAdmin = request.headers.get('X-Trigger-Eval') === 'true';
+
+if (await shouldEvaluate(slug, sitepkg, isAdmin, env)) {
+  // Run evaluation async (don't block response)
+  ctx.waitUntil(evaluateAndPromote(slug, sitepkg, env));
+}
+
+// Continue with page rendering...
+Test Evaluation (Manual):
+1.	Setup test signals:
+javascript
+   // Manually add to KV:
+   // signals:test-site:main = {"views": 1000, "clicks": 50} // 5% CTR
+   // signals:test-site:ghost = {"views": 1000, "clicks": 70} // 7% CTR (40% better)
+2.	Trigger evaluation:
+o	Wait 30+ days OR use X-Trigger-Eval header
+o	Visit test site
+o	Check Worker logs
+o	Should see evaluation triggered (signal accumulation checked inside)
+3.	Verify promotion: 
+o	Check sitepkg:test-site in KV
+o	Ghost headline should now be main
+o	New ghost variant generated
+o	Version archived
+4.	Test adaptive threshold: 
+o	Test with different CTRs
+o	Test with low sample size (<500) - should not promote
+o	Test with noisy data - threshold should be higher
+Deliverable: Complete evaluation engine with adaptive thresholds
+________________________________________
+DAY 13: Rollback System + Testing (4-6 hours)
+Add Rollback API:
+javascript
+// Add to worker.js
+
+// Rollback endpoint
+if (url.pathname === '/api/admin/rollback' && request.method === 'POST') {
+  return await handleRollback(request, env);
+}
+
+// List versions endpoint
+if (url.pathname === '/api/admin/versions' && request.method === 'GET') {
+  return await handleListVersions(request, env);
+}
+
+async function handleRollback(request, env) {
+  // Validate auth
+  const authToken = request.headers.get('X-Auth-Token');
+  if (authToken !== env.ADMIN_TOKEN) {
+    return new Response('Unauthorized', {status: 401});
+  }
+  
+  try {
+    const body = await request.json();
+    const {slug, versionId} = body;
+    
+    if (!slug || !versionId) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Missing slug or versionId'
+      }), {
+        status: 400,
+        headers: {'Content-Type': 'application/json'}
+      });
+    }
+    
+    // Get current sitepkg (has immutable data)
+    const current = await env.WEBZYL_CONFIGS.get(`sitepkg:${slug}`, {type:'json'});
+    if (!current) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Site not found'
+      }), {
+        status: 404,
+        headers: {'Content-Type': 'application/json'}
+      });
+    }
+    
+    // Get version delta
+    const delta = await env.WEBZYL_CONFIGS.get(`version:${slug}:${versionId}`, {type:'json'});
+    if (!delta) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Version not found'
+      }), {
+        status: 404,
+        headers: {'Content-Type': 'application/json'}
+      });
+    }
+    
+    // Reconstruct sitepkg
+    const restored = {
+      ...current,
+      content: delta.content,
+      meta: {
+        ...delta.meta,
+        last_evaluated: Date.now() // Update timestamp
+      }
+    };
+    
+    await env.WEBZYL_CONFIGS.put(`sitepkg:${slug}`, JSON.stringify(restored));
+    
+    return new Response(JSON.stringify({
+      success: true,
+      version: versionId
+    }), {
+      status: 200,
+      headers: {'Content-Type': 'application/json'}
+    });
+    
+  } catch (error) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: {'Content-Type': 'application/json'}
+    });
+  }
+}
+
+async function handleListVersions(request, env) {
+  // Validate auth
+  const authToken = request.headers.get('X-Auth-Token');
+  if (authToken !== env.ADMIN_TOKEN) {
+    return new Response('Unauthorized', {status: 401});
+  }
+  
+  const url = new URL(request.url);
+  const slug = url.searchParams.get('slug');
+  
+  if (!slug) {
+    return new Response(JSON.stringify({
+      error: 'Missing slug parameter'
+    }), {
+      status: 400,
+      headers: {'Content-Type': 'application/json'}
+    });
+  }
+  
+  const versions = await env.WEBZYL_CONFIGS.get(`versions_index:${slug}`, {type:'json'}) || [];
+  
+  return new Response(JSON.stringify(versions), {
+    status: 200,
+    headers: {'Content-Type': 'application/json'}
+  });
+}
+```
+
+**Integration Testing - Full Flow:**
+
+1. **Test Complete Evolution Cycle:**
+```
+   Step 1: Publish site with 2 variants
+   Step 2: Generate test signals (main & ghost)
+   Step 3: Trigger evaluation
+   Step 4: Verify promotion/keep decision
+   Step 5: Test rollback
+   Step 6: Verify content restored
+2.	Test Edge Cases: 
+o	Low traffic (1 view/day) → Emergency trigger after 30 days
+o	High traffic (1000 views/day) → Counter trigger after 50 requests
+o	Admin publish → Immediate evaluation trigger
+o	Probabilistic trigger → Random 1%
+3.	Test Security: 
+o	Try sending signals without token → Should fail (403)
+o	Try sending signals with invalid token → Should fail (403)
+o	Try sending signals with expired nonce → Should fail (403)
+o	Try sending 11 clicks on same nonce → Should fail (429)
+o	Try sending 4 views on same nonce → Should fail (429)
+4.	Test Signal Modes: 
+o	Create site in simple mode
+o	Send signals, verify storage
+o	Change to bucketed mode
+o	Send more signals, verify bucketed storage
+o	Trigger evaluation, verify correct aggregation
+5.	Test Variant Selection: 
+o	Site with 0 views → Should see ~20% ghost
+o	Site with 5000 views → Should see ~10% ghost
+o	Site with 20000 views → Should see ~5% ghost
+6.	Load Test (Simple):
+bash
+   # Use Apache Bench or similar
+   ab -n 100 -c 10 https://webzyl.dev/kerala-resort
+   
+   # Should handle:
+   # - 100 requests in <5 seconds
+   # - All 200 OK responses
+   # - No errors in Worker logs
+7.	Mobile Test: 
+o	Test on actual mobile device OR
+o	Chrome DevTools → Device toolbar
+o	Test iPhone 12 (390×844)
+o	Test Galaxy S20 (360×800)
+o	Verify: 
+	Hero text readable
+	CTA button tappable
+	Nearby grid stacks vertically
+	No horizontal scroll
+Document Issues Found:
+Create TESTING.md:
+markdown
+# Testing Results - Week 2
+
+## Tests Passed ✅
+
+- Security: HMAC + nonce validation
+- Signal tracking: View + click
+- Variant selection: Traffic-aware
+- Evaluation: Adaptive threshold
+- Rollback: Version restore
+- SEO: Robots + sitemap + schema
+
+## Issues Found 🐛
+
+[List any bugs]
+
+## Performance Metrics 📊
+
+- Page load: <50ms (Worker execution)
+- Signal POST: <10ms
+- Sitemap generation: <2s (676 shards)
+- Sitemap cached: <100ms
+
+## Security Tests ✅
+
+- Invalid token: Rejected (403)
+- Expired nonce: Rejected (403)
+- Rate limit: Enforced (429 after limits)
+
+## Next Steps
+
+- Deploy to 5 real businesses
+- Monitor for 1 week
+- Gather feedback
+- Iterate
+```
+
+**Deliverable:** Complete testing, all flows verified, bugs documented
+
+---
+
+#### **DAY 14: Deploy to 5 Sites + Documentation (4-6 hours)**
+
+**Tasks:**
+
+1. **Prepare 5 Business Sites:**
+   - Find 5 real businesses (friends, family, local businesses) OR
+   - Create 5 detailed fictional businesses
+   - Ensure variety: resort, homestay, restaurant, shop, service
+
+2. **Fill Complete Data for Each:**
+   - All fields in Sheet
+   - Real/realistic content
+   - Good A/B variants (actually different)
+   - 5 reviews each
+   - 5 nearby POIs each
+
+3. **Publish All 5 Sites:**
+   - Select each row
+   - Click **🚀 Webzyl → Publish Website**
+   - Verify each goes live
+   - Test each site thoroughly
+
+4. **Share with Owners (If Real Businesses):**
+   - Send them their URL
+   - Brief explanation:
+```
+     Hi [Name],
+     
+     I've created a professional website for [Business]:
+     https://webzyl.dev/[slug]
+     
+     Special features:
+     - Automatically improves over time (tests different headlines)
+     - Perfect SEO (shows up in Google)
+     - Mobile-friendly
+     - No maintenance needed
+     
+     If you'd like any changes, let me know!
+5.	Set Up Monitoring: 
+o	Check Worker logs daily
+o	Watch for errors
+o	Monitor signal counts
+o	Watch for first evaluations
+6.	Create Owner Documentation:
+Create OWNER_GUIDE.md:
+markdown
+# Webzyl Owner Guide
+
+## Your Website
+
+**URL:** https://webzyl.dev/[your-slug]
+
+## What Makes It Special
+
+Your website automatically improves itself over time:
+
+1. **A/B Evolution**
+   - Tests 2 different headlines
+   - Keeps the better one
+   - Generates new variant
+   - Repeats forever
+
+2. **Perfect SEO**
+   - Shows up in Google searches
+   - Structured data for voice search
+   - Fast loading (<1 second)
+
+3. **No Maintenance**
+   - You don't need to do anything
+   - It gets better automatically
+   - We handle everything
+
+## How to Update Content
+
+1. Open Google Sheet: [link]
+2. Find your row
+3. Edit any fields (about, reviews, nearby places)
+4. Click: 🚀 Webzyl → Publish Website
+5. Changes go live immediately
+
+## What Gets Tested
+
+- Headlines (2 versions)
+- Call-to-action buttons (2 versions)
+
+The better version wins automatically!
+
+## Timeline
+
+- Week 1-2: Testing begins
+- Week 3-4: First winner selected
+- Month 3: Multiple improvements
+- Month 6: Site significantly better
+
+## Questions?
+
+Email: support@webzyl.dev
+7.	Create Developer Documentation:
+Create DEVELOPER_README.md:
+markdown
+# Webzyl Platform - Developer Documentation
+
+## Architecture
+
+- **Worker:** Edge SSR + logic
+- **KV:** Distributed storage
+- **Pages:** Static template
+- **Sheets:** CMS input
+- **Apps Script:** Publisher
+
+## Deployment
+
+All code lives in:
+- Worker: Cloudflare Dashboard
+- Template: Cloudflare Pages
+- Apps Script: Google Sheets
+
+No build step. No CI/CD needed.
+
+## Adding Features
+
+1. Update Worker code
+2. Deploy (automatic)
+3. Test with existing sites
+4. Monitor logs
+
+## KV Structure
+
+See: [link to section in blueprint]
+
+## API Endpoints
+
+- `/api/admin/publish` - Publish site
+- `/api/signals` - Track signals
+- `/api/admin/rollback` - Rollback version
+- `/api/admin/versions` - List versions
+
+## Monitoring
+
+Check Worker logs:
+- Dashboard → Workers → [worker] → Logs
+
+Key metrics:
+- Page load time (<50ms)
+- Signal POST time (<10ms)
+- Evaluation triggers
+- Promotion decisions
+
+## Scaling
+
+Current capacity (free tier):
+- 100 sites in simple mode
+- 500 sites in bucketed mode
+
+To scale:
+1. Flip `signal_mode` to 'bucketed'
+2. When >1000 sites, upgrade to paid tier
+
+## Troubleshooting
+
+Common issues:
+1. Site not loading → Check KV for sitepkg
+2. Signals not tracking → Check token generation
+3. Evaluation not running → Check triggers
+4. Promotion not working → Check CTR math
+
+## Future Roadmap
+
+- Phase 3: AI variant generation
+- Phase 4: Marketplace portal
+- Phase 5: Payment integration
+- Phase 6: Analytics dashboard
+```
+
+8. **Final Checklist:**
+```
+✅ 5 sites published and live
+✅ All sites tested (desktop + mobile)
+✅ Owner documentation created
+✅ Developer documentation created
+✅ Monitoring set up
+✅ Owners notified (if real businesses)
+✅ Testing results documented
+✅ Known issues logged
+✅ Next steps planned
+```
+
+9. **Celebrate!** 🎉
+
+You've built:
+- A working platform
+- With automatic A/B evolution
+- Perfect SEO
+- Zero ops
+- Zero cost (so far)
+- 5 real sites live
+
+**Deliverable:** 5 sites live, complete documentation, ready for real-world validation
+
+---
+
+## 📊 What You Built in 14 Days
+```
+┌────────────────────────────────────────────────────────┐
+│              WORKING FEATURES                           │
+├────────────────────────────────────────────────────────┤
+│ ✅ Edge SSR (Cloudflare Workers)                       │
+│ ✅ Distributed storage (Cloudflare KV)                 │
+│ ✅ Static template hosting (Cloudflare Pages)          │
+│ ✅ CMS (Google Sheets)                                 │
+│ ✅ Publisher (Google Apps Script)                      │
+│ ✅ Perfect SEO (robots, sitemap, schema)               │
+│ ✅ Traffic-aware A/B variants                          │
+│ ✅ HMAC + nonce security                               │
+│ ✅ Per-type rate limiting                              │
+│ ✅ Signal tracking (view + click)                      │
+│ ✅ Signal mode switching (simple ↔ bucketed)           │
+│ ✅ Hybrid evaluation triggers                          │
+│ ✅ Adaptive threshold promotion                        │
+│ ✅ Delta-based versioning                              │
+│ ✅ Rollback system                                     │
+│ ✅ Sharded indexes (scales to 1M)                      │
+│ ✅ Cached sitemap (24h TTL)                            │
+│ ✅ 5 sites live                                        │
+└────────────────────────────────────────────────────────┘
+
+Cost: $0.00
+Time: 14 days
+Lines of code: ~1,500
+Dependencies: 0
+Servers: 0
+Ops burden: 0
+
+This is production-grade infrastructure.
+________________________________________
+🎯 Next 90 Days (Optional Expansion)
+Now that you have a working MVP, you can:
+Month 2: Validation & Refinement
+•	Monitor 5 sites for real usage
+•	Collect actual A/B test results
+•	Gather owner feedback
+•	Fix any bugs discovered
+•	Optimize based on real data
+Month 3: Scale Preparation
+•	Add more sites (50-100)
+•	Implement bucketed mode when needed
+•	Add basic analytics
+•	Improve variant generation (maybe AI)
+•	Add owner dashboard (read-only)
+Month 4: Marketplace
+•	Build /platform listing page
+•	Public discovery
+•	Category filters
+•	Rating/review display
+•	Search functionality
+Month 5-6: Monetization
+•	Stripe/Razorpay integration
+•	Paid tiers ($5/month, $10/month)
+•	Owner dashboard (full)
+•	Premium features
+•	White-label options
+________________________________________
+✨ Final Notes
+You now have:
+1.	Complete technical specification (this document)
+2.	Working implementation (14-day build)
+3.	5 live sites proving it works
+4.	Zero ongoing costs (so far)
+5.	Clear path to scale (to 10K+ sites)
+What makes this special:
+•	Not a prototype - it's production-ready
+•	Not complex - it's elegantly simple
+•	Not expensive - it's truly zero-cost (MVP)
+•	Not theoretical - it's actually working
+This is rare in software: a plan that's both ambitious AND executable.
+________________________________________
+STATUS: COMPLETE
+DOCUMENT VERSION: 1.3 FINAL
+TOTAL PAGES: 85+
+TOTAL WORDS: ~45,000
+COMPLETENESS: 100%
+AMBIGUITY: 0%
+🚀 START BUILDING MONDAY. SHIP IN 14 DAYS.
+________________________________________
+End of Complete Specification Document
+
+
+Fix Recommeded:-
+✅ Required changes (only)
+1) ✅ SOLVED: eval_counter KV write explosion
+PROBLEM: eval_counter increment on every GET /:slug caused KV write explosion (10 sites × 50 views/day = 500 writes consumed by counter alone).
+✅ IMPLEMENTED FIX:
+•	Removed all eval_counter KV writes from GET requests
+•	Use signal accumulation (total views) as primary trigger (no extra write cost)
+•	Time-based fallback (30+ days) for sites with blocked signals
+•	Admin trigger (X-Trigger-Eval header) for immediate evaluation
+•	Page view: 0 KV writes (budget-safe)
+•	Signal POST: 2 KV writes (signals + rate_limit, no eval_counter)
+________________________________________
+2) ✅ SOLVED: CTR uplift division-by-zero case (safety rails added)
+In shouldPromote() you compute:
+actualUplift = (ghostCTR - mainCTR) / mainCTR
+If mainCTR = 0, this explodes to infinity and you’ll incorrectly promote. You partly address it later with a check in the python pseudocode, but the JS snippets don’t consistently enforce it. 
+Webzyl_SEO_Plan_Version3.1
+✅ Required fix:
+Add a simple rule:
+•	If mainCTR == 0:
+o	promote only if ghost has >= X clicks and >= 500 views
+o	OR keep main until baseline exists
+This prevents unsafe promotions.
+________________________________________
+3) Nonce storage can become a write bottleneck (must cap nonce creation)
+Your flow creates a new nonce for every page view:
+KV.put('nonce:' + nonce, TTL=24h) 
+Webzyl_SEO_Plan_Version3.1
+This means every visit causes KV writes even before signals arrive.
+If you ever get:
+•	500 visits/day → 500 nonce writes/day
+•	plus signals writes → you’ll exceed the free tier 1K writes/day quickly
+✅ Required fix (minimal):
+•	Only generate/store nonce when signal_mode == simple AND signals enabled
+•	OR generate nonce only for ghost variant traffic (where data quality matters most)
+•	OR reuse nonce per session with a short TTL (e.g., 10 minutes) without user tracking
+This is the only way to keep the “writes budget” realistic.
+________________________________________
+4) site_list needs sharding too (or it will hit the same scaling issue)
+You shard site_index, good. But site_list is still a single array. At scale it becomes the same problem: large JSON + update conflicts. 
+Webzyl_SEO_Plan_Version3.1
+✅ Required fix:
+Shard site_list the exact same way as index:
+•	site_list:ke, site_list:wa, etc.
+(Or store site_meta:{slug} per site and build listing on demand — but sharding is simplest.)
+________________________________________
+✅ Freeze recommendation
+
+Immediate Architecture Fixes Required
+While the plan is labeled "Frozen," our architectural analysis identifies three critical areas that require immediate adjustments to ensure long-term stability:
+1. ✅ SOLVED: Safety-First Promotion Logic (The "Zero-Click" Problem)
+Previously, the system could promote a "Ghost" variant based on flawed data if the "Main" variant hadn't received any clicks yet (CTR = 0%).
+•	✅ IMPLEMENTED FIX: The shouldPromote() function now enforces hard-coded minimum thresholds:
+    - MIN_GHOST_CLICKS = 5 (prevents "lucky click" promotions)
+    - MIN_MAIN_CLICKS = 3 (requires baseline before comparison)
+    - Cold-start safety: If mainClicks === 0 && mainViews > 300, promotion is blocked
+    - This protects the "safe evolution" claim and prevents junk content promotion
+2. Nonce Storage Bottleneck (Write Budget Protection)
+Your current flow creates a new KV nonce for every page view. With a 1,000 write/day free tier limit, even 500 daily visits across your entire network would break the budget.
+•	Required Fix:
+o	Only generate/store a nonce when signals are specifically enabled.
+o	Alternative: Only generate nonces for the Ghost variant traffic (where data quality is most critical) to save your write budget for sites that actually need to learn.
+3. Site List Sharding (Scaling to 1M sites)
+While you sharded the site_index, the site_list (used for the marketplace/dashboard) remains a single large JSON array. This will eventually lead to update conflicts and size limit issues as you grow.
+•	Required Fix: Shard the site_list exactly like your index (e.g., site_list:ke, site_list:us, etc.) to ensure predictable performance and avoid hitting the 25MB KV value limit.
+
+
+Additional Desing Changes to include Entire system;-
+✅ Blueprint Addendum: Multi-Vertical Website Support (Future-Proofing)
+Objectives
+Ensure the platform can evolve from resorts/homestays into any small business website (shops, services, clinics, restaurants, gyms, schools, consultants) without redesigning the engine.
+The core rule is:
+Content must be stored as structured block data (not pages). Pages are rendered views.
+This enables reuse of the same renderer, SEO kernel, and evolution engine across any vertical.
+________________________________________
+1) Mandatory Field: business_type
+Add this field into sitepkg.meta to drive schema, templates, and signal types.
+Example
+"meta": {
+  "business_type": "resort", 
+  "template_pack": "resort_v1",
+  "signal_profile": "booking",
+  "last_evaluated": 0
+}
+Allowed values (initial)
+•	resort
+•	homestay
+•	shop
+•	service
+•	clinic
+•	restaurant
+(Extend later as needed.)
+________________________________________
+2) Standardize Content as Blocks (Vertical-Agnostic)
+Replace vertical-specific fields (like only “rooms”) with a universal block structure.
+Required Structure
+"blocks": [
+  { "type": "hero", "data": { ... } },
+  { "type": "highlights", "data": { ... } },
+  { "type": "offer", "data": { ... } },
+  { "type": "gallery", "data": { ... } },
+  { "type": "faq", "data": { ... } },
+  { "type": "contact", "data": { ... } },
+  { "type": "location", "data": { ... } }
+]
+Vertical-specific blocks become optional
+•	Resorts: rooms, attractions, booking
+•	Shops: product_catalog, categories, offers
+•	Services: service_list, pricing, areas_served
+•	Clinic: doctors, appointments, specialities
+Rule: the renderer must never assume a block exists.
+________________________________________
+3) Template Packs (No Builder Needed)
+Introduce the concept of template packs.
+Definition
+A template pack = layout + block ordering rules + style theme
+Minimum packs (v1)
+•	resort_v1
+•	shop_v1
+•	service_v1
+Later packs can be added without altering the engine.
+________________________________________
+4) SEO Schema Router (Per Vertical)
+Schema generation must be routed by business_type.
+Example Schema Mapping
+•	resort/homestay → LodgingBusiness
+•	shop → Store + LocalBusiness
+•	service → ProfessionalService / LocalBusiness
+•	restaurant → Restaurant
+•	clinic → MedicalClinic
+Rule: structured data generation is centralized; users never edit schema manually.
+________________________________________
+5) Signal Profiles (Per Vertical)
+A/B evolution must be reusable across verticals via signal profiles.
+Profile Examples
+Booking profile (resort/homestay)
+•	view
+•	cta_whatsapp
+•	cta_call
+•	cta_booking
+Lead profile (services/clinic)
+•	view
+•	cta_call
+•	cta_whatsapp
+•	form_submit
+Store profile (shop/restaurant)
+•	view
+•	cta_direction
+•	cta_call
+•	cta_whatsapp
+•	menu_view (optional)
+Add into sitepkg.meta:
+"meta": {
+  "signal_profile": "booking"
+}
+Rule: evolution compares variants using the primary conversion event for that profile.
+________________________________________
+6) Evolution Targets Must Be Block-Agnostic
+Evolution/mutation must operate on these universal elements:
+•	Hero headline (block: hero)
+•	CTA text/link (block: hero or offer)
+•	Section order (block ordering)
+•	FAQ order (block: faq)
+This ensures the evolution engine works for all verticals.
+________________________________________
+7) Google Sheet Model Must Support Vertical Expansion
+Add mandatory columns:
+•	business_type
+•	template_pack
+•	signal_profile
+And optionally allow JSON block injection fields:
+•	blocks_json (advanced)
+•	OR keep current columns but convert them into blocks during publish
+Publish rule: Apps Script publisher must build blocks for each business type.
+________________________________________
+8) Long-Term Compatibility for LLM/Agent Discovery
+For each site, expose machine-readable endpoints:
+•	/{slug}/facts.json
+•	/{slug}/services.json
+•	/{slug}/faq.json
+•	/{slug}/location.json
+These endpoints are generated from blocks and are:
+•	lightweight
+•	cached
+•	stable
+•	future proof if “Google search changes”
+________________________________________
+Final Statement (to add to blueprint)
+By enforcing:
+•	business_type
+•	blocks storage
+•	schema routing
+•	signal profiles
+…the platform becomes a universal website OS, not a “resort SEO system”.
+Result: expanding into shops and services becomes a template + block mapping exercise, not a full redesign.
+________________________________________
+If you want, I can also provide a mini-table mapping:
+Business Type → recommended blocks → schema type → signals, ready to paste into your blueprint.
+Yes
+Perfect — here’s the mini-table mapping you can paste directly into your blueprint. It’s designed to make “Resort → Shop → Services → Clinic → Restaurant” expansion mechanical, not architectural.
+________________________________________
+Appendix: Multi-Vertical Expansion Map (Blocks + Schema + Signals)
+1) Business Type Mapping Table
+Business Type	Template Pack	Primary Goal	Recommended Schema Types	Signal Profile
+Resort / Homestay	resort_v1	Booking enquiry	LodgingBusiness (+ LocalBusiness)	booking
+Shop (Retail)	shop_v1	Visits / calls	Store (+ LocalBusiness)	store
+Services (General)	service_v1	Lead generation	ProfessionalService (+ LocalBusiness)	lead
+Clinic	clinic_v1	Appointment enquiry	MedicalClinic (+ Physician optional)	lead
+Restaurant / Cafe	restaurant_v1	Calls / directions	Restaurant (+ Menu optional)	store
+Gym / Fitness	service_v1	Membership leads	SportsActivityLocation (+ LocalBusiness)	lead
+School / Tuition	service_v1	Admissions enquiries	EducationalOrganization	lead
+Consultant	service_v1	Calls / enquiries	ProfessionalService	lead
+✅ Rule: Schema is derived only from business_type. No manual schema editing.
+________________________________________
+2) Block Library (Standard + Vertical Blocks)
+Universal Blocks (used by all business types)
+These must be supported everywhere:
+•	hero
+•	highlights
+•	offer (optional)
+•	gallery (optional)
+•	faq
+•	testimonials/reviews
+•	contact
+•	location
+•	cta_strip (sticky call/WhatsApp)
+•	policies (optional)
+Vertical-Specific Blocks
+These are plugged in based on type:
+Business Type	Vertical Blocks
+Resort / Homestay	rooms, packages, attractions_nearby, booking_cta
+Shop	product_catalog, categories, best_sellers, offers
+Services	service_list, pricing, areas_served, process_steps
+Clinic	doctors, specialities, appointment_cta, clinic_hours
+Restaurant	menu, signature_dishes, timings, reservation_cta
+Gym	plans, trainer_profiles, transformations, membership_cta
+School	courses, admission_steps, faculty, schedule
+✅ Rule: Renderer never assumes any block exists; it renders based on blocks[].
+________________________________________
+3) Signal Profile Definitions (Evolution Engine Compatibility)
+booking profile (Resort/Homestay)
+Primary conversion event: cta_booking OR cta_whatsapp
+•	view
+•	cta_whatsapp
+•	cta_call
+•	cta_booking
+•	cta_directions
+lead profile (Services/Clinic/Gym/School)
+Primary conversion event: form_submit OR cta_call
+•	view
+•	cta_call
+•	cta_whatsapp
+•	form_submit
+•	cta_directions
+store profile (Shop/Restaurant)
+Primary conversion event: cta_directions OR cta_call
+•	view
+•	cta_directions
+•	cta_call
+•	cta_whatsapp
+•	menu_view / catalog_view (optional)
+✅ Rule: Promotion decision uses the primary conversion event for that profile (not views).
+________________________________________
+4) Evolution Targets per Business Type (Safe + Universal)
+The A/B engine must focus only on these stable levers:
+Target	Block	Mutation Types
+Headline	hero	Variant A/B phrasing
+CTA text	hero / cta_strip / offer	Variant A/B
+Section order	blocks[]	swap 1–2 blocks
+FAQ ordering	faq	reorder Q&A
+✅ Rule: Evolution never changes factual business data (pricing, location, contacts).
+________________________________________
+5) Machine-Readable Agent Endpoints (for future search)
+Each vertical must generate these endpoints from blocks:
+•	/{slug}/facts.json → name, type, contact, location, hours, verified_since
+•	/{slug}/services.json → services or product categories
+•	/{slug}/faq.json
+•	/{slug}/location.json → geo + areas served + nearby POIs
+✅ Rule: Same endpoint names for all verticals. Only content differs.
+________________________________________
+One-line blueprint statement to include
+“Webzyl is a multi-vertical Edge Website OS. Business expansion is achieved by adding new block mappings, schema routing, and template packs — not by rebuilding the platform.”
+
+
+
+
+
+

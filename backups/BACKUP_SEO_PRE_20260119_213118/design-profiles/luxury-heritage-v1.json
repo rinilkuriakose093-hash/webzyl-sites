@@ -1,0 +1,35 @@
+{
+  "id": "luxury-heritage-v1",
+  "typography": {
+    "fontDisplay": "Playfair Display",
+    "fontBody": "Inter",
+    "baseSize": 18,
+    "scaleRatio": 1.333,
+    "letterSpacing": {
+      "display": "0.04em",
+      "heading": "0.02em"
+    },
+    "lineHeight": {
+      "display": 1.1,
+      "body": 1.6
+    }
+  },
+  "spacing": {
+    "section": "clamp(6rem, 10vw, 14rem)",
+    "component": "clamp(2rem, 4vw, 4rem)"
+  },
+  "layout": {
+    "hero": "full-bleed-centered",
+    "sections": "alternating-asymmetric",
+    "gallery": "editorial"
+  },
+  "motion": {
+    "type": "fade",
+    "duration": "slow"
+  },
+  "color": {
+    "background": "#0B1C1E",
+    "foreground": "#F5F5F2",
+    "accent": "#7C6EFF"
+  }
+}

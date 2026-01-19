@@ -1,0 +1,35 @@
+{
+  "id": "modern-premium-v1",
+  "typography": {
+    "fontDisplay": "Inter",
+    "fontBody": "Inter",
+    "baseSize": 16,
+    "scaleRatio": 1.25,
+    "letterSpacing": {
+      "display": "0.01em",
+      "heading": "0.01em"
+    },
+    "lineHeight": {
+      "display": 1.2,
+      "body": 1.5
+    }
+  },
+  "spacing": {
+    "section": "clamp(4rem, 8vw, 10rem)",
+    "component": "clamp(1.5rem, 3vw, 3rem)"
+  },
+  "layout": {
+    "hero": "centered",
+    "sections": "stacked",
+    "gallery": "grid"
+  },
+  "motion": {
+    "type": "none",
+    "duration": "none"
+  },
+  "color": {
+    "background": "#FFFFFF",
+    "foreground": "#111111",
+    "accent": "#0066FF"
+  }
+}

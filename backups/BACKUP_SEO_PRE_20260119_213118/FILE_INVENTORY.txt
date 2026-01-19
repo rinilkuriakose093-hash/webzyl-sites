@@ -1,0 +1,71 @@
+COMPLETE FILE INVENTORY - Pre-SEO Backup
+========================================
+Timestamp: 2026-01-19 21:31:18
+
+BACKED UP FILES:
+---------------
+
+📁 Root Level (Critical Files)
+  ✅ worker.js                     240,163 bytes  - Main Cloudflare Worker v7.2
+  ✅ template.html                  58,476 bytes  - Main HTML template
+  ✅ wrangler.toml                   3,073 bytes  - Cloudflare config with KV bindings
+  ✅ config-grand-royal.json         3,606 bytes  - Sample site configuration
+
+📁 Booking Module
+  ✅ booking-api.js                 44,000 bytes  - Booking API logic
+
+📁 Design Profiles (design-profiles/)
+  ✅ luxury-heritage-v1.json         6,532 bytes  - Luxury heritage base profile
+  ✅ modern-premium-v1.json          6,215 bytes  - Modern premium base profile
+  ✅ variants/luxury-heritage-v1--calm.json  3,841 bytes
+  ✅ variants/luxury-heritage-v1--bold.json  3,842 bytes
+
+📁 Apps Script Integration (Webzyl-Notifications-v6.2.2/)
+  ✅ notifications-v6.2.2.gs        17,126 bytes  - Single-channel notifications
+  ✅ notifications-multichannel-v6.2.2.gs  29,113 bytes - Multi-channel notifications
+  ✅ worker-notifications-v6.2.2.js  24,647 bytes
+  ✅ worker-notifications-multichannel-v6.2.2.js  22,052 bytes
+  ✅ Supporting documentation files
+
+TOTAL BACKUP SIZE: ~500 KB (compressed)
+
+NOT BACKED UP (Excluded):
+------------------------
+❌ node_modules/          - Can be restored via npm install
+❌ .git/                  - Version control metadata
+❌ _backups/              - Previous backup directories
+❌ backups/               - Other backup directories (recursive)
+❌ tmpclaude-* files      - Temporary Claude Code files
+❌ Test images            - *.jpg test files
+❌ Documentation only     - *.md files (except manifest)
+
+CRITICAL DEPENDENCIES:
+---------------------
+📦 NPM Packages (package.json):
+  - wrangler (Cloudflare CLI)
+  - color (Color manipulation for SSR)
+  
+☁️ Cloudflare Resources:
+  - KV Namespace: RESORT_CONFIGS (ddeba62c54d046d69320dcc2ae68a269)
+  - KV Namespace: EVENTS_KV (69ca9f544dc84a8d92f64230a74ae3e5)
+  - R2 Bucket: webzyl-media
+  - D1 Database: webzyl-media (6ca4a54d-b35e-4218-9068-54423913053f)
+  
+🔗 External Integrations:
+  - Google Apps Script: Booking webhook
+  - Google Sheets: CMS backend
+  - MailChannels: Email delivery
+
+RESTORE VERIFICATION:
+--------------------
+To verify backup integrity:
+  1. Check file count: ls -R | wc -l
+  2. Verify file sizes match above
+  3. Test JSON validity: jq . *.json
+  4. Check no BOM/encoding issues: file -bi *
+
+GIT COMMIT STATUS:
+-----------------
+Current branch: main
+Status: See git status output
+Recommended: Run GIT_COMMIT_COMMANDS.sh for checkpoint commit

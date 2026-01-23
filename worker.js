@@ -6596,13 +6596,26 @@ async function auditOrphanedAssets(env) {
 
 async function handleSitemapCacheInvalidation(request, env) {
   try {
-    // Validate admin token
+    // Security: Reject non-POST explicitly (prevent accidental crawler hits)
+    if (request.method !== 'POST') {
+      return new Response('Not Found', { status: 404 }); // Security through obscurity
+    }
+
+    // Security: Validate admin token (return 404 on failure, not 403)
     if (!validateAdminToken(request, env)) {
+      return new Response('Not Found', { status: 404 }); // Security through obscurity
+    }
+
+    // Parse request body (reject malformed JSON early)
+    let payload;
+    try {
+      payload = await request.json();
+    } catch (e) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'Unauthorized'
+        error: 'Invalid JSON'
       }), {
-        status: 403,
+        status: 400,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -6610,8 +6623,6 @@ async function handleSitemapCacheInvalidation(request, env) {
       });
     }
 
-    // Parse request body
-    const payload = await request.json();
     const { prefix, slug } = payload;
 
     if (!prefix || !/^[a-z]{2}$/.test(prefix)) {
@@ -6627,14 +6638,10 @@ async function handleSitemapCacheInvalidation(request, env) {
       });
     }
 
-    // Delete cache keys for this shard only (surgical invalidation)
+    // Delete cache key for this shard only (surgical invalidation, single KV write)
     const cacheKey = `sitemap_cache:${prefix}`;
-    const cacheTs = `sitemap_cache_ts:${prefix}`;
 
-    await Promise.all([
-      env.RESORT_CONFIGS.delete(cacheKey),
-      env.RESORT_CONFIGS.delete(cacheTs)
-    ]);
+    await env.RESORT_CONFIGS.delete(cacheKey);
 
     console.log(`[SITEMAP] Cache invalidated for shard: ${prefix} (slug: ${slug || 'unknown'})`);
 

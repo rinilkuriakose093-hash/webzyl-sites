@@ -6,29 +6,24 @@
     <title>{{BUSINESS_NAME}} | {{TAGLINE}}</title>
     <meta name="description" content="{{DESCRIPTION}}">
 
-    <!-- SEO: Open Graph Tags -->
-    <meta property="og:type" content="business.business">
-    <meta property="og:title" content="{{BUSINESS_NAME}} | {{TAGLINE}}">
-    <meta property="og:description" content="{{DESCRIPTION}}">
-    <meta property="og:url" content="{{CANONICAL_URL}}">
-    <meta property="og:site_name" content="{{BUSINESS_NAME}}">
-    <meta property="og:image" content="{{HERO_IMAGE}}">
+    <!-- ============================================================
+         SEO META TAGS: SINGLE SOURCE OF TRUTH
+         ============================================================
+         ARCHITECTURE DECISION (2026-01-19):
+         - Worker (seo/meta.js + seo/schema.js) is the SINGLE authority
+         - Template contains ONLY essential meta (charset, viewport, title, description)
+         - All SEO tags (OG, Twitter, Canonical, Schema) injected by Worker at runtime
+         - This prevents dual ownership and ensures consistency
 
-    <!-- SEO: Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{BUSINESS_NAME}} | {{TAGLINE}}">
-    <meta name="twitter:description" content="{{DESCRIPTION}}">
-    <meta name="twitter:image" content="{{HERO_IMAGE}}">
+         FUTURE ENHANCEMENT:
+         When Worker SSR is implemented, the following will be injected:
+         1. Open Graph tags (og:title, og:description, og:image, og:url)
+         2. Twitter Card tags (twitter:card, twitter:title, etc.)
+         3. Canonical URL (<link rel="canonical">)
+         4. Schema.org JSON-LD (<script type="application/ld+json">)
 
-    <!-- SEO: Canonical URL -->
-    <link rel="canonical" href="{{CANONICAL_URL}}">
-
-    <!-- SEO: Additional Meta Tags -->
-    <meta name="robots" content="index, follow, max-image-preview:large">
-    <meta name="googlebot" content="index, follow">
-
-    <!-- SEO: Schema.org JSON-LD (Injected by Worker SSR) -->
-    <!-- Schema injection point - populated at runtime based on business type -->
+         DO NOT add static SEO tags here - they will conflict with Worker injection.
+         ============================================================ -->
     <style>
         /* ========== RESET & BASE ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }

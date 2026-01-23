@@ -29,10 +29,11 @@ import modernPremium from "./design-profiles/modern-premium-v1.json";
 import luxuryHeritageCalm from "./design-profiles/variants/luxury-heritage-v1--calm.json";
 import luxuryHeritageBold from "./design-profiles/variants/luxury-heritage-v1--bold.json";
 
-// SEO Modules (CEO Directive #3 Compliant)
+// SEO Modules (CEO Directive #3 Compliant + AI Search Era)
 import { generateRobotsTxt } from './seo/robots.js';
 import { generateSitemapIndex } from './seo/sitemap-index.js';
 import { generateSitemapShard } from './seo/sitemap-shard.js';
+import { generateFacts, generateFAQ } from './seo/facts.js';
 import { generateSchema } from './seo/schema.js';
 import { buildMetaTags } from './seo/meta.js';
 
@@ -509,6 +510,48 @@ export default {
     if (sitemapMatch) {
       const prefix = sitemapMatch[1];
       return await generateSitemapShard(env.RESORT_CONFIGS, prefix, hostname);
+    }
+
+    // =====================================================
+    // AGENT-FIRST JSON ENDPOINTS (AI Search Era)
+    // =====================================================
+    // Route 4: facts.json - Machine-readable site facts for AI search engines
+    // (OpenAI SearchGPT, Google SGE, Perplexity AI)
+    if (path === '/facts.json') {
+      const slug = hostname.split('.')[0]; // Extract slug from subdomain
+      const sitepkg = await getPropertyConfigSafe(env, slug);
+
+      if (!sitepkg) {
+        return new Response(JSON.stringify({ error: 'Site not found' }), {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Webzyl-Route': 'facts',
+            'X-Webzyl-KV-Ops': '1'
+          }
+        });
+      }
+
+      return generateFacts(sitepkg, hostname);
+    }
+
+    // Route 5: faq.json - FAQ structured data for AI search engines
+    if (path === '/faq.json') {
+      const slug = hostname.split('.')[0]; // Extract slug from subdomain
+      const sitepkg = await getPropertyConfigSafe(env, slug);
+
+      if (!sitepkg) {
+        return new Response(JSON.stringify({ error: 'Site not found' }), {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Webzyl-Route': 'faq',
+            'X-Webzyl-KV-Ops': '1'
+          }
+        });
+      }
+
+      return generateFAQ(sitepkg, hostname);
     }
 
     // =====================================================

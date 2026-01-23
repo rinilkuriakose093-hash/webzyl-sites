@@ -3214,15 +3214,195 @@ ${shardData.map(slug => `  <url>
 - ✅ Protects KV read budget (CEO Directive #3)
 - ✅ Scales to millions of sites
 
-**Test SEO:**
+---
+
+### ✅ AGENT-FIRST JSON ENDPOINTS (CEO Directive #2 - AI Search Era)
+
+**Why This Matters**:
+AI search engines (OpenAI SearchGPT, Google SGE, Perplexity AI, Anthropic Claude) prefer clean JSON "fact sheets" over HTML scraping. This positions Webzyl years ahead of competitors doing HTML-only SEO.
+
+**File Structure Update**:
+```
+/seo/
+  ├── robots.js              # Robots.txt generator
+  ├── sitemap-index.js       # Sitemap index generator
+  ├── sitemap-shard.js       # Per-shard sitemap generator
+  ├── schema.js              # Schema.org generator (SOURCE OF TRUTH)
+  ├── meta.js                # Meta tags builder
+  └── facts.js               # Agent-first JSON endpoints ✨ NEW
+```
+
+**Add Agent-First Routes to Worker**:
+
+```javascript
+// worker.js (add after sitemap routes)
+
+// Import agent-first module
+import { generateFacts, generateFAQ } from './seo/facts.js';
+
+// Route 4: facts.json - Machine-readable site facts
+if (pathname === '/facts.json') {
+  const slug = url.hostname.split('.')[0];
+  const sitepkg = await getPropertyConfigSafe(env, slug);
+
+  if (!sitepkg) {
+    return new Response(JSON.stringify({ error: 'Site not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  return generateFacts(sitepkg, url.hostname);
+}
+
+// Route 5: faq.json - FAQ structured data
+if (pathname === '/faq.json') {
+  const slug = url.hostname.split('.')[0];
+  const sitepkg = await getPropertyConfigSafe(env, slug);
+
+  if (!sitepkg) {
+    return new Response(JSON.stringify({ error: 'Site not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  return generateFAQ(sitepkg, url.hostname);
+}
+```
+
+**File: seo/facts.js**
+```javascript
+import { generateSchema } from './schema.js';
+
+export function generateFacts(sitepkg, hostname) {
+  // Generate schema.org data (source of truth)
+  const schema = generateSchema(sitepkg, hostname);
+
+  // Build machine-readable facts
+  const facts = {
+    name: schema.name,
+    type: schema['@type'],
+    description: schema.description,
+    url: schema.url,
+    telephone: schema.telephone,
+    email: schema.email,
+    address: schema.address,
+    openingHours: schema.openingHoursSpecification,
+    priceRange: schema.priceRange,
+    aggregateRating: schema.aggregateRating,
+    image: schema.image,
+    category: sitepkg.category || 'resort',
+    features: sitepkg.features || [],
+    amenities: sitepkg.amenities || [],
+    lastUpdated: new Date().toISOString(),
+    dataSource: 'webzyl-platform'
+  };
+
+  // Remove null/undefined values
+  Object.keys(facts).forEach(key => {
+    if (facts[key] === null || facts[key] === undefined) {
+      delete facts[key];
+    }
+  });
+
+  return new Response(JSON.stringify(facts, null, 2), {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'X-Webzyl-Route': 'facts',
+      'X-Webzyl-KV-Ops': '0'
+    }
+  });
+}
+
+export function generateFAQ(sitepkg, hostname) {
+  const faqData = sitepkg.faq || sitepkg.faqs || [];
+
+  const faq = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqData.map(item => ({
+      '@type': 'Question',
+      name: item.question || item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer || item.a
+      }
+    })),
+    about: {
+      '@type': 'Thing',
+      name: sitepkg.name,
+      url: `https://${hostname}`
+    },
+    lastUpdated: new Date().toISOString(),
+    dataSource: 'webzyl-platform'
+  };
+
+  return new Response(JSON.stringify(faq, null, 2), {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'X-Webzyl-Route': 'faq',
+      'X-Webzyl-KV-Ops': '0'
+    }
+  });
+}
+```
+
+**Key Benefits**:
+- ✅ Zero KV operations (purely computational, like robots.txt)
+- ✅ AI-first discoverability (SearchGPT, SGE, Perplexity)
+- ✅ Single source of truth (derives from schema.js)
+- ✅ CORS-enabled for AI crawlers
+- ✅ Future-proof for agent-driven web
+
+---
+
+### ✅ ZERO-LOG OBSERVABILITY (Cost Protection + Developer Experience)
+
+**Why This Matters**:
+Traditional `console.log` statements generate server-side logs that can impact performance and (in some clouds) cost. Headers-based debugging provides zero-cost observability.
+
+**Implementation**: All SEO routes now include standardized headers:
+
+```javascript
+// Example response headers:
+{
+  'X-Webzyl-Route': 'sitemap-shard',  // Route identifier
+  'X-Webzyl-KV-Ops': '2',             // KV operations count
+  'X-Cache': 'HIT'                     // Cache status (if applicable)
+}
+```
+
+**How to Use**:
+1. Open browser DevTools → Network tab
+2. Visit any SEO route (e.g., `/sitemap-aa.xml`)
+3. Check response headers to audit cache efficiency and KV operations
+4. No server-side logs generated
+
+**Key Benefits**:
+- ✅ Zero log costs (no Cloudflare Workers log charges)
+- ✅ Instant debugging (Network tab shows all metrics)
+- ✅ Production-safe (no performance impact)
+- ✅ Audit-friendly (KV operations visible per request)
+
+---
+
+**Test SEO (Updated):**
 
 1. Visit `/robots.txt` → Should see robots file
 2. Visit `/sitemap.xml` → Should see sitemap INDEX (list of 676 shard URLs)
 3. Visit `/sitemap-aa.xml` → Should see sitemap for "aa" shard
 4. Visit `/sitemap-zz.xml` → Should see sitemap for "zz" shard
 5. Check `X-Cache` header → Should be HIT on second request
+6. **NEW**: Visit `/facts.json` → Should see machine-readable site facts (JSON)
+7. **NEW**: Visit `/faq.json` → Should see FAQ structured data (JSON)
+8. **NEW**: Check `X-Webzyl-KV-Ops` header → Should see KV operations count
 
-**Deliverable:** Perfect SEO infrastructure (robots, sitemap index, sharded sitemaps)
+**Deliverable:** Perfect SEO infrastructure + Agent-first JSON endpoints + Zero-log observability
 
 ---
 

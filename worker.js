@@ -29,6 +29,13 @@ import modernPremium from "./design-profiles/modern-premium-v1.json";
 import luxuryHeritageCalm from "./design-profiles/variants/luxury-heritage-v1--calm.json";
 import luxuryHeritageBold from "./design-profiles/variants/luxury-heritage-v1--bold.json";
 
+// SEO Modules (CEO Directive #3 Compliant)
+import { generateRobotsTxt } from './seo/robots.js';
+import { generateSitemapIndex } from './seo/sitemap-index.js';
+import { generateSitemapShard } from './seo/sitemap-shard.js';
+import { generateSchema } from './seo/schema.js';
+import { buildMetaTags } from './seo/meta.js';
+
 // =====================================================
 // CONFIGURATION CONSTANTS
 // =====================================================
@@ -478,11 +485,32 @@ export default {
     // =====================================================
     // IMAGE SERVING (Check FIRST - highest priority)
     // =====================================================
-    
+
     if (path.startsWith('/img/')) {
       return handleMediaServe(request, env);
     }
-    
+
+    // =====================================================
+    // SEO ROUTES (CEO Directive #3 Compliant)
+    // =====================================================
+
+    // Route 1: robots.txt (zero KV operations)
+    if (path === '/robots.txt') {
+      return generateRobotsTxt(hostname);
+    }
+
+    // Route 2: Sitemap Index (lists 676 shard sitemaps, zero KV operations)
+    if (path === '/sitemap.xml') {
+      return generateSitemapIndex(hostname);
+    }
+
+    // Route 3: Per-Shard Sitemaps (aa-zz, 676 total, cached per-shard)
+    const sitemapMatch = path.match(/^\/sitemap-([a-z]{2})\.xml$/);
+    if (sitemapMatch) {
+      const prefix = sitemapMatch[1];
+      return await generateSitemapShard(env.RESORT_CONFIGS, prefix, hostname);
+    }
+
     // =====================================================
     // DATA ENDPOINT (Critical: Check BEFORE subdomain routing)
     // =====================================================
@@ -829,6 +857,18 @@ export default {
     
     if (path === '/api/event' && request.method === 'POST') {
       return handleEventTrackingRequest(request, env);
+    }
+
+    // =====================================================
+    // INTERNAL: SITEMAP CACHE INVALIDATION
+    // =====================================================
+    // Called by Google Apps Script after publishing a site.
+    // Invalidates only the affected shard cache (prefix-scoped).
+    // CEO Directive #3 Compliant - surgical cache invalidation.
+    // =====================================================
+
+    if (path === '/_internal/invalidate-sitemap' && request.method === 'POST') {
+      return handleSitemapCacheInvalidation(request, env);
     }
 
     // =====================================================
@@ -6541,3 +6581,89 @@ async function auditOrphanedAssets(env) {
   }
 }
 
+
+// ============================================================================
+// SEO: SITEMAP CACHE INVALIDATION HANDLER
+// ============================================================================
+// CEO Directive #3 Compliant - Surgical Cache Invalidation
+//
+// Called by Google Apps Script after publishing a site to KV.
+// Invalidates only the affected shard cache (prefix-scoped deletion).
+// Protects KV write budget by NOT invalidating all 676 shards.
+//
+// Security: Requires X-Admin-Token header
+// ============================================================================
+
+async function handleSitemapCacheInvalidation(request, env) {
+  try {
+    // Validate admin token
+    if (!validateAdminToken(request, env)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Unauthorized'
+      }), {
+        status: 403,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // Parse request body
+    const payload = await request.json();
+    const { prefix, slug } = payload;
+
+    if (!prefix || !/^[a-z]{2}$/.test(prefix)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid prefix. Must be 2 lowercase letters (e.g., "aa", "ab")'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // Delete cache keys for this shard only (surgical invalidation)
+    const cacheKey = `sitemap_cache:${prefix}`;
+    const cacheTs = `sitemap_cache_ts:${prefix}`;
+
+    await Promise.all([
+      env.RESORT_CONFIGS.delete(cacheKey),
+      env.RESORT_CONFIGS.delete(cacheTs)
+    ]);
+
+    console.log(`[SITEMAP] Cache invalidated for shard: ${prefix} (slug: ${slug || 'unknown'})`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      prefix: prefix,
+      slug: slug,
+      message: `Sitemap cache invalidated for shard: ${prefix}`
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (error) {
+    console.error('[SITEMAP] Cache invalidation error:', error);
+
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+}

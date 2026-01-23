@@ -36,6 +36,7 @@ import { generateSitemapShard } from './seo/sitemap-shard.js';
 import { generateFacts, generateFAQ } from './seo/facts.js';
 import { generateSchema } from './seo/schema.js';
 import { buildMetaTags } from './seo/meta.js';
+import { checkRateLimit, rateLimitResponse, getRequestIdentifier, getRateLimitCategory } from './seo/rate-limiter.js';
 
 // =====================================================
 // CONFIGURATION CONSTANTS
@@ -445,7 +446,20 @@ export default {
     const url = new URL(request.url);
     const hostname = url.hostname;
     const path = url.pathname;
-    
+
+    // =====================================================
+    // RATE LIMITING (Defense-in-depth, backup to edge rules)
+    // =====================================================
+    const category = getRateLimitCategory(path);
+    if (category) {
+      const identifier = getRequestIdentifier(request);
+      const { allowed, retryAfter } = checkRateLimit(identifier, category);
+
+      if (!allowed) {
+        return rateLimitResponse(retryAfter, category);
+      }
+    }
+
     // =====================================================
     // SPECIAL HANDLING FOR IMG SUBDOMAIN (Check FIRST - highest priority)
     // =====================================================

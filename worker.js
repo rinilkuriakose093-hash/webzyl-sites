@@ -474,30 +474,6 @@ export default {
     }
 
     // =====================================================
-    // WEBZYL BRAND HOMEPAGE (www.webzyl.com and webzyl.com)
-    // =====================================================
-
-    if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
-      // Skip API paths - they're handled later
-      if (!path.startsWith('/api/')) {
-        // Serve super admin dashboard at /super-admin path
-        if (path === '/super-admin' || path === '/super-admin/') {
-          return handleSuperAdminDashboard(request, env);
-        }
-        // Serve admin dashboard (CEO dashboard) at /admin path
-        if (path === '/admin' || path === '/admin/') {
-          return handleCEOAdminDashboard(request, env);
-        }
-        // Serve operator dashboard at /operator path
-        if (path === '/operator' || path === '/operator/') {
-          return handleOperatorDashboard(request, env);
-        }
-        // Serve the Webzyl brand identity page
-        return handleBrandHomepage(request, env, ctx);
-      }
-    }
-
-    // =====================================================
     // IMAGE SERVING (Check FIRST - highest priority)
     // =====================================================
 
@@ -508,6 +484,7 @@ export default {
     // =====================================================
     // SEO ROUTES (CEO Directive #3 Compliant)
     // =====================================================
+    // IMPORTANT: These must come BEFORE brand homepage check
 
     // Route 1: robots.txt (zero KV operations)
     if (path === '/robots.txt') {
@@ -566,6 +543,31 @@ export default {
       }
 
       return generateFAQ(sitepkg, hostname);
+    }
+
+    // =====================================================
+    // WEBZYL BRAND HOMEPAGE (www.webzyl.com and webzyl.com)
+    // =====================================================
+    // IMPORTANT: This catch-all must come AFTER SEO routes
+
+    if (hostname === 'webzyl.com' || hostname === 'www.webzyl.com') {
+      // Skip API paths - they're handled later
+      if (!path.startsWith('/api/')) {
+        // Serve super admin dashboard at /super-admin path
+        if (path === '/super-admin' || path === '/super-admin/') {
+          return handleSuperAdminDashboard(request, env);
+        }
+        // Serve admin dashboard (CEO dashboard) at /admin path
+        if (path === '/admin' || path === '/admin/') {
+          return handleCEOAdminDashboard(request, env);
+        }
+        // Serve operator dashboard at /operator path
+        if (path === '/operator' || path === '/operator/') {
+          return handleOperatorDashboard(request, env);
+        }
+        // Serve the Webzyl brand identity page
+        return handleBrandHomepage(request, env, ctx);
+      }
     }
 
     // =====================================================
